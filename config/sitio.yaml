@@ -1,0 +1,18 @@
+# Sitio de construcción asignado al Grupo 7.
+# Fuente: 03_SITIOS_POR_GRUPO.md / sitios.yaml del curso.
+#
+# REGLA DEL CURSO: todos los scripts de clima deben usar EXACTAMENTE esta
+# latitud/longitud (salvo autorización explícita del profesor). Es el punto
+# meteorológico oficial del caso docente; NO es la coordenada exacta de una
+# fundación real de aerogenerador.
+
+grupo: G7
+localidad: Renaico
+region: La Araucanía
+parque_eolico: Parque Eólico Vergara
+estado_proyecto: aprobado
+referencia_sea: https://www.sea.gob.cl/tce/tabla-de-comision-evaluacion-1818
+
+latitud: -37.692100    # grados decimales (negativo = hemisferio sur)
+longitud: -72.624000   # grados decimales (negativo = oeste de Greenwich)
+zona_horaria: America/Santiago

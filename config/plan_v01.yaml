@@ -1,0 +1,49 @@
+# Plan de vertidas v01 — EJEMPLO PROVISIONAL PARA LA SEMANA 1.
+#
+# ATENCIÓN: esto NO es nuestra recomendación constructiva. Solo sirve para
+# tener un primer modelo IFC con vertidas identificables y sus propiedades.
+# La recomendación saldrá de las simulaciones (semanas 3 a 5).
+#
+# Idea del plan: la losa se hormigona en 2 capas horizontales y luego el
+# pedestal (3 vertidas). Las cotas z se miden desde la base de la losa.
+
+nombre: plan_v01
+descripcion: "Ejemplo provisional: losa en 2 capas + pedestal"
+
+# [PROVISIONAL] La fecha real de inicio es la fecha de la defensa final (TBD).
+# Cuando se conozca, se cambia SOLO esta línea y se regenera el IFC.
+fecha_inicio: "2026-12-01T08:00:00-03:00"
+
+vertidas:
+  - id: V01
+    elemento: losa             # losa (prisma 18 x 18) o pedestal (cilindro)
+    z_inferior_m: 0.00
+    z_superior_m: 1.15
+    inicio_h: 0                # horas desde fecha_inicio
+    tipo_hormigon: G30
+    temperatura_colocacion_C: 20.0
+    moldaje: Madera contrachapada 18 mm
+    aislacion: Ninguna
+    retiro_moldaje_h: 72       # horas desde el inicio de ESTA vertida
+
+  - id: V02
+    elemento: losa
+    z_inferior_m: 1.15
+    z_superior_m: 2.30
+    inicio_h: 72
+    tipo_hormigon: G30
+    temperatura_colocacion_C: 20.0
+    moldaje: Madera contrachapada 18 mm
+    aislacion: Ninguna
+    retiro_moldaje_h: 72
+
+  - id: V03
+    elemento: pedestal
+    z_inferior_m: 2.30
+    z_superior_m: 3.30
+    inicio_h: 144
+    tipo_hormigon: G30
+    temperatura_colocacion_C: 20.0
+    moldaje: Moldaje metálico circular
+    aislacion: Ninguna
+    retiro_moldaje_h: 72
