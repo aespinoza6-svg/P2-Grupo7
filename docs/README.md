@@ -10,6 +10,7 @@ Orden de lectura recomendado. Cada documento explica **qué hicimos, por qué y 
 | 04 | [Guía para el oral E01](04_guia_oral_E01.md) | Preguntas probables con respuestas y qué mostrar en el código | E01 |
 | 05 | [Decisiones y supuestos](05_decisiones_y_supuestos.md) | Registro de decisiones de modelación y supuestos provisionales | todas |
 | 06 | [Flujo de trabajo con Git](06_flujo_de_trabajo_git.md) | Ramas, commits, Pull Requests y cómo declarar el commit evaluado | todas |
+| 07 | [Informe E03: verificación 1D](07_informe_E03_verificacion_1d.md) | Solución exacta, convergencia espacial y temporal, tests complementarios y limitaciones (≤ 800 palabras) | E03 |
 
 Las figuras referenciadas están en [`../resultados/figuras/`](../resultados/figuras/) y se
 regeneran con los scripts de [`../scripts/`](../scripts/).
