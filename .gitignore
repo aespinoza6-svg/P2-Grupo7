@@ -1,0 +1,28 @@
+# Entornos virtuales (cada integrante crea el suyo; no se suben)
+.venv/
+venv/
+env/
+
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Caché de pytest
+.pytest_cache/
+
+# Editores / sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Respaldos automáticos de Blender / Bonsai
+*.blend1
+*.ifc~
+
+# Salidas temporales (lo que sí queremos versionar va en resultados/figuras)
+resultados/tmp/
