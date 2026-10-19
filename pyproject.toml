@@ -29,7 +29,8 @@ dependencies = [
 dev = ["pytest>=8.0"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["mcplan*"]  # solo la carpeta mcplan/ es código del paquete
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

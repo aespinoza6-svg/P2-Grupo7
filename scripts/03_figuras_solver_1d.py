@@ -1,8 +1,8 @@
 """
-Paso 3 — Demostraciones del solver 1D (figuras para la revisión oral).
+Paso 3 — Figuras del solver 1D (para la revisión oral).
 
-    python scripts/03_demo_solver_1d.py            # guarda las figuras
-    python scripts/03_demo_solver_1d.py --mostrar  # además abre las ventanas
+    python scripts/03_figuras_solver_1d.py            # guarda las figuras
+    python scripts/03_figuras_solver_1d.py --mostrar  # además abre las ventanas
 
 Genera en resultados/figuras/:
   fig01  Dirichlet: solución numérica vs exacta (verificación)
@@ -18,6 +18,7 @@ modelo de hidratación (semana 3).
 
 import argparse
 import sys
+from pathlib import Path
 
 import matplotlib
 
@@ -26,16 +27,36 @@ if "--mostrar" not in sys.argv:
 import matplotlib.pyplot as plt
 import numpy as np
 
-from estilo_graficos import AZUL, GRIS, NARANJO, VERDE_AGUA, colores_tiempo, guardar
-from mcplan import soluciones_analiticas as exacta
+from mcplan import analiticas as exacta
 from mcplan.solver1d import Dirichlet, Malla1D, Material, Neumann, Robin, resolver
+
+# --- Estilo y salida de las figuras -----------------------------------------
+RAIZ = Path(__file__).resolve().parents[1]
+CARPETA_FIGURAS = RAIZ / "resultados" / "figuras"
+# Colores para curvas que representan COSAS distintas; GRIS para límites y referencias.
+AZUL, NARANJO, VERDE_AGUA, GRIS = "#2a78d6", "#eb6834", "#1baf7a", "#52514e"
+plt.rcParams.update({"axes.grid": True, "grid.alpha": 0.3, "axes.spines.top": False,
+                     "axes.spines.right": False, "lines.linewidth": 2.0, "savefig.dpi": 160})
+
+
+def guardar(fig, nombre):
+    CARPETA_FIGURAS.mkdir(parents=True, exist_ok=True)
+    ruta = CARPETA_FIGURAS / nombre
+    fig.savefig(ruta, bbox_inches="tight")
+    print(f"  figura -> {ruta.relative_to(RAIZ)}")
+
+
+def colores_tiempo(n):
+    """Un solo tono, claro = temprano y oscuro = tarde (el tiempo es una magnitud ordenada)."""
+    return plt.cm.Blues(np.linspace(0.35, 0.95, n))
+
 
 HORA = 3600.0
 DIA = 24 * HORA
 
 # Material didáctico (alpha = 1e-4 m²/s): procesos de minutos, fácil de ver.
 DIDACTICO = Material("didactico", k=1.0, rho=1000.0, cp=10.0)
-# Hormigón: valores provisionales de config/fundacion.yaml (alpha ≈ 9.3e-7 m²/s).
+# Hormigón: valores provisionales de config/caso_base.yaml (alpha ≈ 9.3e-7 m²/s).
 HORMIGON = Material("hormigon", k=2.0, rho=2400.0, cp=900.0)
 
 

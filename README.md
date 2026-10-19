@@ -14,7 +14,7 @@ Métodos Computacionales 2026 · Universidad de los Andes
 
 - **Lugar:** Renaico, Región de La Araucanía, Chile
 - **Proyecto eólico de referencia:** Parque Eólico Vergara
-- **Coordenadas meteorológicas:** latitud `-37.692100`, longitud `-72.624000` (ver [`config/sitio.yaml`](config/sitio.yaml))
+- **Coordenadas meteorológicas:** latitud `-37.692100`, longitud `-72.624000` (ver [`config/caso_base.yaml`](config/caso_base.yaml))
 
 ## Descripción
 
@@ -34,48 +34,48 @@ Bonsai / Blender  ->  IFC  ->  IfcOpenShell  ->  geometría + propiedades  ->  v
 
 Estos límites son criterios de control del riesgo definidos para el proyecto docente; cumplirlos no constituye una demostración de ausencia de agrietamiento.
 
-## Estado de avance
+## ¿Por dónde empiezo?
 
-| Semana | Entrega | Estado |
-|---|---|---|
-| W1 | E01 · BIM + difusión + solver 1D | ✅ IFC inicial, solver 1D, 23 tests, guía del oral |
-| W1 | E02 · round-trip IFC + demo 1D | 🟡 comparación de versiones lista; falta practicar la edición en Bonsai |
-| W1 | E03 · verificación 1D | 🟡 convergencia lista (fig06); falta el informe (≤ 800 palabras) |
-| W2 | E04–E06 · 2D/3D + condiciones de borde | ⬜ |
-| W3 | E07–E09 · voxelización + vertidas + hidratación | ⬜ |
-| W4 | E10–E12 · entorno, moldaje, clima | ⬜ |
-| W5 | E13–E15 · incertidumbre, Monte Carlo, HPC | ⬜ |
+1. Este README: qué hay en cada carpeta y cómo correr todo.
+2. [`docs/1_teoria.md`](docs/1_teoria.md): BIM/IFC, física y solver, explicados.
+3. El código que se explica en el oral: [`mcplan/solver1d.py`](mcplan/solver1d.py) y [`mcplan/bim.py`](mcplan/bim.py).
+4. [`docs/2_guia_oral.md`](docs/2_guia_oral.md): preguntas probables con sus respuestas.
 
 ## Estructura del repositorio
 
 ```
 P2-Grupo7/
-├── README.md               <- este archivo: qué es, cómo instalar, cómo correr
-├── pyproject.toml          <- define el paquete Python "mcplan" y sus dependencias
-├── requirements.txt        <- versiones exactas probadas (entorno reproducible)
+├── README.md          <- este archivo
+├── requirements.txt   <- dependencias (versiones exactas probadas)
+├── pyproject.toml     <- define el paquete "mcplan" (técnico, no se toca)
 │
-├── config/                 <- ENTRADAS: todo lo que define el caso (sin tocar código)
-│   ├── sitio.yaml              coordenadas oficiales del grupo
-│   ├── fundacion.yaml          geometría y material (supuestos marcados [PROVISIONAL])
-│   └── plan_v01.yaml           plan de vertidas de ejemplo
+├── config/            ENTRADAS: datos y decisiones (se cambian aquí, no en el código)
+│   ├── caso_base.yaml     sitio + geometría + hormigón
+│   └── plan_v01.yaml      plan de vertidas (ejemplo)
 │
-├── src/mcplan/             <- CÓDIGO del proyecto (paquete importable)
-│   ├── solver1d.py             solver térmico 1D explícito (balance por celdas)
-│   ├── soluciones_analiticas.py  soluciones exactas para verificar
-│   └── bim.py                  crear / leer el modelo IFC con IfcOpenShell
+├── mcplan/            EL CÓDIGO (lo que se explica en el oral)
+│   ├── solver1d.py        solver térmico 1D (balance de energía por celdas)
+│   ├── analiticas.py      soluciones exactas para verificar el solver
+│   └── bim.py             crear y leer el modelo IFC
 │
-├── scripts/                <- PROGRAMAS a ejecutar, numerados en orden
+├── scripts/           LO QUE SE EJECUTA, en orden
 │   ├── 01_crear_modelo_ifc.py
 │   ├── 02_inspeccionar_ifc.py
-│   ├── 03_demo_solver_1d.py
+│   ├── 03_figuras_solver_1d.py
 │   └── 04_convergencia_1d.py
 │
-├── tests/                  <- verificación automática (pytest)
-├── modelos/                <- modelos IFC (se abren en Bonsai)
-├── resultados/             <- SALIDAS: figuras y tablas generadas por los scripts
-├── docs/                   <- explicación de teoría, código y decisiones (leer en orden)
-└── entregas/               <- texto de cada entrega (repositorio + commit evaluado)
+├── tests/             verificación automática (pytest)
+├── modelos/           (generado) modelo IFC, se abre en Bonsai
+├── resultados/        (generado) figuras y tablas
+│
+└── docs/
+    ├── 1_teoria.md        BIM/IFC + física + solver
+    ├── 2_guia_oral.md     preguntas y respuestas para los orales
+    ├── 3_supuestos.md     decisiones y supuestos provisionales
+    └── informe_E03.md     informe de verificación 1D
 ```
+
+Lo marcado como *(generado)* no se edita a mano: se regenera con los scripts.
 
 ## Instalación
 
@@ -114,32 +114,60 @@ pip install -r requirements.txt
 
 ## Uso
 
-Con el entorno activado, desde la raíz del repositorio:
+Siempre **desde la carpeta del repositorio** y con el entorno activado:
 
 ```bash
-pytest -v                                                        # 1. verificar (23 tests)
-python scripts/01_crear_modelo_ifc.py                            # 2. generar el IFC desde config/
+pytest -v                                                                 # 1. verificar (23 tests)
+python scripts/01_crear_modelo_ifc.py                                     # 2. generar el IFC desde config/
 python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc   # 3. leer el IFC sin Blender
-python scripts/03_demo_solver_1d.py                              # 4. figuras del solver 1D
-python scripts/04_convergencia_1d.py                             # 5. estudio de convergencia
+python scripts/03_figuras_solver_1d.py                                    # 4. figuras del solver 1D
+python scripts/04_convergencia_1d.py                                      # 5. estudio de convergencia
 ```
 
-Las figuras quedan en [`resultados/figuras/`](resultados/figuras/).
 Para comparar un IFC editado en Bonsai con el original:
 
 ```bash
 python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc --comparar modelos/fundacion_G7_plan_v01_bonsai.ifc
 ```
 
-## Documentación
+## Entregas
 
-Ver [`docs/README.md`](docs/README.md). Para el oral E01, partir por
-[`docs/04_guia_oral_E01.md`](docs/04_guia_oral_E01.md).
+| ID | Fecha | Actividad | Estado | Commit evaluado |
+|---|---|---|---|---|
+| E01 | mié 21 oct | Oral: BIM + difusión + solver 1D | ✅ listo | *pendiente* |
+| E02 | jue 22 oct | Lab: round-trip IFC + demo 1D | 🟡 falta practicar la edición en Bonsai | *pendiente* |
+| E03 | vie 23 oct | Verificación 1D → [informe](docs/informe_E03.md) | ✅ listo | *pendiente* |
+| E04–E15 | 28 oct – 20 nov | 2D/3D, vertidas, hidratación, clima, Monte Carlo | ⬜ | |
 
-## Forma de trabajo
+Texto para Canvas (cada entrega):
 
-Ramas + Pull Requests revisados por otro integrante; cada entrega se marca con un tag sobre el
-commit evaluado. Detalle en [`docs/06_flujo_de_trabajo_git.md`](docs/06_flujo_de_trabajo_git.md).
+```
+Repositorio: https://github.com/aespinoza6-svg/P2-Grupo7
+Commit evaluado: https://github.com/aespinoza6-svg/P2-Grupo7/commit/<SHA>
+```
+
+<details>
+<summary>Nota opcional E01 (93 palabras)</summary>
+
+La geometría es provisional: interpretamos 3,30 m como altura total y supusimos un pedestal de
+1,00 m hasta recibir la geometría oficial (supuestos documentados en docs/3_supuestos.md). El IFC
+se genera por script con IfcOpenShell y se abre/edita en Bonsai; el round-trip editando en Bonsai
+se mostrará en E02. El plan de vertidas del IFC es un ejemplo, no una recomendación. El solver 1D
+(Dirichlet, Neumann, Robin, fuente) está verificado con solución exacta, conservación de energía
+y convergencia (orden 2 en espacio, 1 en tiempo). Faltan: calibrar las propiedades del hormigón e
+incorporar hidratación.
+
+</details>
+
+## Forma de trabajo con Git
+
+1. **`main` siempre funciona.** Cada tarea se hace en una rama (`e04-solver-2d`) y entra por
+   **Pull Request** revisado por otro integrante: así todos conocen todo el código.
+2. **Antes de cada commit:** `pytest`.
+3. **Mensajes de commit:** `tipo: descripción`, con tipo `feat` (nuevo), `fix` (corrección),
+   `test`, `docs`, `refactor` (reorganizar sin cambiar resultados) o `chore` (configuración).
+4. **Commit evaluado:** unir a `main`, obtener el SHA con `git rev-parse HEAD`, marcarlo con
+   `git tag -a E01 -m "Entrega E01"` + `git push origin E01`, y completar la tabla de entregas.
 
 ## Repositorio
 

@@ -157,13 +157,13 @@ def _angulo_compuesto(grados_decimales: float) -> list[int]:
     return list(ifcopenshell.util.geolocation.dd2dms(grados_decimales, use_us=True))
 
 
-def crear_modelo_fundacion(sitio: dict, fundacion: dict, plan: dict) -> ifcopenshell.file:
+def crear_modelo_fundacion(caso: dict, plan: dict) -> ifcopenshell.file:
     """Construye el IFC de la fundación con una IfcFooting por vertida.
 
-    sitio, fundacion y plan son los diccionarios de config/sitio.yaml,
-    config/fundacion.yaml y config/plan_vXX.yaml.
+    caso: diccionario de config/caso_base.yaml (secciones sitio, geometria, hormigon).
+    plan: diccionario de config/plan_vXX.yaml (las vertidas).
     """
-    geo = fundacion["geometria"]
+    sitio, geo, h = caso["sitio"], caso["geometria"], caso["hormigon"]
     validar_plan(geo, plan)
 
     # 1) Archivo, proyecto y unidades (metros: así las cotas del YAML se
@@ -171,7 +171,7 @@ def crear_modelo_fundacion(sitio: dict, fundacion: dict, plan: dict) -> ifcopens
     modelo = ifcopenshell.api.project.create_file(version="IFC4")
     modelo.header.file_name.author = ("Grupo 7",)
     modelo.header.file_name.organization = ("UANDES - Metodos Computacionales",)
-    proyecto =ifcopenshell.api.root.create_entity(
+    proyecto = ifcopenshell.api.root.create_entity(
         modelo, ifc_class="IfcProject", name="P2 Grupo 7 - Fundación aerogenerador"
     )
     unidades = [
@@ -213,8 +213,7 @@ def crear_modelo_fundacion(sitio: dict, fundacion: dict, plan: dict) -> ifcopens
 
     # 4) Material con sus propiedades térmicas en los property sets ESTÁNDAR
     #    de IFC (Pset_MaterialCommon y Pset_MaterialThermal).
-    h = fundacion["hormigon"]
-    hormigon = ifcopenshell.api.material.add_material(modelo, name=h["nombre"], category="concrete")
+    hormigon =ifcopenshell.api.material.add_material(modelo, name=h["nombre"], category="concrete")
     ps = ifcopenshell.api.pset.add_pset(modelo, product=hormigon, name="Pset_MaterialCommon")
     ifcopenshell.api.pset.edit_pset(modelo, pset=ps, properties={"MassDensity": float(h["densidad_kg_m3"])})
     ps = ifcopenshell.api.pset.add_pset(modelo, product=hormigon, name="Pset_MaterialThermal")

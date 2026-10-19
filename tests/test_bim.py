@@ -20,9 +20,9 @@ CONFIG = RAIZ / "config"
 
 @pytest.fixture(scope="module")
 def entradas():
+    """(caso, plan): los mismos archivos que usa scripts/01_crear_modelo_ifc.py."""
     return (
-        bim.cargar_yaml(CONFIG / "sitio.yaml"),
-        bim.cargar_yaml(CONFIG / "fundacion.yaml"),
+        bim.cargar_yaml(CONFIG / "caso_base.yaml"),
         bim.cargar_yaml(CONFIG / "plan_v01.yaml"),
     )
 
@@ -53,8 +53,8 @@ def test_inicio_planificado_se_calcula_desde_el_plan(ruta_ifc):
 def test_volumenes_coinciden_con_la_geometria(ruta_ifc, entradas):
     """Volumen calculado por IfcOpenShell vs fórmula exacta.
     El cilindro se aproxima con triángulos: se acepta 1 % de diferencia."""
-    _, fundacion, plan = entradas
-    g = fundacion["geometria"]
+    caso, plan = entradas
+    g = caso["geometria"]
     geo = bim.geometria_vertidas(ruta_ifc)
     for v in plan["vertidas"]:
         espesor = v["z_superior_m"] - v["z_inferior_m"]
@@ -70,7 +70,7 @@ def test_volumenes_coinciden_con_la_geometria(ruta_ifc, entradas):
 def test_altura_total_de_la_fundacion(ruta_ifc, entradas):
     geo = bim.geometria_vertidas(ruta_ifc)
     z_max = max(d["max_xyz_m"][2] for d in geo.values())
-    assert z_max == pytest.approx(entradas[1]["geometria"]["altura_total_m"])
+    assert z_max == pytest.approx(entradas[0]["geometria"]["altura_total_m"])
 
 
 def test_coordenadas_del_sitio(ruta_ifc):
@@ -103,8 +103,8 @@ def test_globalid_estable_al_regenerar(entradas):
 
 def test_plan_con_hueco_es_rechazado(entradas):
     """Si las vertidas no llenan la fundación, se avisa (no se inventa nada)."""
-    sitio, fundacion, plan = entradas
+    caso, plan = entradas
     plan_malo = {**plan, "vertidas": [dict(v) for v in plan["vertidas"]]}
     plan_malo["vertidas"][1]["z_inferior_m"] = 1.20  # deja un hueco 1.15-1.20
     with pytest.raises(ValueError, match="hueco o traslape"):
-        bim.crear_modelo_fundacion(sitio, fundacion, plan_malo)
+        bim.crear_modelo_fundacion(caso, plan_malo)

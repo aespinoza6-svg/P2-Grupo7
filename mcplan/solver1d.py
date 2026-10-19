@@ -11,7 +11,7 @@ Ecuación que se resuelve (conducción de calor con fuente interna):
     cp   calor específico                [J/(kg K)]
     Q    fuente volumétrica de calor     [W/m³]  (más adelante: hidratación)
 
-La deducción completa está en docs/03_solver_1d.md. Resumen con la misma
+La deducción completa está en docs/1_teoria.md (Parte C). Resumen con la misma
 notación que usa el código:
 
 1) MALLA DE CELDAS (volúmenes finitos centrados en celdas)

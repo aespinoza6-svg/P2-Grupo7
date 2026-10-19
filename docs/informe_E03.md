@@ -1,4 +1,4 @@
-# 07 — Informe E03: verificación del solver 1D
+# Informe E03: verificación del solver 1D
 
 > Entrega E03 · 23 de octubre de 2026 · Grupo 7 · Reproducir: `pytest -v` y
 > `python scripts/04_convergencia_1d.py`
@@ -16,14 +16,14 @@ $$\frac{\partial T}{\partial t} = \alpha\frac{\partial^2 T}{\partial x^2},\quad 
 $$T(x,t) = T_b + A\,\sin\frac{\pi x}{L}\,e^{-\alpha(\pi/L)^2 t}$$
 
 El modo seno cumple ambos bordes y decae a su propia tasa (separación de variables;
-`soluciones_analiticas.seno_dirichlet`). Datos: $L = 1$ m, $\alpha = 10^{-4}$ m²/s (material
+`analiticas.seno_dirichlet`). Datos: $L = 1$ m, $\alpha = 10^{-4}$ m²/s (material
 didáctico, cálculo rápido), $T_b = 20$ °C, $A = 50$ °C; error medido en $t = 1500$ s (amplitud
 restante 11,4 °C). Ejercita el borde Dirichlet, lo delicado en una malla de celdas: la
 superficie queda a $\Delta x/2$ del centro.
 
 ## 3. Esquema
 
-Volúmenes finitos centrados en celdas ([docs/03](03_solver_1d.md)): $N$ celdas de ancho
+Volúmenes finitos centrados en celdas ([teoría, Parte C](1_teoria.md)): $N$ celdas de ancho
 $\Delta x = L/N$, cada una con su balance *acumulación = entra − sale*. Flujo entre vecinas:
 $G(T_i - T_{i+1})$, con $G = k/\Delta x$ ($2k/\Delta x$ hacia la superficie Dirichlet). Euler
 explícito:

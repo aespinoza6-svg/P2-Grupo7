@@ -4,7 +4,7 @@ Paso 1 — Crear el modelo IFC de la fundación a partir de config/.
     python scripts/01_crear_modelo_ifc.py
     python scripts/01_crear_modelo_ifc.py --plan config/plan_v01.yaml --salida modelos/otro.ifc
 
-Lee:   config/sitio.yaml, config/fundacion.yaml y el plan de vertidas.
+Lee:   config/caso_base.yaml (sitio, geometría, hormigón) y el plan de vertidas.
 Crea:  modelos/fundacion_G7_<nombre del plan>.ifc  (se abre en Bonsai).
 """
 
@@ -22,16 +22,16 @@ def main():
     parser.add_argument("--salida", default=None, type=Path)
     args = parser.parse_args()
 
-    sitio = bim.cargar_yaml(RAIZ / "config" / "sitio.yaml")
-    fundacion = bim.cargar_yaml(RAIZ / "config" / "fundacion.yaml")
+    caso = bim.cargar_yaml(RAIZ / "config" / "caso_base.yaml")
     plan = bim.cargar_yaml(args.plan)
     salida = args.salida or RAIZ / "modelos" / f"fundacion_G7_{plan['nombre']}.ifc"
 
-    modelo = bim.crear_modelo_fundacion(sitio, fundacion, plan)
+    modelo = bim.crear_modelo_fundacion(caso, plan)
     salida.parent.mkdir(parents=True, exist_ok=True)
     modelo.write(str(salida))
 
     print(f"Modelo IFC creado: {salida}")
+    sitio = caso["sitio"]
     print(f"  esquema: {modelo.schema}   sitio: {sitio['localidad']} ({sitio['latitud']}, {sitio['longitud']})")
     for v in bim.leer_vertidas(modelo):
         print(f"  {v['VertidaID']}  {v['Nombre']:<16} inicio {v['InicioPlanificado']}  "

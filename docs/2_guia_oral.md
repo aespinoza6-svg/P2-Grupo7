@@ -1,4 +1,9 @@
-# 04 — Guía de estudio para la revisión oral E01 (miércoles 21 de octubre)
+# Guía para los orales
+
+Una sección por revisión oral. Cada pregunta tiene una respuesta modelo y qué mostrar en el
+código. La teoría completa está en [1_teoria.md](1_teoria.md).
+
+## E01 — BIM, difusión y solver 1D (miércoles 21 de octubre)
 
 > En la revisión **se puede preguntar a cualquier integrante** y se pide **navegar por código
 > real**. Cada respuesta indica qué mostrar. Las respuestas son guías: hay que poder decirlas
@@ -6,7 +11,7 @@
 >
 > Lecturas previas exigidas: guías del curso G00, G01, G02 y G05.
 
-## Checklist individual (cada integrante, antes del miércoles)
+### Checklist individual (cada integrante, antes del miércoles)
 
 - [ ] Clonar el repo, crear el entorno e instalar (`README.md` → *Instalación*).
 - [ ] Correr `pytest` y ver los 23 tests pasar.
@@ -18,7 +23,7 @@
 
 ---
 
-## Bloque A — BIM / IFC
+### Bloque A — BIM / IFC
 
 **A1. ¿Qué es BIM?**
 Una forma de trabajar con un modelo digital de **información** del proyecto: cada objeto es un
@@ -47,7 +52,7 @@ Porque el único puente es el **archivo IFC**: (1) cualquiera puede reproducir e
 instalar Blender, incluido el cluster HPC sin pantalla; (2) el estado interno de Blender no es
 un formato estable ni auditable, el IFC sí; (3) se puede testear con `pytest`; (4) cada vertida
 tiene un `GlobalId` permanente y se pueden comparar versiones.
-*Mostrar:* `src/mcplan/__init__.py` (regla: ningún módulo importa Blender) y `bim.leer_vertidas()`.
+*Mostrar:* `mcplan/__init__.py` (regla: ningún módulo importa Blender) y `bim.leer_vertidas()`.
 
 **A6. ¿Dónde están las propiedades de cada vertida?** En el property set `MC_Vertida` de cada
 `IfcFooting` (`VertidaID`, `TipoHormigon`, `InicioPlanificado`, `TemperaturaColocacion_C`,
@@ -65,11 +70,11 @@ clave (`"vertida/V01"`) para que regenerar el modelo no cambie las identidades.
 
 **A9. ¿Qué dimensiones son datos y cuáles supuestos?** Datos del enunciado: 18 × 18 m, 3,30 m,
 Ø 7 m. Supuestos provisionales (documentados, no silenciosos): 3,30 m como altura total y
-pedestal de 1,00 m. *Mostrar:* `config/fundacion.yaml` y [05](05_decisiones_y_supuestos.md).
+pedestal de 1,00 m. *Mostrar:* `config/caso_base.yaml` y [3_supuestos.md](3_supuestos.md).
 
 ---
 
-## Bloque B — Física
+### Bloque B — Física
 
 **B1. Significado físico de k, ρ, c_p, α**
 - $k$ [W/(m·K)]: qué tan fácil **conduce** calor (flujo por unidad de gradiente).
@@ -78,7 +83,7 @@ pedestal de 1,00 m. *Mostrar:* `config/fundacion.yaml` y [05](05_decisiones_y_su
 - $\alpha = k/(\rho c_p)$ [m²/s]: **qué tan rápido se propaga** un cambio de temperatura.
   Para el hormigón $\alpha \approx 9{,}3\cdot10^{-7}$ m²/s: en 14 días el calor penetra solo
   $\sqrt{\alpha t} \approx 1$ m, por eso el núcleo de 3,30 m se calienta casi como si estuviera aislado.
-*Mostrar:* clase `Material` en `solver1d.py`; [02 §2](02_fisica_conduccion.md).
+*Mostrar:* clase `Material` en `solver1d.py`; [teoría B.2](1_teoria.md).
 
 **B2. Balance de energía**
 Acumulación = lo que entra − lo que sale + lo que se genera:
@@ -108,7 +113,7 @@ Puede subir $T_{max}$; por eso hay que mirar ambos criterios.
 
 ---
 
-## Bloque C — Discretización y estabilidad
+### Bloque C — Discretización y estabilidad
 
 **C1. ¿Cómo discretizaron en 1D?**
 Volúmenes finitos centrados en celdas: $N$ celdas de ancho $\Delta x$, una temperatura por
@@ -141,7 +146,7 @@ demuestra con la verificación.
 
 ---
 
-## Bloque D — Verificación
+### Bloque D — Verificación
 
 **D1. ¿Cómo saben que el solver está bien?** 15 tests contra respuestas conocidas: solución
 exacta del seno, conservación de energía, balance con flujo y fuente, aumento adiabático lineal,
@@ -156,11 +161,11 @@ ecuación representa la realidad (comparando con mediciones de Ju y Lei, más ad
 
 ---
 
-## Recorrido sugerido para la demo (≈ 5 min)
+### Recorrido sugerido para la demo (≈ 5 min)
 
 1. `README.md`: estructura del repo y cómo instalar.
-2. `config/` → los 3 YAML (dato vs supuesto `[PROVISIONAL]`).
+2. `config/` → los 2 YAML (dato `[CURSO]` vs supuesto `[PROVISIONAL]`).
 3. `python scripts/01_crear_modelo_ifc.py` y `python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc`.
-4. `src/mcplan/solver1d.py`: docstring del módulo → `Robin` → `paso_tiempo_maximo` → bucle de `resolver`.
+4. `mcplan/solver1d.py`: docstring del módulo → `Robin` → `paso_tiempo_maximo` → bucle de `resolver`.
 5. `pytest -v` (23 tests).
 6. Figuras fig01 (exacta), fig05 (estabilidad), fig06 (convergencia), fig04 (física del problema).

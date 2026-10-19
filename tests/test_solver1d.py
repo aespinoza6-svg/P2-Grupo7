@@ -9,7 +9,7 @@ Correr con:   pytest -v
 import numpy as np
 import pytest
 
-from mcplan import soluciones_analiticas as exacta
+from mcplan import analiticas as exacta
 from mcplan.solver1d import (
     Dirichlet,
     Malla1D,
@@ -23,7 +23,7 @@ from mcplan.solver1d import (
 # Material "didáctico" con alpha = 1e-4 m²/s (como en los ejemplos del curso):
 # los procesos ocurren en minutos/horas y los tests corren rápido.
 DIDACTICO = Material("didactico", k=1.0, rho=1000.0, cp=10.0)
-# Hormigón con los valores provisionales de config/fundacion.yaml.
+# Hormigón con los valores provisionales de config/caso_base.yaml.
 HORMIGON = Material("hormigon", k=2.0, rho=2400.0, cp=900.0)
 
 

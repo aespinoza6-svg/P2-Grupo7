@@ -19,15 +19,32 @@ Caso: decaimiento del seno con bordes Dirichlet (tiene solución exacta).
 Salida: resultados/figuras/fig06_convergencia.png y resultados/convergencia_1d.csv
 """
 
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from estilo_graficos import AZUL, GRIS, NARANJO, RAIZ, guardar
-from mcplan import soluciones_analiticas as exacta
+from mcplan import analiticas as exacta
 from mcplan.solver1d import Dirichlet, Malla1D, Material, paso_tiempo_maximo, resolver
+
+# --- Estilo y salida de las figuras -----------------------------------------
+RAIZ = Path(__file__).resolve().parents[1]
+CARPETA_FIGURAS = RAIZ / "resultados" / "figuras"
+# Colores para curvas que representan COSAS distintas; GRIS para límites y referencias.
+AZUL, NARANJO, VERDE_AGUA, GRIS = "#2a78d6", "#eb6834", "#1baf7a", "#52514e"
+plt.rcParams.update({"axes.grid": True, "grid.alpha": 0.3, "axes.spines.top": False,
+                     "axes.spines.right": False, "lines.linewidth": 2.0, "savefig.dpi": 160})
+
+
+def guardar(fig, nombre):
+    CARPETA_FIGURAS.mkdir(parents=True, exist_ok=True)
+    ruta = CARPETA_FIGURAS / nombre
+    fig.savefig(ruta, bbox_inches="tight")
+    print(f"  figura -> {ruta.relative_to(RAIZ)}")
+
 
 DIDACTICO = Material("didactico", k=1.0, rho=1000.0, cp=10.0)
 L, T_B, A, T_FINAL = 1.0, 20.0, 50.0, 1500.0

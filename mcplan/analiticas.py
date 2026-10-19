@@ -7,7 +7,7 @@ que es comprobar que la ecuación representa bien la realidad (eso se hará
 comparando con las mediciones de Ju y Lei, 2019).
 
 Cada función indica el problema exacto que resuelve, para poder reproducirlo
-con el solver numérico. La deducción de cada una está en docs/03_solver_1d.md.
+con el solver numérico. La explicación está en docs/1_teoria.md (Parte C).
 """
 
 from __future__ import annotations

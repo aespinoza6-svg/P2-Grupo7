@@ -1,4 +1,4 @@
-# 05 — Registro de decisiones y supuestos
+# Decisiones y supuestos
 
 > Regla del enunciado: *"los grupos no deben inventar silenciosamente dimensiones faltantes"*.
 > Todo lo que no es un dato del curso queda registrado aquí, con su estado.
@@ -8,19 +8,19 @@
 
 | ID | Supuesto | Dónde está | Por qué | Estado |
 |---|---|---|---|---|
-| S01 | El "espesor 3,30 m" es la **altura total** (losa + pedestal) | `config/fundacion.yaml` | El artículo no lo define inequívocamente | Pendiente: geometría oficial del profesor |
-| S02 | Altura del pedestal = **1,00 m** | `config/fundacion.yaml` | Idem | Pendiente |
-| S03 | Losa = prisma recto 18 × 18 m sin taludes; pedestal = cilindro recto centrado; sin pernos, armaduras ni ductos | `config/fundacion.yaml`, `bim.py` | Simplificación para la semana 1 | Pendiente |
-| S04 | Hormigón: $k = 2{,}0$ W/(m·K), $\rho = 2400$ kg/m³, $c_p = 900$ J/(kg·K) | `config/fundacion.yaml` | Valores típicos (los del código de ejemplo del curso) | Calibrar en semana 3 (Ju y Lei, ICH) |
+| S01 | El "espesor 3,30 m" es la **altura total** (losa + pedestal) | `config/caso_base.yaml` | El artículo no lo define inequívocamente | Pendiente: geometría oficial del profesor |
+| S02 | Altura del pedestal = **1,00 m** | `config/caso_base.yaml` | Idem | Pendiente |
+| S03 | Losa = prisma recto 18 × 18 m sin taludes; pedestal = cilindro recto centrado; sin pernos, armaduras ni ductos | `config/caso_base.yaml`, `bim.py` | Simplificación para la semana 1 | Pendiente |
+| S04 | Hormigón: $k = 2{,}0$ W/(m·K), $\rho = 2400$ kg/m³, $c_p = 900$ J/(kg·K) | `config/caso_base.yaml` | Valores típicos (los del código de ejemplo del curso) | Calibrar en semana 3 (Ju y Lei, ICH) |
 | S05 | Plan v01: losa en 2 capas + pedestal, inicios a 0/72/144 h, 20 °C, moldaje de madera, retiro a 72 h | `config/plan_v01.yaml` | Solo para tener un IFC con vertidas; **no es la recomendación** | Se reemplaza por planes simulados (semanas 3–5) |
 | S06 | Fecha de inicio = 2026-12-01 08:00 (−03:00) | `config/plan_v01.yaml` | La real es la fecha de la defensa final (TBD) | Cambiar cuando se conozca |
-| S07 | Figuras 03 y 04: base adiabática, clima ficticio (onda de 24 h) y fuente ilustrativa $Q = Q_0 e^{-t/\tau}$ | `scripts/03_demo_solver_1d.py` | Ilustrar la física antes de tener clima real e hidratación | Reemplazar en semanas 3–4 |
+| S07 | Figuras 03 y 04: base adiabática, clima ficticio (onda de 24 h) y fuente ilustrativa $Q = Q_0 e^{-t/\tau}$ | `scripts/03_figuras_solver_1d.py` | Ilustrar la física antes de tener clima real e hidratación | Reemplazar en semanas 3–4 |
 
 ## Decisiones de modelación y de software
 
 | ID | Decisión | Alternativas consideradas | Justificación |
 |---|---|---|---|
-| D01 | Paquete Python `mcplan` en `src/`, instalable con `pip install -e .` | Scripts sueltos | Scripts, tests y (luego) el cluster importan el mismo código, sin trucos de rutas |
+| D01 | Paquete Python en la carpeta `mcplan/`, instalable con `pip install -e .` | Scripts sueltos | Scripts, tests y (luego) el cluster importan el mismo código, sin trucos de rutas |
 | D02 | Volúmenes finitos **centrados en celdas** | Diferencias finitas con nodos en los bordes (código de ejemplo del curso) | En 3D cada vóxel es una celda; conserva energía exactamente; interfaces y moldajes como resistencias en serie |
 | D03 | Euler **explícito** | Implícito (Crank–Nicolson, Euler implícito) | Simple y explicable; con $\Delta x$ de 5–10 cm el paso estable (15–30 min) es razonable. Reevaluar si el 3D resulta lento |
 | D04 | Conductancia entre celdas con **resistencias en serie** (media armónica de $k$) | Promedio aritmético de $k$ | Garantiza continuidad del flujo entre materiales distintos |
