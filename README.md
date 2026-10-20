@@ -66,8 +66,10 @@ P2-Grupo7/
 │   └── 04_convergencia_1d.py
 │
 ├── tests/             verificación automática (pytest)
-├── fundaciones/       IFC de trabajo; `fundacion.ifc` se genera desde config/
-│   └── archivo/       versiones previas conservadas
+├── fundaciones/       BIM y presentación visual
+│   ├── fundacion.ifc                    IFC fuente, regenerable desde config/
+│   ├── fundacion_araucania.blend        escena visual de Blender/Bonsai
+│   └── vista_fundacion_araucania.png    render de esa escena
 ├── resultados/        (generado) figuras y tablas
 ├── Antecedentes/      material complementario del curso y bibliografía
 │
@@ -94,8 +96,9 @@ proyecto se mantienen en `mcplan/`, `scripts/`, `tests/`, `fundaciones/` y `resu
 
 ## Instalación
 
-Requisitos: **Python 3.12** y Git. (No se necesita Blender para correr el código; Bonsai
-solo se usa para ver y editar el modelo IFC.)
+Requisitos: **Python 3.12** y Git. No se necesita Blender para ejecutar el código o generar el
+IFC. Bonsai se usa para ver y editar el IFC; la escena `fundacion_araucania.blend` añade
+materiales y ambientación visual, pero no modifica ni reemplaza `fundacion.ifc`.
 
 **Windows (PowerShell):**
 
@@ -139,7 +142,8 @@ python scripts/03_figuras_solver_1d.py                                    # 4. f
 python scripts/04_convergencia_1d.py                                      # 5. estudio de convergencia
 ```
 
-Para comparar un IFC editado en Bonsai con el original:
+Para comparar un IFC editado en Bonsai con el original, primero guárdalo como
+`fundaciones/fundacion_bonsai.ifc` usando **Save IFC Project As…**. Luego ejecuta:
 
 ```bash
 python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/fundacion_bonsai.ifc

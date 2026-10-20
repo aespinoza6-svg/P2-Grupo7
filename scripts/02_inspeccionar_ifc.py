@@ -2,7 +2,7 @@
 Paso 2 — Leer un IFC desde Python (sin Blender) y mostrar lo que contiene.
 
     python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc
-    python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/editado_en_bonsai.ifc
+    python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/fundacion_bonsai.ifc
 
 Muestra: jerarquía espacial, vertidas con sus propiedades, volumen y cotas
 calculados desde la geometría. Con --comparar, lista qué cambió entre dos
