@@ -14,7 +14,7 @@ código. La teoría completa está en [1_teoria.md](1_teoria.md).
 ### Checklist individual (cada integrante, antes del miércoles)
 
 - [ ] Clonar el repo, crear el entorno e instalar (`README.md` → *Instalación*).
-- [ ] Correr `pytest` y ver los 23 tests pasar.
+- [ ] Correr `pytest` y revisar que todas las pruebas pasen.
 - [ ] Correr los scripts 01 a 04 y mirar cada figura en `resultados/figuras/`.
 - [ ] Abrir el IFC en Bonsai, cambiar una propiedad, guardar como otra versión y compararla
       con `scripts/02_inspeccionar_ifc.py --comparar`.
@@ -30,13 +30,13 @@ Una forma de trabajar con un modelo digital de **información** del proyecto: ca
 elemento constructivo con identidad, tipo, relaciones y propiedades (no solo un dibujo). En
 nuestro caso describe qué se construye y cuándo: la fundación, cada vertida, su material, inicio
 planificado, temperatura de colocación, moldaje y aislación.
-*Mostrar:* `modelos/fundacion_G7_plan_v01.ifc` en Bonsai o la salida de `scripts/02_inspeccionar_ifc.py`.
+*Mostrar:* `fundaciones/fundacion.ifc` en Bonsai o la salida de `scripts/02_inspeccionar_ifc.py`.
 
 **A2. ¿Qué es IFC?**
 El formato **abierto** e internacional (ISO 16739, buildingSMART) para intercambiar modelos BIM.
 Es un archivo de texto con entidades (`IfcFooting`, `IfcSite`…), relaciones y property sets.
 Al ser abierto, cualquier programa lo lee: Bonsai, Revit o nuestro Python.
-*Mostrar:* abrir el `.ifc` en un editor de texto y ubicar la línea `IFCFOOTING(...'V01 - losa'...)`.
+*Mostrar:* abrir el `.ifc` en un editor de texto y ubicar la entidad `IFCFOOTING` de V01.
 
 **A3. ¿Qué rol cumple Blender?**
 Es la plataforma de modelado 3D (interfaz gráfica, visualización). Por sí solo no entiende IFC
@@ -54,23 +54,24 @@ un formato estable ni auditable, el IFC sí; (3) se puede testear con `pytest`; 
 tiene un `GlobalId` permanente y se pueden comparar versiones.
 *Mostrar:* `mcplan/__init__.py` (regla: ningún módulo importa Blender) y `bim.leer_vertidas()`.
 
-**A6. ¿Dónde están las propiedades de cada vertida?** En el property set `MC_Vertida` de cada
-`IfcFooting` (`VertidaID`, `TipoHormigon`, `InicioPlanificado`, `TemperaturaColocacion_C`,
+**A6. ¿Dónde están las propiedades de cada vertida?** En el property set `UANDES_HormigonMasivo` de cada
+`IfcFooting` (`VertidaID`, `TipoHormigon`, `Inicio_h`, `InicioPlanificado`, `TemperaturaColocacion_C`,
 `Moldaje`, `Aislacion`, `RetiroMoldaje_h`). Las del material en los psets estándar
 `Pset_MaterialCommon` y `Pset_MaterialThermal`.
 *Mostrar:* `bim.crear_modelo_fundacion()`, paso 5.
 
-**A7. ¿Por qué `MC_Vertida` y no `Pset_Vertida`?** El prefijo `Pset_` está reservado para los
-property sets estándar de buildingSMART; los propios deben usar otro prefijo.
+**A7. ¿Por qué `UANDES_HormigonMasivo` y no `Pset_Vertida`?** El prefijo `Pset_` está reservado
+para los property sets estándar de buildingSMART; el set docente propio usa un nombre distinto.
 
 **A8. ¿Qué es el GlobalId y por qué lo fijamos?** Es la identidad única y permanente de cada
 objeto IFC. IfcOpenShell lo genera al azar; nosotros lo calculamos con `uuid5` a partir de una
 clave (`"vertida/V01"`) para que regenerar el modelo no cambie las identidades.
 *Mostrar:* `bim._guid_estable()` y `test_globalid_estable_al_regenerar`.
 
-**A9. ¿Qué dimensiones son datos y cuáles supuestos?** Datos del enunciado: 18 × 18 m, 3,30 m,
-Ø 7 m. Supuestos provisionales (documentados, no silenciosos): 3,30 m como altura total y
-pedestal de 1,00 m. *Mostrar:* `config/caso_base.yaml` y [3_supuestos.md](3_supuestos.md).
+**A9. ¿Qué dimensiones tiene la geometría docente?** Planta octagonal con 18 m entre caras,
+1,10 m de espesor en el borde, 3,30 m al centro y pedestal cilíndrico Ø7 m × 1 m; por eso la
+altura total es 4,30 m. Es una simplificación docente, no una reconstrucción CAD del artículo.
+*Mostrar:* `config/caso_base.yaml` y [3_supuestos.md](3_supuestos.md).
 
 ---
 
@@ -164,8 +165,8 @@ ecuación representa la realidad (comparando con mediciones de Ju y Lei, más ad
 ### Recorrido sugerido para la demo (≈ 5 min)
 
 1. `README.md`: estructura del repo y cómo instalar.
-2. `config/` → los 2 YAML (dato `[CURSO]` vs supuesto `[PROVISIONAL]`).
-3. `python scripts/01_crear_modelo_ifc.py` y `python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc`.
+2. `config/` → `caso_base.yaml` y `plan_v02.yaml` (geometría docente, propiedades provisionales y cinco vertidas).
+3. `python scripts/01_crear_modelo_ifc.py` y `python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc`.
 4. `mcplan/solver1d.py`: docstring del módulo → `Robin` → `paso_tiempo_maximo` → bucle de `resolver`.
-5. `pytest -v` (23 tests).
+5. `pytest -v`.
 6. Figuras fig01 (exacta), fig05 (estabilidad), fig06 (convergencia), fig04 (física del problema).

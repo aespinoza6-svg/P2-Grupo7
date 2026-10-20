@@ -51,7 +51,8 @@ P2-Grupo7/
 │
 ├── config/            ENTRADAS: datos y decisiones (se cambian aquí, no en el código)
 │   ├── caso_base.yaml     sitio + geometría + hormigón
-│   └── plan_v01.yaml      plan de vertidas (ejemplo)
+│   ├── plan_v01.yaml      plan provisional antiguo (referencia histórica)
+│   └── plan_v02.yaml      geometría docente de cinco vertidas
 │
 ├── mcplan/            EL CÓDIGO (lo que se explica en el oral)
 │   ├── solver1d.py        solver térmico 1D (balance de energía por celdas)
@@ -65,7 +66,8 @@ P2-Grupo7/
 │   └── 04_convergencia_1d.py
 │
 ├── tests/             verificación automática (pytest)
-├── modelos/           (generado) modelo IFC, se abre en Bonsai
+├── fundaciones/       IFC de trabajo; `fundacion.ifc` se genera desde config/
+│   └── archivo/       versiones previas conservadas
 ├── resultados/        (generado) figuras y tablas
 ├── Antecedentes/      material complementario del curso y bibliografía
 │
@@ -88,7 +90,7 @@ La carpeta [`Antecedentes/`](Antecedentes/) reúne material de referencia para e
 - artículo de Ju y Lei (2019), referencia experimental del caso base.
 
 Estos archivos apoyan el estudio y la revisión oral. El código ejecutable y los resultados del
-proyecto se mantienen en `mcplan/`, `scripts/`, `tests/`, `modelos/` y `resultados/`.
+proyecto se mantienen en `mcplan/`, `scripts/`, `tests/`, `fundaciones/` y `resultados/`.
 
 ## Instalación
 
@@ -130,9 +132,9 @@ pip install -r requirements.txt
 Siempre **desde la carpeta del repositorio** y con el entorno activado:
 
 ```bash
-pytest -v                                                                 # 1. verificar (23 tests)
-python scripts/01_crear_modelo_ifc.py                                     # 2. generar el IFC desde config/
-python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc   # 3. leer el IFC sin Blender
+pytest -v                                                                 # 1. verificar el proyecto
+python scripts/01_crear_modelo_ifc.py                                     # 2. generar el IFC de cinco vertidas
+python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc            # 3. leer el IFC sin Blender
 python scripts/03_figuras_solver_1d.py                                    # 4. figuras del solver 1D
 python scripts/04_convergencia_1d.py                                      # 5. estudio de convergencia
 ```
@@ -140,7 +142,7 @@ python scripts/04_convergencia_1d.py                                      # 5. e
 Para comparar un IFC editado en Bonsai con el original:
 
 ```bash
-python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc --comparar modelos/fundacion_G7_plan_v01_bonsai.ifc
+python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/fundacion_bonsai.ifc
 ```
 
 ## Entregas
@@ -162,10 +164,11 @@ Commit evaluado: https://github.com/aespinoza6-svg/P2-Grupo7/commit/<SHA>
 <details>
 <summary>Nota opcional E01 (93 palabras)</summary>
 
-La geometría es provisional: interpretamos 3,30 m como altura total y supusimos un pedestal de
-1,00 m hasta recibir la geometría oficial (supuestos documentados en docs/3_supuestos.md). El IFC
-se genera por script con IfcOpenShell y se abre/edita en Bonsai; el round-trip editando en Bonsai
-se mostrará en E02. El plan de vertidas del IFC es un ejemplo, no una recomendación. El solver 1D
+La geometría sigue la simplificación docente documentada en `Antecedentes/GUIA_BONSAI_FUNDACION.md`:
+planta octagonal de 18 m entre caras, transición de 1,10 a 3,30 m y pedestal superior de 1,00 m.
+El IFC de cinco vertidas se genera por script con IfcOpenShell en `fundaciones/fundacion.ifc` y
+se abre/edita en Bonsai; el round-trip editando en Bonsai se muestra en E02. El plan es una geometría docente, no una
+recomendación constructiva optimizada. El solver 1D
 (Dirichlet, Neumann, Robin, fuente) está verificado con solución exacta, conservación de energía
 y convergencia (orden 2 en espacio, 1 en tiempo). Faltan: calibrar las propiedades del hormigón e
 incorporar hidratación.

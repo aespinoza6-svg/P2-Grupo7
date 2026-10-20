@@ -23,7 +23,7 @@ def entradas():
     """(caso, plan): los mismos archivos que usa scripts/01_crear_modelo_ifc.py."""
     return (
         bim.cargar_yaml(CONFIG / "caso_base.yaml"),
-        bim.cargar_yaml(CONFIG / "plan_v01.yaml"),
+        bim.cargar_yaml(CONFIG / "plan_v02.yaml"),
     )
 
 
@@ -35,42 +35,62 @@ def ruta_ifc(entradas, tmp_path):
     return ruta
 
 
-def test_tres_vertidas_con_todas_las_propiedades(ruta_ifc):
+def test_cinco_vertidas_con_todas_las_propiedades(ruta_ifc):
     vertidas = bim.leer_vertidas(ruta_ifc)
-    assert [v["VertidaID"] for v in vertidas] == ["V01", "V02", "V03"]
+    assert [v["VertidaID"] for v in vertidas] == [1, 2, 3, 4, 5]
     for v in vertidas:
         assert bim.propiedades_faltantes(v) == []
         assert v["ClaseIFC"] == "IfcFooting"
-        assert v["Material"] == "Hormigon G30"
+        assert v["Material"] == "Hormigon M1"
+        assert v["Inicio_h"] >= 0
 
 
 def test_inicio_planificado_se_calcula_desde_el_plan(ruta_ifc):
-    """V02 parte 72 h después de fecha_inicio (2026-12-01 08:00)."""
+    """V02 parte 6 h después de fecha_inicio (2026-12-01 08:00)."""
     v02 = bim.leer_vertidas(ruta_ifc)[1]
-    assert v02["InicioPlanificado"] == "2026-12-04T08:00:00-03:00"
+    assert v02["Inicio_h"] == 6.0
+    assert v02["InicioPlanificado"] == "2026-12-01T14:00:00-03:00"
 
 
 def test_volumenes_coinciden_con_la_geometria(ruta_ifc, entradas):
-    """Volumen calculado por IfcOpenShell vs fórmula exacta.
-    El cilindro se aproxima con triángulos: se acepta 1 % de diferencia."""
+    """Volumen IFC frente al de prismas/frustos octagonales y cilindro faceteado."""
     caso, plan = entradas
     g = caso["geometria"]
     geo = bim.geometria_vertidas(ruta_ifc)
+    n_oct = g["lados_planta"]
+    n_cil = g["lados_cilindro"]
+    r_ext = (g["distancia_caras_exteriores_m"] / 2) / np.cos(np.pi / n_oct)
+    area_oct = lambda r: n_oct / 2 * r**2 * np.sin(2 * np.pi / n_oct)
+    area_cil = lambda r: n_cil / 2 * r**2 * np.sin(2 * np.pi / n_cil)
     for v in plan["vertidas"]:
         espesor = v["z_superior_m"] - v["z_inferior_m"]
-        if v["elemento"] == "losa":
-            exacto = g["losa_largo_x_m"] * g["losa_ancho_y_m"] * espesor
+        if v["forma"] == "prisma_octagonal":
+            exacto = area_oct(r_ext) * espesor
+        elif v["forma"] == "tronco_octagonal":
+            r0 = bim._radio_octagono_en_z(g, v["z_inferior_m"])
+            r1 = bim._radio_octagono_en_z(g, v["z_superior_m"])
+            a0, a1 = area_oct(r0), area_oct(r1)
+            exacto = espesor / 3 * (a0 + a1 + np.sqrt(a0 * a1))
         else:
-            exacto = np.pi * (g["pedestal_diametro_m"] / 2) ** 2 * espesor
-        assert geo[v["id"]]["volumen_m3"] == pytest.approx(exacto, rel=0.01)
-        assert geo[v["id"]]["min_xyz_m"][2] == pytest.approx(v["z_inferior_m"])
-        assert geo[v["id"]]["max_xyz_m"][2] == pytest.approx(v["z_superior_m"])
+            exacto = area_cil(g["pedestal_diametro_m"] / 2) * espesor
+        vid = int(v["id"][1:])
+        assert geo[vid]["volumen_m3"] == pytest.approx(exacto, rel=0.001)
+        assert geo[vid]["min_xyz_m"][2] == pytest.approx(v["z_inferior_m"])
+        assert geo[vid]["max_xyz_m"][2] == pytest.approx(v["z_superior_m"])
+    assert sum(d["volumen_m3"] for d in geo.values()) == pytest.approx(636.78, abs=0.15)
 
 
 def test_altura_total_de_la_fundacion(ruta_ifc, entradas):
     geo = bim.geometria_vertidas(ruta_ifc)
     z_max = max(d["max_xyz_m"][2] for d in geo.values())
     assert z_max == pytest.approx(entradas[0]["geometria"]["altura_total_m"])
+
+
+def test_planta_octagonal_mide_18_m_entre_caras(ruta_ifc):
+    geo = bim.geometria_vertidas(ruta_ifc)
+    lo = np.min([d["min_xyz_m"] for d in geo.values()], axis=0)
+    hi = np.max([d["max_xyz_m"] for d in geo.values()], axis=0)
+    assert hi - lo == pytest.approx([18.0, 18.0, 4.30], abs=0.01)
 
 
 def test_coordenadas_del_sitio(ruta_ifc):
@@ -89,7 +109,7 @@ def test_cambio_de_propiedad_se_detecta(ruta_ifc, tmp_path):
     modelo.write(str(ruta_v2))
 
     cambios = bim.comparar_vertidas(ruta_ifc, ruta_v2)
-    assert cambios == ["MODIFICADA V02.TemperaturaColocacion_C: 20.0 -> 15.0"]
+    assert cambios == ["MODIFICADA V02.TemperaturaColocacion_C: 18.0 -> 15.0"]
 
 
 def test_globalid_estable_al_regenerar(entradas):
@@ -98,13 +118,13 @@ def test_globalid_estable_al_regenerar(entradas):
     ids_1 = [v["GlobalId"] for v in bim.leer_vertidas(bim.crear_modelo_fundacion(*entradas))]
     ids_2 = [v["GlobalId"] for v in bim.leer_vertidas(bim.crear_modelo_fundacion(*entradas))]
     assert ids_1 == ids_2
-    assert len(set(ids_1)) == 3  # y son distintas entre sí
+    assert len(set(ids_1)) == 5  # y son distintas entre sí
 
 
 def test_plan_con_hueco_es_rechazado(entradas):
     """Si las vertidas no llenan la fundación, se avisa (no se inventa nada)."""
     caso, plan = entradas
     plan_malo = {**plan, "vertidas": [dict(v) for v in plan["vertidas"]]}
-    plan_malo["vertidas"][1]["z_inferior_m"] = 1.20  # deja un hueco 1.15-1.20
+    plan_malo["vertidas"][2]["z_inferior_m"] = 1.20  # deja un hueco 1.10-1.20
     with pytest.raises(ValueError, match="hueco o traslape"):
         bim.crear_modelo_fundacion(caso, plan_malo)

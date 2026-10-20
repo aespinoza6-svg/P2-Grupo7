@@ -8,12 +8,12 @@
 
 | ID | Supuesto | Dónde está | Por qué | Estado |
 |---|---|---|---|---|
-| S01 | El "espesor 3,30 m" es la **altura total** (losa + pedestal) | `config/caso_base.yaml` | El artículo no lo define inequívocamente | Pendiente: geometría oficial del profesor |
-| S02 | Altura del pedestal = **1,00 m** | `config/caso_base.yaml` | Idem | Pendiente |
-| S03 | Losa = prisma recto 18 × 18 m sin taludes; pedestal = cilindro recto centrado; sin pernos, armaduras ni ductos | `config/caso_base.yaml`, `bim.py` | Simplificación para la semana 1 | Pendiente |
+| S01 | Planta exterior octagonal de 18 m entre caras opuestas | `config/caso_base.yaml`, `mcplan/bim.py` | Simplificación reproducible definida en la guía docente | Aplicada |
+| S02 | Espesor del borde 1,10 m; transición lineal hasta 3,30 m en el centro | `config/caso_base.yaml`, `mcplan/bim.py` | La publicación no entrega un CAD inequívoco; se usa la sección de la guía docente | Aplicada; transición octagonal faceteada |
+| S03 | Plataforma octagonal central de 7 m entre caras y pedestal cilíndrico Ø7 m × 1 m; sin pernos, armaduras ni ductos | `config/caso_base.yaml`, `mcplan/bim.py` | Simplificación docente; la altura total resultante es 4,30 m | Aplicada |
 | S04 | Hormigón: $k = 2{,}0$ W/(m·K), $\rho = 2400$ kg/m³, $c_p = 900$ J/(kg·K) | `config/caso_base.yaml` | Valores típicos (los del código de ejemplo del curso) | Calibrar en semana 3 (Ju y Lei, ICH) |
-| S05 | Plan v01: losa en 2 capas + pedestal, inicios a 0/72/144 h, 20 °C, moldaje de madera, retiro a 72 h | `config/plan_v01.yaml` | Solo para tener un IFC con vertidas; **no es la recomendación** | Se reemplaza por planes simulados (semanas 3–5) |
-| S06 | Fecha de inicio = 2026-12-01 08:00 (−03:00) | `config/plan_v01.yaml` | La real es la fecha de la defensa final (TBD) | Cambiar cuando se conozca |
+| S05 | Plan docente de cinco vertidas, inicios a 0/6/12/18/24 h, 18 °C, hormigón M1, moldaje/aislación TBD y retiro a 72 h | `config/plan_v02.yaml` | Valores de ejemplo de la guía; **no son recomendación constructiva** | Aplicado; reemplazar al estudiar planes térmicos |
+| S06 | Fecha de inicio = 2026-12-01 08:00 (−03:00) | `config/plan_v02.yaml` | Fecha demostrativa; la fecha real se confirmará más adelante | Provisional |
 | S07 | Figuras 03 y 04: base adiabática, clima ficticio (onda de 24 h) y fuente ilustrativa $Q = Q_0 e^{-t/\tau}$ | `scripts/03_figuras_solver_1d.py` | Ilustrar la física antes de tener clima real e hidratación | Reemplazar en semanas 3–4 |
 
 ## Decisiones de modelación y de software
@@ -28,9 +28,10 @@
 | D06 | `dt` por defecto = 90 % del máximo estable; el solver **rechaza** un `dt` inestable | Dejar que el usuario elija sin control | Evita resultados basura silenciosos |
 | D07 | Límite de estabilidad por **coeficientes positivos** ($\Delta t \le C_i/S_i$) | Fórmula fija $Fo \le 1/2$ | Funciona con bordes, materiales distintos y en 3D sin cambiar el código |
 | D08 | IFC generado por script desde YAML (IFC4, metros), editable en Bonsai | Modelar solo a mano en Bonsai | Reproducible y parametrizable; Bonsai sigue siendo el editor |
-| D09 | Cada vertida = `IfcFooting` (PAD_FOOTING) con pset propio `MC_Vertida` | Una `IfcFooting` dividida en partes (`IfcBuildingElementPart`) | Más simple de leer, editar en Bonsai y explicar. Reevaluar si el profesor pide otra estructura |
+| D09 | Cada vertida = `IfcFooting` (PAD_FOOTING) con pset propio `UANDES_HormigonMasivo` | Una `IfcFooting` dividida en partes (`IfcBuildingElementPart`) | Sigue el nombre de la guía Bonsai y es sencillo de leer y editar |
 | D10 | Propiedades del material en psets estándar (`Pset_MaterialThermal`, `Pset_MaterialCommon`) | Pset propio | Cualquier software BIM las entiende |
 | D11 | `GlobalId` deterministas (uuid5 de una clave) | Aleatorios (por defecto) | Regenerar el IFC no cambia identidades; comparación entre versiones |
+| D12 | Octágonos y transiciones como sólidos IFC faceteados | Perfiles IFC extruidos | Representa las caras inclinadas y permite leer/triangular con IfcOpenShell |
 
 ## Preguntas abiertas para el profesor / ayudante
 

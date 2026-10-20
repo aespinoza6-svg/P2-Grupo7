@@ -1,0 +1,66 @@
+# Geometría docente de cinco vertidas descrita en GUIA_BONSAI_FUNDACION.md.
+# Las cotas z definen capas continuas; la forma se genera desde caso_base.yaml.
+nombre: plan_v02
+descripcion: "Geometría docente: octágono, transición y pedestal circular"
+fecha_inicio: "2026-12-01T08:00:00-03:00"
+
+vertidas:
+  - id: V01
+    elemento: losa_borde
+    forma: prisma_octagonal
+    z_inferior_m: 0.00
+    z_superior_m: 0.55
+    inicio_h: 0
+    tipo_hormigon: M1
+    temperatura_colocacion_C: 18.0
+    moldaje: TBD
+    aislacion: TBD
+    retiro_moldaje_h: 72
+
+  - id: V02
+    elemento: losa_borde
+    forma: prisma_octagonal
+    z_inferior_m: 0.55
+    z_superior_m: 1.10
+    inicio_h: 6
+    tipo_hormigon: M1
+    temperatura_colocacion_C: 18.0
+    moldaje: TBD
+    aislacion: TBD
+    retiro_moldaje_h: 72
+
+  - id: V03
+    elemento: transicion
+    forma: tronco_octagonal
+    z_inferior_m: 1.10
+    z_superior_m: 2.20
+    inicio_h: 12
+    tipo_hormigon: M1
+    temperatura_colocacion_C: 18.0
+    moldaje: TBD
+    aislacion: TBD
+    retiro_moldaje_h: 72
+
+  - id: V04
+    elemento: transicion
+    forma: tronco_octagonal
+    z_inferior_m: 2.20
+    z_superior_m: 3.30
+    inicio_h: 18
+    tipo_hormigon: M1
+    temperatura_colocacion_C: 18.0
+    moldaje: TBD
+    aislacion: TBD
+    retiro_moldaje_h: 72
+
+  - id: V05
+    elemento: pedestal
+    forma: cilindro
+    z_inferior_m: 3.30
+    z_superior_m: 4.30
+    inicio_h: 24
+    tipo_hormigon: M1
+    temperatura_colocacion_C: 18.0
+    moldaje: TBD
+    aislacion: TBD
+    retiro_moldaje_h: 72

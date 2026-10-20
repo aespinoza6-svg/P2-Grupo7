@@ -14,7 +14,7 @@ Todo lo que hay que saber explicar, en el orden en que conviene estudiarlo. Cada
 ## Parte A: BIM, IFC, Blender, Bonsai e IfcOpenShell
 
 > Código: [`mcplan/bim.py`](../mcplan/bim.py) ·
-> Modelo: [`modelos/fundacion_G7_plan_v01.ifc`](../modelos/fundacion_G7_plan_v01.ifc) ·
+> Modelo: [`fundaciones/fundacion.ifc`](../fundaciones/fundacion.ifc) ·
 > Tests: [`tests/test_bim.py`](../tests/test_bim.py)
 
 ### A.1 Conceptos
@@ -51,11 +51,11 @@ Es texto en formato STEP: cada línea es una entidad con un número `#id` y sus 
 Extracto de nuestro modelo:
 
 ```
-#32=IFCRECTANGLEPROFILEDEF(.AREA.,$,$,18.,18.);                      perfil 18 x 18 m
-#33=IFCFOOTING('1WBX6NOJnMUuIOfTD8k_Tl',$,'V01 - losa',...,.PAD_FOOTING.);   la vertida V01
-#40=IFCEXTRUDEDAREASOLID(#32,#38,#39,1.15);                          perfil extruido 1,15 m
-#50=IFCRELDEFINESBYPROPERTIES('2OBW...',$,$,$,(#33),#49);             V01 ↔ su property set
-#51=IFCPROPERTYSINGLEVALUE('VertidaID',$,IFCLABEL('V01'),$);
+#32=IFCCLOSEDSHELL(...);                                              caras del prisma octagonal
+#33=IFCFACETEDBREP(#32);                                              sólido IFC de la vertida
+#34=IFCFOOTING('1WBX6NOJnMUuIOfTD8k_Tl',$,'Vertida_01',...);          la vertida 1
+#50=IFCRELDEFINESBYPROPERTIES('2OBW...',$,$,$,(#34),#49);             V01 ↔ su property set
+#51=IFCPROPERTYSINGLEVALUE('VertidaID',$,IFCINTEGER(1),$);
 #54=IFCPROPERTYSINGLEVALUE('TemperaturaColocacion_C',$,IFCREAL(20.),$);
 ```
 
@@ -68,9 +68,9 @@ Conceptos que aparecen:
   `IfcRelContainedInSpatialStructure` (el nivel contiene las zapatas),
   `IfcRelDefinesByProperties` (objeto ↔ property set), `IfcRelAssociatesMaterial` (objeto ↔ material).
 - **Property sets (psets)**: grupos de propiedades nombre–valor. Los que empiezan con `Pset_`
-  son **estándar** de buildingSMART; los propios deben usar otro prefijo (nosotros: `MC_`).
-- **Geometría**: la forma de cada vertida es un **perfil 2D extruido** (`IfcExtrudedAreaSolid`):
-  rectángulo para la losa, círculo para el pedestal.
+  son **estándar** de buildingSMART; el conjunto docente propio se llama `UANDES_HormigonMasivo`.
+- **Geometría**: prismas octagonales, troncos octagonales y el cilindro superior se guardan
+  como sólidos IFC faceteados cerrados (`IfcFacetedBrep`).
 - **Unidades**: declaradas en el archivo (`IfcUnitAssignment`). Usamos **metros**
   (IfcOpenShell por defecto usaría milímetros: una losa de "18" sería de 18 mm).
 
@@ -81,24 +81,29 @@ IfcProject  "P2 Grupo 7 - Fundación aerogenerador"
 └── IfcSite  "Renaico - Parque Eólico Vergara"   lat -37.6921, lon -72.624   pset MC_Sitio
     └── IfcBuilding  "Aerogenerador"
         └── IfcBuildingStorey  "Nivel fundación"
-            ├── IfcFooting  "V01 - losa"       z = 0,00 → 1,15 m   372,6 m³
-            ├── IfcFooting  "V02 - losa"       z = 1,15 → 2,30 m   372,6 m³
-            └── IfcFooting  "V03 - pedestal"   z = 2,30 → 3,30 m    38,5 m³
+            ├── IfcFooting  "Vertida_01" z = 0,00 → 0,55 m   147,63 m³
+            ├── IfcFooting  "Vertida_02" z = 0,55 → 1,10 m  147,63 m³
+            ├── IfcFooting  "Vertida_03" z = 1,10 → 2,20 m  214,22 m³
+            ├── IfcFooting  "Vertida_04" z = 2,20 → 3,30 m   88,92 m³
+            └── IfcFooting  "Vertida_05" z = 3,30 → 4,30 m   38,37 m³
 ```
 
 **Cada vertida es una `IfcFooting`** (clase IFC para fundaciones) con:
 
-| Propiedad (pset `MC_Vertida`) | Tipo | Significado |
+| Propiedad (pset `UANDES_HormigonMasivo`) | Tipo | Significado |
 |---|---|---|
-| `VertidaID` | texto | Identificador del plan (V01, V02…) |
-| `TipoHormigon` | texto | Tipo de hormigón (G30 provisional) |
+| `VertidaID` | entero | Número de vertida (1…5); el nombre IFC es `Vertida_01`… |
+| `Elemento` | texto | Zona funcional: borde, transición o pedestal |
+| `Forma` | texto | Tipo de sólido IFC generado |
+| `TipoHormigon` | texto | Tipo de hormigón del ejemplo docente (M1) |
+| `Inicio_h` | real [h] | Horas desde `fecha_inicio` |
 | `InicioPlanificado` | texto ISO 8601 | Fecha y hora de inicio = `fecha_inicio` del plan + `inicio_h` |
 | `TemperaturaColocacion_C` | real [°C] | Temperatura del hormigón al colocarlo (condición inicial) |
 | `Moldaje` | texto | Tipo de moldaje |
 | `Aislacion` | texto | Aislación de la superficie |
 | `RetiroMoldaje_h` | real [h] | Horas desde el inicio de esa vertida hasta retirar el moldaje |
 
-El **material** `Hormigon G30` lleva sus propiedades térmicas en los psets **estándar**
+El **material** `Hormigon M1` lleva sus propiedades térmicas en los psets **estándar**
 `Pset_MaterialCommon.MassDensity` y `Pset_MaterialThermal.ThermalConductivity /
 SpecificHeatCapacity`, para que cualquier software BIM las entienda.
 
@@ -108,8 +113,8 @@ El IFC **no se dibuja a mano**: lo genera `scripts/01_crear_modelo_ifc.py` desde
 
 | Archivo | Contiene |
 |---|---|
-| `config/caso_base.yaml` | sitio (coordenadas oficiales del curso), geometría y hormigón (supuestos marcados `[PROVISIONAL]`) |
-| `config/plan_v01.yaml` | las vertidas: cotas, inicio, temperatura, moldaje… (**ejemplo, no recomendación**) |
+| `config/caso_base.yaml` | sitio, dimensiones de la simplificación geométrica docente y propiedades provisionales del hormigón |
+| `config/plan_v02.yaml` | las cinco vertidas docentes: forma, cotas, inicio, temperatura y moldaje |
 
 Ventajas: cambiar una decisión (p. ej. la fecha de inicio o el número de capas) es cambiar un
 YAML y regenerar, sin tocar código. `validar_plan()` rechaza planes con huecos o traslapes.
@@ -128,23 +133,23 @@ calcula el `GlobalId` a partir de una clave fija (p. ej. `"vertida/V01"`) con `u
 
 1. Instalar Blender (4.2 o superior) y luego Bonsai desde *Edit → Preferences → Get Extensions*
    (buscar "Bonsai").
-2. Abrir `modelos/fundacion_G7_plan_v01.ifc` con *File → Open IFC Project*.
-3. En el árbol espacial (panel de Bonsai) aparecen Sitio → Edificio → Nivel → 3 `IfcFooting`.
+2. Abrir `fundaciones/fundacion.ifc` con *File → Open IFC Project*.
+3. En el árbol espacial (panel de Bonsai) aparecen Sitio → Edificio → Nivel → 5 `IfcFooting`.
 4. Seleccionar una vertida → pestaña de propiedades del objeto → panel de *Property Sets*:
-   ahí está `MC_Vertida`. Editar, por ejemplo, `TemperaturaColocacion_C`.
+   ahí está `UANDES_HormigonMasivo`. Editar, por ejemplo, `TemperaturaColocacion_C`.
 5. Guardar **como una versión nueva** (*Save IFC Project As…*), p. ej.
-   `modelos/fundacion_G7_plan_v01_bonsai.ifc`. No sobrescribir el `v01` generado.
+   `fundaciones/fundacion_bonsai.ifc`. No sobrescribir el IFC generado.
 6. Volver a Python y comparar:
 
 ```bash
-python scripts/02_inspeccionar_ifc.py modelos/fundacion_G7_plan_v01.ifc --comparar modelos/fundacion_G7_plan_v01_bonsai.ifc
+python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/fundacion_bonsai.ifc
 ```
 
 Salida esperada (si se cambió la temperatura de V02):
 
 ```
-DIFERENCIAS  fundacion_G7_plan_v01.ifc  ->  fundacion_G7_plan_v01_bonsai.ifc
-  MODIFICADA V02.TemperaturaColocacion_C: 20.0 -> 15.0
+DIFERENCIAS  fundacion.ifc  ->  fundacion_bonsai.ifc
+  MODIFICADA V02.TemperaturaColocacion_C: 18.0 -> 15.0
 ```
 
 Este es el **round-trip IFC** (Bonsai → IFC → Python detecta el cambio) que se demuestra en el
@@ -153,8 +158,8 @@ automáticamente (editando con IfcOpenShell, que es lo que Bonsai usa por dentro
 
 ### A.6 Pendiente
 
-- Reemplazar los supuestos `[PROVISIONAL]` por la geometría oficial del profesor
-  ([3_supuestos.md](3_supuestos.md)).
+- Confirmar si el profesor entrega un IFC geométrico oficial; si es distinto, reemplazará esta
+  simplificación docente ([3_supuestos.md](3_supuestos.md)).
 - Practicar en Bonsai (cada integrante): abrir, editar una propiedad, guardar, comparar.
 - Semana 3: voxelizar la geometría del IFC (`geometria_vertidas()` ya entrega volúmenes y cotas).
 

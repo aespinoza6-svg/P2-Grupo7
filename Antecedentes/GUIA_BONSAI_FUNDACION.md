@@ -857,255 +857,61 @@ Pset_HormigonMasivo
 
 ---
 
-# 23. Opción recomendada: agregar metadata desde Python
+# 23. Metadata en el repositorio del Grupo 7
 
-La interfaz para editar property sets puede cambiar entre versiones de Bonsai.
+El IFC que genera este repositorio ya incluye la metadata de cada vertida. No es necesario
+crear ni ejecutar un archivo aparte llamado `add_course_properties.py`.
 
-Para hacer el ejercicio reproducible usaremos IfcOpenShell para agregar nuestra metadata al IFC.
+Desde la raíz del repositorio, con el entorno virtual activado, ejecuta:
 
-Instala:
-
-```basaah
-pip install ifcopenshell
+```powershell
+python scripts/01_crear_modelo_ifc.py
+python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc
 ```
 
-Luego ejecuta:
+El primer comando lee `config/caso_base.yaml` y `config/plan_v02.yaml`, crea cinco elementos
+`IfcFooting` y guarda `fundaciones/fundacion.ifc`. Cada vertida tiene el Property Set
+`UANDES_HormigonMasivo`, con `VertidaID`, `Elemento`, `Forma`, `TipoHormigon`, `Inicio_h`,
+`InicioPlanificado`, `TemperaturaColocacion_C`, `Moldaje`, `Aislacion` y `RetiroMoldaje_h`.
 
-```bash
-python code/add_cours}e_properties.py foundation.ifc foundation_props.ifc
-```
+El segundo comando muestra la jerarquía IFC, las propiedades y las cotas/volúmenes calculados
+desde la geometría del archivo. El IFC también se puede abrir en Bonsai con **File > Open IFC
+Project**.
 
-El script utiliza la API oficial:
+## 24. Editar metadata en Bonsai
 
-```python
-ifcopenshell.api.pset.add_pset(...)
-ifcopenshell.api.pset.edit_pset(...)
-```
-
-Abre después:
+Si cambias propiedades en Bonsai, guarda una copia como:
 
 ```text
-foundation_props.ifc
+fundaciones/fundacion_bonsai.ifc
 ```
 
-con Bonsai.
+No sobrescribas el IFC generado. Para comparar la copia editada con el archivo base, desde la
+raíz del repositorio ejecuta:
 
-Selecciona una vertida y ve a:
-
-```text
-Object Information
-> Property Sets
+```powershell
+python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar fundaciones/fundacion_bonsai.ifc
 ```
 
-Deberías ver:
+La salida identifica cambios de propiedades, geometría, nombres o identidad entre ambas versiones.
 
-```text
-UANDES_HormigonMasivo
-```
+## 25. Qué revisar en la salida
+
+- Esquema IFC4 y unidades métricas.
+- Cinco elementos IFC `Vertida_01` a `Vertida_05`, IDs numéricos 1 a 5 y Property Set `UANDES_HormigonMasivo`.
+- Caja global cercana a `18 × 18 × 4.30 m`.
+- Cotas Z consecutivas: `0–0.55`, `0.55–1.10`, `1.10–2.20`, `2.20–3.30` y `3.30–4.30 m`.
+- Volumen total aproximado de **636.8 m³**; puede variar unas décimas por la aproximación faceteada del cilindro.
+
+La caja en X/Y mide 18 m porque el octágono está orientado con sus caras alineadas a los ejes.
+
+## 26. Si editas la geometría
+
+La geometría generada desde YAML se cambia en `config/caso_base.yaml` y `config/plan_v02.yaml`;
+luego se regenera con el comando de la sección 23. Las modificaciones manuales de Bonsai deben
+guardarse en `fundaciones/fundacion_bonsai.ifc` para conservar una copia reproducible del IFC de entrada.
 
 ---
-
-# 24. Código de metadata
-
-```python
-"""
-Agrega metadata del curso a los objetos Vertida_01 ... Vertida_05.
-
-Uso:
-    python add_course_properties.py foundation.ifc foundation_props.ifc
-
-Requiere:
-    pip install ifcopenshell
-"""
-import sys
-import ifcopenshell
-import ifcopenshell.api
-
-if len(sys.argv) != 3:
-    raise SystemExit("Uso: python add_course_properties.py input.ifc output.ifc")
-
-src, dst = sys.argv[1], sys.argv[2]
-model = ifcopenshell.open(src)
-
-defaults = {
-    "Vertida_01": {"VertidaID": 1, "Inicio_h": 0.0,  "TemperaturaColocacion_C": 18.0, "TipoHormigon": "M1"},
-    "Vertida_02": {"VertidaID": 2, "Inicio_h": 6.0,  "TemperaturaColocacion_C": 18.0, "TipoHormigon": "M1"},
-    "Vertida_03": {"VertidaID": 3, "Inicio_h": 12.0, "TemperaturaColocacion_C": 18.0, "TipoHormigon": "M1"},
-    "Vertida_04": {"VertidaID": 4, "Inicio_h": 18.0, "TemperaturaColocacion_C": 18.0, "TipoHormigon": "M1"},
-    "Vertida_05": {"VertidaID": 5, "Inicio_h": 24.0, "TemperaturaColocacion_C": 18.0, "TipoHormigon": "M1"},
-}
-
-products = {p.Name: p for p in model.by_type("IfcProduct") if getattr(p, "Name", None)}
-
-for name, props in defaults.items():
-    product = products.get(name)
-    if product is None:
-        print(f"WARNING: no encontré {name}")
-        continue
-
-    # Nombre custom: NO usar prefijo Pset_, reservado a sets estandarizados.
-    pset = ifcopenshell.api.pset.add_pset(
-        model,
-        product=product,
-        name="UANDES_HormigonMasivo",
-    )
-    props = {
-        **props,
-        "Moldaje": "TBD",
-        "Aislacion": "TBD",
-        "RetiroMoldaje_h": 72.0,
-    }
-    ifcopenshell.api.pset.edit_pset(
-        model,
-        pset=pset,
-        properties=props,
-    )
-    print(f"OK: {name}")
-
-model.write(dst)
-print(f"Escrito: {dst}")
-
-```
-
----
-
-# 25. Verificar el IFC desde Python
-
-Una vez guardado el modelo:
-
-```bash
-python code/check_ifc.py foundation_props.ifc
-```
-
-El script:
-
-1. abre el IFC;
-2. busca `Vertida_XX`;
-3. imprime clase y GUID;
-4. imprime property sets;
-5. triangula la geometría;
-6. calcula bounding boxes en coordenadas globales.
-
-Código:
-
-```python
-"""
-Chequeo básico del IFC del proyecto.
-
-Uso:
-    python check_ifc.py foundation.ifc
-
-Requiere:
-    pip install ifcopenshell numpy
-"""
-import sys
-import numpy as np
-import ifcopenshell
-import ifcopenshell.geom
-import ifcopenshell.util.element
-
-if len(sys.argv) != 2:
-    raise SystemExit("Uso: python check_ifc.py foundation.ifc")
-
-path = sys.argv[1]
-model = ifcopenshell.open(path)
-
-print("Schema:", model.schema)
-print()
-
-targets = [
-    p for p in model.by_type("IfcProduct")
-    if (getattr(p, "Name", "") or "").startswith("Vertida_")
-]
-
-if not targets:
-    raise SystemExit("No encontré objetos con Name='Vertida_XX'")
-
-settings = ifcopenshell.geom.settings()
-settings.set("use-world-coords", True)
-
-mins = []
-maxs = []
-
-for p in sorted(targets, key=lambda x: x.Name):
-    print("="*70)
-    print("Name:", p.Name)
-    print("Class:", p.is_a())
-    print("GUID:", p.GlobalId)
-
-    psets = ifcopenshell.util.element.get_psets(p)
-    if psets:
-        print("Property sets:")
-        for k,v in psets.items():
-            print(" ", k, "=", v)
-    else:
-        print("Property sets: ninguno")
-
-    try:
-        shape = ifcopenshell.geom.create_shape(settings, p)
-        verts = np.asarray(shape.geometry.verts, dtype=float).reshape(-1,3)
-        lo = verts.min(axis=0)
-        hi = verts.max(axis=0)
-        mins.append(lo); maxs.append(hi)
-        print("BBox min [m]:", np.round(lo,4))
-        print("BBox max [m]:", np.round(hi,4))
-        print("BBox size[m]:", np.round(hi-lo,4))
-    except Exception as e:
-        print("ERROR geometría:", e)
-
-if mins:
-    lo=np.min(np.vstack(mins),axis=0)
-    hi=np.max(np.vstack(maxs),axis=0)
-    print()
-    print("GLOBAL")
-    print("BBox min [m]:", np.round(lo,4))
-    print("BBox max [m]:", np.round(hi,4))
-    print("BBox size[m]:", np.round(hi-lo,4))
-
-print()
-print("Número de vertidas:", len(targets))
-
-```
-
----
-
-# 26. ¿Qué debería imprimir aproximadamente?
-
-Algo del estilo:
-
-```text
-Schema: IFC4
-
-======================================================================
-Name: Vertida_01
-Class: IfcFooting
-GUID: ...
-Property sets:
-  UANDES_HormigonMasivo = ...
-BBox size[m]: [18 ... 18 ... 0.55]
-
-...
-
-GLOBAL
-BBox size[m]: aproximadamente [18, 18, 4.3]
-
-Número de vertidas: 5
-```
-
-El bounding box exacto en X/Y depende de la orientación del octágono, pero no debería aparecer algo como:
-
-```text
-18000 m
-```
-
-ni:
-
-```text
-0.018 m
-```
-
----
-
 # 27. Guardar correctamente
 
 Durante el trabajo usa:
