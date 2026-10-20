@@ -67,6 +67,7 @@ P2-Grupo7/
 ├── tests/             verificación automática (pytest)
 ├── modelos/           (generado) modelo IFC, se abre en Bonsai
 ├── resultados/        (generado) figuras y tablas
+├── Antecedentes/      material complementario del curso y bibliografía
 │
 └── docs/
     ├── 1_teoria.md        BIM/IFC + física + solver
@@ -76,6 +77,18 @@ P2-Grupo7/
 ```
 
 Lo marcado como *(generado)* no se edita a mano: se regenera con los scripts.
+
+## Antecedentes del curso
+
+La carpeta [`Antecedentes/`](Antecedentes/) reúne material de referencia para el equipo:
+
+- presentación inicial del Proyecto 2;
+- guías G00–G08 y material complementario sobre difusión térmica;
+- ejemplos didácticos de difusión 1D;
+- artículo de Ju y Lei (2019), referencia experimental del caso base.
+
+Estos archivos apoyan el estudio y la revisión oral. El código ejecutable y los resultados del
+proyecto se mantienen en `mcplan/`, `scripts/`, `tests/`, `modelos/` y `resultados/`.
 
 ## Instalación
 
