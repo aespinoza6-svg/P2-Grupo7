@@ -1,0 +1,47 @@
+# Caso base del Grupo 7: DÓNDE (sitio), QUÉ (geometría) y CON QUÉ (hormigón).
+#
+# Cada valor indica su ORIGEN:
+#   [CURSO]       dato entregado por el curso (enunciado o sitios.yaml)
+#   [PROVISIONAL] supuesto nuestro, porque el artículo no lo define de forma
+#                 inequívoca. Se reemplaza cuando el profesor entregue/valide
+#                 la geometría oficial. Registro completo: docs/3_supuestos.md
+
+# ---------------------------------------------------------------------------
+# SITIO — fuente: 03_SITIOS_POR_GRUPO.md / sitios.yaml del curso.
+# REGLA DEL CURSO: todos los scripts de clima usan EXACTAMENTE esta latitud y
+# longitud. Es el punto meteorológico oficial del caso docente, NO la
+# coordenada exacta de una fundación real.
+# ---------------------------------------------------------------------------
+sitio:
+  grupo: G7
+  localidad: Renaico
+  region: La Araucanía
+  parque_eolico: Parque Eólico Vergara
+  estado_proyecto: aprobado
+  referencia_sea: https://www.sea.gob.cl/tce/tabla-de-comision-evaluacion-1818
+  latitud: -37.692100      # [CURSO] grados decimales (negativo = sur)
+  longitud: -72.624000     # [CURSO] grados decimales (negativo = oeste)
+  zona_horaria: America/Santiago
+
+# ---------------------------------------------------------------------------
+# GEOMETRÍA — caso base del curso: Ju y Lei (2019).
+# Simplificaciones (documentadas, no silenciosas): losa = prisma recto de base
+# cuadrada sin taludes; pedestal = cilindro recto centrado; sin pernos,
+# armaduras ni ductos.
+# ---------------------------------------------------------------------------
+geometria:
+  losa_largo_x_m: 18.0        # [CURSO] "aproximadamente 18 m x 18 m"
+  losa_ancho_y_m: 18.0        # [CURSO]
+  pedestal_diametro_m: 7.0    # [CURSO] "parte superior cilíndrica de ~7 m de diámetro"
+  altura_total_m: 3.30        # [CURSO] "espesor 3,30 m" -> [PROVISIONAL] lo leemos como altura total losa + pedestal
+  altura_pedestal_m: 1.00     # [PROVISIONAL] el artículo no lo define
+
+# ---------------------------------------------------------------------------
+# HORMIGÓN — [PROVISIONAL] valores típicos (los del código de ejemplo del
+# curso). Se calibran en la semana 3 con Ju y Lei (2019) e ICH.
+# ---------------------------------------------------------------------------
+hormigon:
+  nombre: Hormigon G30
+  conductividad_W_mK: 2.0         # k
+  densidad_kg_m3: 2400.0          # rho
+  calor_especifico_J_kgK: 900.0   # cp

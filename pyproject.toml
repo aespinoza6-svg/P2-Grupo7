@@ -1,0 +1,36 @@
+# Definición del paquete Python del proyecto.
+# Permite instalarlo con `pip install -e .` para que `import mcplan`
+# funcione desde scripts/, tests/ y notebooks sin manipular rutas.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcplan"
+version = "0.1.0"
+description = "Planificación de vertidas de hormigón masivo mediante simulación térmica (Proyecto 2, Grupo 7)"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Antonia Espinoza Rubio" },
+    { name = "Natalia Paz Godoy Jaramillo" },
+    { name = "Pedro Pablo Castillo Muratto" },
+]
+# Rangos mínimos. Las versiones EXACTAS probadas están en requirements.txt.
+dependencies = [
+    "numpy>=2.0",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+    "ifcopenshell>=0.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mcplan*"]  # solo la carpeta mcplan/ es código del paquete
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

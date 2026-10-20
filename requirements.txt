@@ -1,0 +1,15 @@
+# Entorno reproducible del proyecto (versiones exactas probadas con Python 3.12).
+#
+# Uso (desde la raíz del repositorio, con el entorno virtual activado):
+#     pip install -r requirements.txt
+#
+# La última línea instala nuestro propio paquete `mcplan` (carpeta mcplan/)
+# en modo editable: los cambios en el código se ven sin reinstalar.
+
+numpy==2.5.4
+matplotlib==3.11.2
+pyyaml==6.0.3
+ifcopenshell==0.9.0.post1
+pytest==9.1.1
+
+-e .
