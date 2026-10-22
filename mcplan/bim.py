@@ -394,6 +394,7 @@ def geometria_vertidas(modelo) -> dict[str, dict]:
         forma = ifcopenshell.geom.create_shape(ajustes, elemento)
         vertices = np.array(forma.geometry.verts).reshape(-1, 3)
         resultado[vid] = {
+            "GlobalId": elemento.GlobalId,
             "volumen_m3": float(ifcopenshell.util.shape.get_volume(forma.geometry)),
             "min_xyz_m": vertices.min(axis=0),
             "max_xyz_m": vertices.max(axis=0),
@@ -413,14 +414,34 @@ def editar_propiedad(modelo, vertida_id: str, propiedad: str, valor) -> None:
     raise KeyError(f"No existe la vertida {vertida_id!r} en el modelo.")
 
 
+def _resumen_geometria(g: dict) -> dict:
+    """Volumen y caja envolvente redondeados a 1 mm / 0,01 m³, para que
+    diferencias de redondeo numérico no se informen como cambios."""
+    return {
+        "Geometria.Volumen_m3": round(g["volumen_m3"], 2),
+        "Geometria.Min_xyz_m": tuple(round(float(c), 3) for c in g["min_xyz_m"]),
+        "Geometria.Max_xyz_m": tuple(round(float(c), 3) for c in g["max_xyz_m"]),
+    }
+
+
 def comparar_vertidas(antes, despues) -> list[str]:
     """Diferencias entre dos versiones del modelo, vertida por vertida.
 
     Las vertidas se emparejan por GlobalId (identidad), no por nombre:
     así un cambio de nombre se detecta como cambio y no como "borrada + nueva".
+
+    Se comparan las PROPIEDADES (pset de vertida, nombre, material) y también
+    la GEOMETRÍA: volumen y caja envolvente calculados desde el IFC. Así se
+    detecta tanto "cambié la temperatura" como "moví o estiré la pieza en Bonsai".
     """
+    antes, despues = abrir(antes), abrir(despues)
     a = {v["GlobalId"]: v for v in leer_vertidas(antes)}
     b = {v["GlobalId"]: v for v in leer_vertidas(despues)}
+    geo_a = {g["GlobalId"]: g for g in geometria_vertidas(antes).values()}
+    geo_b = {g["GlobalId"]: g for g in geometria_vertidas(despues).values()}
+    for gid in a.keys() & b.keys():
+        a[gid] = {**a[gid], **_resumen_geometria(geo_a[gid])}
+        b[gid] = {**b[gid], **_resumen_geometria(geo_b[gid])}
     cambios = []
     for gid in sorted(a.keys() - b.keys()):
         cambios.append(f"ELIMINADA  {_etiqueta_vertida(a[gid].get('VertidaID'))} ({gid})")
