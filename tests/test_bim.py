@@ -112,6 +112,27 @@ def test_cambio_de_propiedad_se_detecta(ruta_ifc, tmp_path):
     assert cambios == ["MODIFICADA V02.TemperaturaColocacion_C: 18.0 -> 15.0"]
 
 
+
+def test_cambio_de_geometria_se_detecta(ruta_ifc, tmp_path):
+    """Simula mover el pedestal (V05) 0,5 m hacia arriba en Bonsai:
+    la comparación debe informar el cambio de cotas aunque ninguna
+    propiedad haya cambiado."""
+    import ifcopenshell.api.geometry
+    import ifcopenshell.util.placement
+
+    modelo = bim.abrir(ruta_ifc)
+    pedestal = bim.elementos_vertida(modelo)[-1]
+    matriz = ifcopenshell.util.placement.get_local_placement(pedestal.ObjectPlacement)
+    matriz[2, 3] += 0.5
+    ifcopenshell.api.geometry.edit_object_placement(modelo, product=pedestal, matrix=matriz)
+    ruta_v2 = tmp_path / "fundacion_movida.ifc"
+    modelo.write(str(ruta_v2))
+
+    cambios = bim.comparar_vertidas(ruta_ifc, ruta_v2)
+    assert len(cambios) == 2
+    assert all(c.startswith("MODIFICADA V05.Geometria.") for c in cambios)
+
+
 def test_globalid_estable_al_regenerar(entradas):
     """Regenerar el IFC desde config/ entrega las mismas identidades
     (requisito para poder comparar versiones y para la trazabilidad)."""

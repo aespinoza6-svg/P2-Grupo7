@@ -30,7 +30,9 @@ from mcplan.solver1d import Dirichlet, Malla1D, Material, Neumann, Robin, resolv
 # =============================================================================
 
 L = 1.0                    # largo de la barra [m]
-N = 50                     # número de celdas (más celdas = más preciso y más lento)
+N = 50                     # número de celdas -> dx = L/N (más celdas = más preciso y más lento)
+DT = None                  # paso de tiempo [s]. None = automático (90 % del máximo estable).
+                           # Si pones uno mayor al máximo, el programa avisa con un error.
 
 # Material. Didáctico: alpha = k/(rho·cp) = 1e-4 m²/s (procesos de minutos).
 # Hormigón: k=2.0, rho=2400, cp=900 (alpha ≈ 9.3e-7 m²/s, procesos de días).
@@ -61,14 +63,15 @@ def main():
     material = Material("barra", k=k, rho=rho, cp=cp)
     malla = Malla1D.uniforme(L, N, material)
     res = resolver(malla, T_INICIAL, BORDE_IZQ, BORDE_DER, t_final=T_FINAL_MIN * 60.0,
-                   fuente=Q, n_guardados=200)
+                   fuente=Q, dt=DT, n_guardados=200)
 
     # Temperatura en x = L/2 (interpolada entre los centros de celda).
     T_centro = np.array([np.interp(L / 2, res.x, perfil) for perfil in res.T])
     minutos = res.t / 60.0
 
     print(f"alpha = {material.alpha:.3e} m²/s   dx = {malla.dx:.4f} m   "
-          f"dt = {res.dt:.4g} s   Fo = {res.fourier:.3f}   pasos = {res.n_pasos}")
+          f"dt = {res.dt:.4g} s (máximo estable {res.dt_max:.4g} s)   "
+          f"Fo = {res.fourier:.3f}   pasos = {res.n_pasos}")
     print(f"T centro: inicial {T_centro[0]:.2f} °C -> final {T_centro[-1]:.2f} °C "
           f"(máx {T_centro.max():.2f} °C)")
     print(f"Tiempo característico L²/alpha = {L**2 / material.alpha / 60:.1f} min")
