@@ -14,6 +14,8 @@ from pathlib import Path
 
 from mcplan import bim
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def imprimir_jerarquia(elemento, nivel=0):
     """Recorre IfcProject > IfcSite > IfcBuilding > ... y sus elementos contenidos."""
@@ -28,9 +30,23 @@ def imprimir_jerarquia(elemento, nivel=0):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("ifc", type=Path)
+    parser.add_argument(
+        "ifc",
+        nargs="?",
+        type=Path,
+        default=ROOT / "fundaciones" / "fundacion.ifc",
+        help="ruta al IFC (por defecto: fundaciones/fundacion.ifc)",
+    )
     parser.add_argument("--comparar", type=Path, default=None, help="otra versión del IFC")
     args = parser.parse_args()
+    if not args.ifc.is_absolute():
+        args.ifc = ROOT / args.ifc
+    if args.comparar and not args.comparar.is_absolute():
+        args.comparar = ROOT / args.comparar
+    if not args.ifc.is_file():
+        parser.error(f"no existe el archivo IFC: {args.ifc}")
+    if args.comparar and not args.comparar.is_file():
+        parser.error(f"no existe el archivo IFC para comparar: {args.comparar}")
 
     modelo = bim.abrir(args.ifc)
     print(f"Archivo: {args.ifc}   esquema: {modelo.schema}\n")
