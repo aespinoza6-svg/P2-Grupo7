@@ -8,6 +8,7 @@ Todo lo que hay que saber explicar, en el orden en que conviene estudiarlo. Cada
 | [A](#parte-a-bim-ifc-blender-bonsai-e-ifcopenshell) | BIM, IFC, Blender, Bonsai e IfcOpenShell | ¿Qué es BIM/IFC? ¿Qué rol tienen Blender y Bonsai? ¿Por qué el solver no depende de Blender? |
 | [B](#parte-b-física-de-la-conducción-de-calor) | Física de la conducción de calor | Significado de k, ρ, cp, α; balance de energía; condición inicial; Dirichlet, Neumann, Robin |
 | [C](#parte-c-solver-1d-discretización-estabilidad-y-verificación) | Solver 1D (discretización, estabilidad y verificación) | ¿Cómo discretizamos? ¿Por qué es estable? ¿Cómo sabemos que está bien? |
+| [D](#parte-d-solver-2d3d-mismo-método-en-tres-direcciones) | Solver 2D/3D | ¿Qué cambia al pasar a 3D? ¿Por qué Fo ≤ 1/4 y 1/6? ¿Cómo se tratan las interfaces? ¿Cómo lo verificamos? |
 
 ---
 
@@ -481,7 +482,164 @@ res.fourier, res.dt      # número de Fourier y paso usado
 
 ### C.10 Limitaciones actuales (próximas semanas)
 
-- Es 1D: la extensión 2D/3D (semana 2) reutiliza la misma idea de celdas y conductancias.
+- Es 1D: la extensión 2D/3D está en la [Parte D](#parte-d-solver-2d3d-mismo-método-en-tres-direcciones).
 - La fuente $Q$ no depende de la temperatura; la hidratación real sí (semana 3).
 - $R_{extra}$ es constante; el retiro de moldaje requiere que cambie en el tiempo (semana 4).
 - No hay activación de vertidas ni suelo explícito (semanas 3–4).
+
+---
+
+## Parte D: Solver 2D/3D (mismo método en tres direcciones)
+
+Código: [`mcplan/solver3d.py`](../mcplan/solver3d.py). Tests: [`tests/test_solver3d.py`](../tests/test_solver3d.py).
+Figuras: [`scripts/06_verificacion_3d.py`](../scripts/06_verificacion_3d.py).
+
+### D.1 La idea: el 1D repetido en x, y, z
+
+La ecuación ahora es
+
+$$
+\rho c_p \frac{\partial T}{\partial t} =
+\frac{\partial}{\partial x}\!\left(k\frac{\partial T}{\partial x}\right) +
+\frac{\partial}{\partial y}\!\left(k\frac{\partial T}{\partial y}\right) +
+\frac{\partial}{\partial z}\!\left(k\frac{\partial T}{\partial z}\right) + Q
+$$
+
+y **no inventamos un método nuevo**: cada celda (voxel) hace el mismo balance que en 1D, pero
+intercambia calor con **6 vecinas** (izquierda/derecha, adelante/atrás, abajo/arriba) en vez de 2.
+
+```
+            z+ (arriba)
+             |
+   x- ---- celda ---- x+        cada flecha = un flujo F = G·(T_celda - T_vecina)
+             |
+            z-          (y lo mismo con y- e y+, hacia adentro de la hoja)
+```
+
+### D.2 Balance de la celda
+
+$$
+C\,\frac{dT}{dt} = (F_{x,\text{atrás}} - F_{x,\text{adelante}}) + (F_{y,\text{atrás}} - F_{y,\text{adelante}}) + (F_{z,\text{abajo}} - F_{z,\text{arriba}}) + Q\,V
+$$
+
+| Símbolo | Significado | Unidad |
+|---|---|---|
+| $V = \Delta x\,\Delta y\,\Delta z$ | volumen de la celda | m³ |
+| $C = \rho c_p V$ | capacidad térmica de la celda | J/K |
+| $F$ | flujo por una cara, positivo hacia $+x$, $+y$ o $+z$ | **W** |
+
+Diferencia con el 1D: allá trabajábamos "por m²" (W/m²) porque todas las caras tenían la misma
+área. En 3D las caras $x$, $y$, $z$ pueden tener áreas distintas ($A_x = \Delta y\,\Delta z$,
+$A_y = \Delta x\,\Delta z$, $A_z = \Delta x\,\Delta y$), así que usamos W y J/K.
+
+### D.3 Conductancias e interfaces entre materiales
+
+Entre dos celdas vecinas el calor atraviesa **dos medias celdas en serie**:
+
+$$
+G = \frac{A}{\dfrac{d}{2k_1} + \dfrac{d}{2k_2}} \qquad (d = \Delta x,\ \Delta y \text{ o } \Delta z)
+$$
+
+- Mismo material: $G = kA/d$ (la diferencia finita de siempre).
+- Materiales distintos: equivale a usar la **media armónica** $k_{cara} = \dfrac{2k_1k_2}{k_1+k_2}$.
+  ¿Por qué armónica y no el promedio? Porque las resistencias en serie se **suman**: si una de las
+  dos capas aísla mucho, ella controla el paso de calor. El promedio aritmético lo sobrestimaría.
+
+Esto es lo que permitirá, sin cambiar el solver, poner **hormigón sobre suelo**, **vertida nueva
+sobre vertida vieja** o **aislación**: basta con decir qué material ocupa cada celda
+(`Malla3D.por_materiales`). Es justo lo que entregará la voxelización del IFC en la semana 3.
+
+### D.4 Bordes: 6 caras con nombre
+
+| Cara | Dónde | Ejemplo en la fundación |
+|---|---|---|
+| `"x-"`, `"x+"` | $x = 0$, $x = L_x$ | costados (moldaje → Robin con $R_{extra}$) |
+| `"y-"`, `"y+"` | $y = 0$, $y = L_y$ | costados |
+| `"z-"` | $z = 0$, abajo | contacto con el suelo |
+| `"z+"` | $z = L_z$, arriba | superficie expuesta al aire |
+
+Se usan las **mismas clases del 1D** (`Dirichlet`, `Neumann`, `Robin`): la física del borde no
+cambia por estar en 3D. **Una cara que no se indica queda aislada** (`Neumann(0)`), y si se escribe
+mal el nombre de una cara el programa da error (no la deja aislada en silencio).
+
+**2D** = una sola capa de celdas en $z$ ($n_z = 1$) con las caras $z$ aisladas: no fluye calor en $z$.
+
+### D.5 Estabilidad: por qué 1/4 en 2D y 1/6 en 3D
+
+El criterio es **el mismo del 1D** (coeficientes positivos): $\Delta t \le C/S$ en toda celda,
+con $S$ = suma de las conductancias de la celda. En malla uniforme ($\Delta x = \Delta y = \Delta z$),
+celda interior:
+
+| | vecinas | $S$ | límite |
+|---|---|---|---|
+| 1D | 2 | $2kA/\Delta x$ | $Fo \le 1/2$ |
+| 2D | 4 | $4kA/\Delta x$ | $Fo \le 1/4$ |
+| 3D | 6 | $6kA/\Delta x$ | $Fo \le 1/6$ |
+
+Intuición: la celda entrega calor a más vecinas en cada paso; si el paso es muy grande, entrega
+más de lo que tiene y "se pasa" (oscila). Con más vecinas, el paso permitido es más chico.
+
+Ojo con las **esquinas con bordes Dirichlet**: la superficie está a $\Delta x/2$ (conductancia
+$2kA/\Delta x$). Una esquina 3D con tres caras Dirichlet tiene $S = 3\cdot 1 + 3\cdot 2 = 9$ en
+unidades de $kA/\Delta x$, entonces $Fo \le 1/9$. El código lo calcula solo (`paso_tiempo_maximo`).
+
+Para el hormigón ($\alpha \approx 9{,}3\cdot10^{-7}$ m²/s) con celdas de 10 cm en 3D:
+$\Delta t \le (0{,}1)^2/(6\cdot 9{,}3\cdot10^{-7}) \approx 1800$ s ≈ 30 min. Para 14 días son
+~700 pasos: barato. Con celdas de 5 cm el paso cae a ~7,5 min (4 veces menos) y hay 8 veces más
+celdas: **32 veces más trabajo**. Esto pesará en Monte Carlo (semana 5).
+
+### D.6 Verificación (batería de la guía del curso, sección 33)
+
+| Test (`tests/test_solver3d.py`) | Qué comprueba | Test de la guía |
+|---|---|---|
+| `test_solucion_exacta_seno[2]` / `[3]` | Seno con bordes fijos vs. solución exacta $e^{-\alpha\pi^2(1/L_x^2+1/L_y^2+1/L_z^2)t}$ | 2 y 3 |
+| `test_convergencia_orden_2[2]` / `[3]` | Duplicar las celdas divide el error por ~4 (orden 2) | 2 y 3 |
+| `test_conservacion_energia_bordes_adiabaticos` | Todo aislado: la energía no cambia (error ~1e-12) | 4 |
+| `test_fuente_uniforme_adiabatica_aumento_lineal` | $dT/dt = Q/(\rho c_p)$ en todas las celdas | 5 |
+| `test_neumann_flujo_entrante_suma_energia` | Entra $q$ por una cara: $E(t) = E_0 + qAt$ exacto | 6 |
+| `test_robin_bloque_caliente_se_enfria_hacia_el_aire` | El calor sale hacia el aire más frío; ninguna celda baja de $T_{aire}$ | 7 |
+| `test_estacionario_robin_con_moldaje` | Estacionario con moldaje vs. resistencias en serie | 7 |
+| `test_3d_con_caras_laterales_aisladas_es_igual_al_1d` | Barra 3D con costados aislados = solver 1D (diferencia < 1e-10) | conecta con la semana 1 |
+| `test_interfaz_hormigon_sobre_suelo` | Dos materiales: perfil lineal por tramos con quiebre en la interfaz | interfaces |
+| `test_paso_maximo_es_fourier_*` | $Fo \le 1/4$ (2D) y $1/6$ (3D) | estabilidad |
+| `test_dt_inestable_lanza_error` | El solver se niega a correr con $\Delta t$ inestable | estabilidad |
+| `test_simetria_del_campo` | Cubo simétrico → campo simétrico (detecta errores de índices) | extra |
+| `test_cara_mal_escrita_lanza_error` | Un nombre de cara mal escrito no pasa en silencio | extra |
+
+Figuras (`python scripts/06_verificacion_3d.py`, ~5 s):
+
+- [fig07](../resultados/figuras/fig07_seno_2d.png): solver 2D, solución exacta y error (máx ~1e-3 °C sobre una amplitud de 40 °C).
+- [fig08](../resultados/figuras/fig08_convergencia_2d_3d.png): orden observado **2,00 en 2D y 1,99 en 3D**
+  (tabla en `resultados/convergencia_2d_3d.csv`).
+- [fig09](../resultados/figuras/fig09_bloque_hormigon_3d.png): bloque de hormigón 3×3×2 m con una
+  fuente **ilustrativa** (todavía no es la hidratación). Muestra lo que el 1D no puede: el núcleo
+  llega a ~73 °C mientras una esquina apenas pasa los 23 °C, porque la esquina pierde calor por
+  tres caras.
+
+### D.7 Cómo usarlo
+
+```python
+from mcplan.solver3d import Material, Malla3D, Dirichlet, Neumann, Robin, resolver
+
+hormigon = Material("hormigon", k=2.0, rho=2400.0, cp=900.0)
+malla = Malla3D.uniforme((3.0, 3.0, 2.0), (30, 30, 20), hormigon)   # celdas de 10 cm
+
+aire = Robin(h=10.0, T_inf=15.0)
+res = resolver(
+    malla,
+    T_inicial=18.0,
+    bordes={"x-": aire, "x+": aire, "y-": aire, "y+": aire, "z+": aire},  # z- (base) aislada
+    t_final=7 * 86400.0,
+    fuente=1000.0,                 # W/m³; también un arreglo por celda o una función Q(t, T)
+)
+res.T[-1][15, 15, 0]               # T del último instante en la celda (i, j, l)
+res.energia(), res.fourier, res.dt
+```
+
+### D.8 Limitaciones actuales (próximas semanas)
+
+- La malla es una **caja**: la fundación octagonal real necesita marcar qué celdas son hormigón,
+  suelo o aire (**voxelización del IFC**, semana 3).
+- Todas las vertidas existen desde $t = 0$; falta **activar cada vertida** a su hora (semana 3).
+- La fuente $Q$ ya puede depender de $T$ (`Q(t, T)`), pero falta el **modelo de hidratación** (semana 3).
+- El borde es igual en toda una cara; el retiro de moldaje y el clima real llegan en la semana 4.

@@ -1,5 +1,5 @@
 """
-Soluciones exactas de la conducción 1D, usadas para VERIFICAR el solver.
+Soluciones exactas de la conducción (1D, 2D y 3D), usadas para VERIFICAR el solver.
 
 Verificar = comprobar que el programa resuelve bien la ecuación que dice
 resolver (comparando con respuestas conocidas). Es distinto de VALIDAR,
@@ -28,6 +28,27 @@ def seno_dirichlet(x, t, L, alpha, T_borde, amplitud):
     """
     x = np.asarray(x, dtype=float)
     return T_borde + amplitud * np.sin(np.pi * x / L) * np.exp(-alpha * (np.pi / L) ** 2 * t)
+
+
+def seno_dirichlet_nd(coordenadas, t, largos, alpha, T_borde, amplitud):
+    """Lo mismo que seno_dirichlet, pero en 2D o 3D (todas las caras a T_borde).
+
+    Problema:  dT/dt = alpha·(d²T/dx² + d²T/dy² [+ d²T/dz²]),  caras a T_borde,
+               T(x,y,z,0) = T_borde + amplitud·sin(pi·x/Lx)·sin(pi·y/Ly)·sin(pi·z/Lz)
+
+    Solución:  el mismo producto de senos multiplicado por
+               exp(-alpha·pi²·(1/Lx² + 1/Ly² + 1/Lz²)·t)
+
+    coordenadas: (X, Y) o (X, Y, Z) en forma de malla (np.meshgrid con
+    indexing="ij"); largos: (Lx, Ly) o (Lx, Ly, Lz). Cada dirección agrega su
+    propia tasa de decaimiento, por eso en 3D el seno se apaga más rápido.
+    """
+    modo = np.ones(np.shape(coordenadas[0]))
+    tasa = 0.0
+    for X, L in zip(coordenadas, largos):
+        modo = modo * np.sin(np.pi * np.asarray(X, dtype=float) / L)
+        tasa += alpha * (np.pi / L) ** 2
+    return T_borde + amplitud * modo * np.exp(-tasa * t)
 
 
 def estacionario_dirichlet_robin(x, L, k, T_izq, h, T_inf, R_extra=0.0):

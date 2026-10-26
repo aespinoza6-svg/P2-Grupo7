@@ -56,6 +56,7 @@ P2-Grupo7/
 │
 ├── mcplan/            EL CÓDIGO (lo que se explica en el oral)
 │   ├── solver1d.py        solver térmico 1D (balance de energía por celdas)
+│   ├── solver3d.py        el mismo método en 2D/3D (6 vecinas, 6 caras de borde)
 │   ├── analiticas.py      soluciones exactas para verificar el solver
 │   └── bim.py             crear y leer el modelo IFC
 │
@@ -63,7 +64,9 @@ P2-Grupo7/
 │   ├── 01_crear_modelo_ifc.py
 │   ├── 02_inspeccionar_ifc.py
 │   ├── 03_figuras_solver_1d.py
-│   └── 04_convergencia_1d.py
+│   ├── 04_convergencia_1d.py
+│   ├── 05_jugar_barra.py       laboratorio: perillas de la ecuación 1D
+│   └── 06_verificacion_3d.py   figuras de verificación 2D/3D
 │
 ├── tests/             verificación automática (pytest)
 ├── fundaciones/       BIM y presentación visual
@@ -74,7 +77,7 @@ P2-Grupo7/
 ├── Antecedentes/      material complementario del curso y bibliografía
 │
 └── docs/
-    ├── 1_teoria.md        BIM/IFC + física + solver
+    ├── 1_teoria.md        BIM/IFC + física + solver 1D + solver 2D/3D
     ├── 2_guia_oral.md     preguntas y respuestas para los orales
     ├── 3_supuestos.md     decisiones y supuestos provisionales
     └── informe_E03.md     informe de verificación 1D
@@ -140,6 +143,7 @@ python scripts/01_crear_modelo_ifc.py                                     # 2. g
 python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc            # 3. leer el IFC sin Blender
 python scripts/03_figuras_solver_1d.py                                    # 4. figuras del solver 1D
 python scripts/04_convergencia_1d.py                                      # 5. estudio de convergencia
+python scripts/06_verificacion_3d.py                                      # 6. verificación 2D/3D
 ```
 
 Para comparar un IFC editado en Bonsai con el original, primero guárdalo como
@@ -156,7 +160,10 @@ python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar funda
 | E01 | mié 21 oct | Oral: BIM + difusión + solver 1D | ✅ listo | *pendiente* |
 | E02 | jue 22 oct | Lab: round-trip IFC + demo 1D | 🟡 falta practicar la edición en Bonsai | *pendiente* |
 | E03 | vie 23 oct | Verificación 1D → [informe](docs/informe_E03.md) | ✅ listo | *pendiente* |
-| E04–E15 | 28 oct – 20 nov | 2D/3D, vertidas, hidratación, clima, Monte Carlo | ⬜ | |
+| E04 | mié 28 oct | Oral: 2D/3D + condiciones de borde → [teoría, Parte D](docs/1_teoria.md#parte-d-solver-2d3d-mismo-método-en-tres-direcciones) | 🟡 en curso | |
+| E05 | jue 29 oct | Lab: batería de verificación térmica (`pytest -v`, `scripts/06`) | 🟡 en curso | |
+| E06 | vie 30 oct | Dossier de verificación + BIM del caso | ⬜ | |
+| E07–E15 | 4 nov – 20 nov | vertidas, hidratación, clima, Monte Carlo | ⬜ | |
 
 Texto para Canvas (cada entrega):
 
