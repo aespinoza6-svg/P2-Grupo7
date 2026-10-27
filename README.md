@@ -160,7 +160,7 @@ python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc --comparar funda
 | E01 | mié 21 oct | Oral: BIM + difusión + solver 1D | ✅ listo | *pendiente* |
 | E02 | jue 22 oct | Lab: round-trip IFC + demo 1D | 🟡 falta practicar la edición en Bonsai | *pendiente* |
 | E03 | vie 23 oct | Verificación 1D → [informe](docs/informe_E03.md) | ✅ listo | *pendiente* |
-| E04 | mié 28 oct | Oral: 2D/3D + condiciones de borde → [teoría, Parte D](docs/1_teoria.md#parte-d-solver-2d3d-mismo-método-en-tres-direcciones) | 🟡 en curso | |
+| E04 | mié 28 oct | Oral: 2D/3D + condiciones de borde → [guía oral E04](docs/2_guia_oral.md#e04--2d3d-condiciones-de-borde-y-fuentes-miércoles-28-de-octubre) | ✅ listo | |
 | E05 | jue 29 oct | Lab: batería de verificación térmica (`pytest -v`, `scripts/06`) | 🟡 en curso | |
 | E06 | vie 30 oct | Dossier de verificación + BIM del caso | ⬜ | |
 | E07–E15 | 4 nov – 20 nov | vertidas, hidratación, clima, Monte Carlo | ⬜ | |

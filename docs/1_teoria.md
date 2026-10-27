@@ -8,7 +8,7 @@ Todo lo que hay que saber explicar, en el orden en que conviene estudiarlo. Cada
 | [A](#parte-a-bim-ifc-blender-bonsai-e-ifcopenshell) | BIM, IFC, Blender, Bonsai e IfcOpenShell | ¿Qué es BIM/IFC? ¿Qué rol tienen Blender y Bonsai? ¿Por qué el solver no depende de Blender? |
 | [B](#parte-b-física-de-la-conducción-de-calor) | Física de la conducción de calor | Significado de k, ρ, cp, α; balance de energía; condición inicial; Dirichlet, Neumann, Robin |
 | [C](#parte-c-solver-1d-discretización-estabilidad-y-verificación) | Solver 1D (discretización, estabilidad y verificación) | ¿Cómo discretizamos? ¿Por qué es estable? ¿Cómo sabemos que está bien? |
-| [D](#parte-d-solver-2d3d-mismo-método-en-tres-direcciones) | Solver 2D/3D | ¿Qué cambia al pasar a 3D? ¿Por qué Fo ≤ 1/4 y 1/6? ¿Cómo se tratan las interfaces? ¿Cómo lo verificamos? |
+| [D](#parte-d-solver-2d3d-mismo-método-en-tres-direcciones) | Solver 2D/3D | ¿Qué cambia al pasar a 3D? ¿Por qué Fo ≤ 1/4 y 1/6? ¿Cómo se tratan las interfaces? ¿Signos, fuente vs. flujo, simetría? ¿Por qué dominan los bordes? ¿Qué es el método de Schmidt? |
 
 ---
 
@@ -605,6 +605,7 @@ celdas: **32 veces más trabajo**. Esto pesará en Monte Carlo (semana 5).
 | `test_dt_inestable_lanza_error` | El solver se niega a correr con $\Delta t$ inestable | estabilidad |
 | `test_simetria_del_campo` | Cubo simétrico → campo simétrico (detecta errores de índices) | extra |
 | `test_cara_mal_escrita_lanza_error` | Un nombre de cara mal escrito no pasa en silencio | extra |
+| `test_en_el_limite_es_el_metodo_de_schmidt[2]` / `[3]` | En el límite de estabilidad, la nueva T es el promedio de las vecinas (ver D.11) | Schmidt (ICH) |
 
 Figuras (`python scripts/06_verificacion_3d.py`, ~5 s):
 
@@ -615,8 +616,138 @@ Figuras (`python scripts/06_verificacion_3d.py`, ~5 s):
   fuente **ilustrativa** (todavía no es la hidratación). Muestra lo que el 1D no puede: el núcleo
   llega a ~73 °C mientras una esquina apenas pasa los 23 °C, porque la esquina pierde calor por
   tres caras.
+- [fig10](../resultados/figuras/fig10_bordes_dominan.png): el mismo bloque con tres bordes distintos
+  (ver D.10).
 
-### D.7 Cómo usarlo
+### D.7 Flujos y signos
+
+Una sola convención en todo el código: **un flujo $F$ es positivo cuando el calor va hacia $+x$,
+$+y$ o $+z$**.
+
+| Dónde | Fórmula | Cómo leerla | Código (`solver3d.py`) |
+|---|---|---|---|
+| Entre dos celdas | $F = G\,(T_{atrás} - T_{adelante})$ | Si la de atrás está más caliente, $F > 0$: el calor avanza hacia la fría. Es el signo menos de Fourier, $q = -k\,\partial T/\partial x$ | línea 326 |
+| Balance de la celda | entra por su cara de atrás $-$ sale por su cara de adelante | $F_{atrás} - F_{adelante} > 0$ → la celda gana calor | línea 337 |
+| Borde | $q_{entrante} = G_b\,(T_{exterior} - T_{celda})$ | Positivo = el calor **entra** al hormigón. En Robin, si el aire está más frío, sale negativo: se enfría | `_flujo_entrante()` en `solver1d.py` |
+| Borde "de inicio" ($x-$, $y-$, $z-$) | $F = +q_{entrante}$ | lo que entra por ahí avanza hacia $+$ | línea 329 |
+| Borde "final" ($x+$, $y+$, $z+$) | $F = -q_{entrante}$ | lo que entra por ahí avanza hacia $-$ | línea 329 |
+
+Comprobación física (está en los tests): un bloque caliente al aire frío siempre **pierde**
+energía y ninguna celda baja de la temperatura del aire (`test_robin_bloque_caliente_se_enfria_hacia_el_aire`).
+Si un signo estuviera mal, el bloque se calentaría solo.
+
+### D.8 Fuente volumétrica vs. flujo superficial
+
+Las dos agregan calor, pero **no son lo mismo**:
+
+| | Fuente volumétrica $Q$ | Flujo superficial $q$ |
+|---|---|---|
+| Unidad | **W/m³** | **W/m²** |
+| Dónde actúa | **dentro** de cada celda, en todo el volumen | solo **por una cara** del borde |
+| En el balance | $+\,Q \cdot V$ en todas las celdas | $+\,q \cdot A$ solo en las celdas que tocan esa cara |
+| Ejemplo en el proyecto | **calor de hidratación** del cemento | **radiación solar** absorbida por la superficie |
+| En el código | argumento `fuente=` de `resolver()` (línea 340) | condición `Neumann(q)` en una cara |
+| Test | `test_fuente_uniforme_adiabatica_aumento_lineal`: todo el bloque sube parejo | `test_neumann_flujo_entrante_suma_energia`: se calienta primero la cara |
+
+Error típico: poner el sol como fuente $Q$ (lo repartiría en todo el volumen, cuando en
+realidad solo calienta la superficie) o poner la hidratación como flujo en el borde.
+La **convección no es una fuente**: es un intercambio por la frontera (Robin).
+
+### D.9 Superficies adiabáticas y simetría
+
+**Adiabático** = no cruza calor: $q = 0$, `Neumann(0)`. En el código, **toda cara que no se
+nombra en `bordes` queda adiabática**, y `bordes={}` es un bloque totalmente aislado (así lo usan
+los tests de energía y de fuente).
+
+Hay dos situaciones físicas que se modelan así:
+
+1. **Aislación perfecta**: una idealización. La aislación real es Robin con $R_{extra}$, porque
+   siempre deja pasar algo (fig10).
+2. **Plano de simetría**: si el problema es simétrico respecto de un plano, la temperatura es
+   igual a ambos lados y el gradiente perpendicular es cero, así que no cruza calor. La fundación
+   octagonal es simétrica respecto de los planos $x$ e $y$ que pasan por su centro: se puede
+   simular **solo 1/4** con esos dos cortes como caras adiabáticas, con 4 veces menos celdas.
+   **Ojo:** solo vale si los bordes también son simétricos. El sol de la tarde, que calienta más
+   una cara que la otra, rompe la simetría.
+
+Cómo reconocer una superficie adiabática en un resultado: las líneas de igual temperatura llegan
+**perpendiculares** a ella, porque no hay flujo que la cruce. En la fig09 eso se ve en la base.
+
+### D.10 Por qué las condiciones de borde pueden dominar el resultado
+
+La [fig10](../resultados/figuras/fig10_bordes_dominan.png) usa el **mismo bloque, el mismo hormigón
+y la misma fuente** que la fig09. Solo cambia el borde (costados y cara superior; la base sigue aislada):
+
+| Borde | Núcleo máx. | Diferencial núcleo − superficie máx. |
+|---|---|---|
+| Superficie desnuda al aire ($h = 10$ W/m²K) | 73,5 °C | **40,9 °C** (no cumple 20 °C) |
+| Con 5 cm de aislación ($R \approx 1{,}4$ m²K/W) | 76,7 °C | **11,2 °C** (cumple) |
+| Todo aislado (adiabático) | 78,5 °C | **0 °C** (todo sube igual) |
+
+Por qué pasa:
+
+- **El núcleo casi no se entera de los bordes.** En 7 días el calor viaja solo
+  $\sqrt{\alpha t} \approx \sqrt{9{,}3\cdot10^{-7}\cdot 6\cdot10^5} \approx 0{,}75$ m. El centro de
+  un elemento grueso se comporta casi como si estuviera aislado: su máximo cambia poco (73–78 °C).
+- **La superficie depende totalmente del borde.** Con aire, la superficie queda cerca del aire.
+  Con aislación, queda cerca del núcleo.
+- **El diferencial es la resta de ambos**, así que lo controla el borde: pasa de 41 °C a 0 °C
+  sin tocar el hormigón.
+- **Número de Biot** $Bi = hL/k$: compara cuánto calor se lleva el aire con cuánto puede conducir
+  el hormigón. Con $h = 10$, $L = 1$ m y $k = 2$: $Bi = 5 \gg 1$. El aire saca calor más rápido
+  de lo que el interior lo repone, y se forma un gradiente fuerte. Con aislación,
+  $h_{efectivo} = 1/(1/h + R) \approx 0{,}67$ y $Bi \approx 0{,}3$: gradiente suave.
+
+**Conclusión para el proyecto:** dos criterios tiran en sentidos opuestos. Aislar baja el
+diferencial (bueno), pero sube un poco $T_{max}$ (malo). Por eso moldaje, aislación y retiro son
+**decisiones del plan** que hay que simular, no detalles.
+
+### D.11 Método de Schmidt (Anexo 4 del ICH)
+
+> Lectura del Anexo 4 pendiente. Esta sección usa la formulación estándar del método.
+
+El método de Schmidt es un método de diferencias finitas explícito, pensado originalmente para
+calcular **a mano o con una planilla**. Es **nuestro mismo esquema** usado justo en el límite de
+estabilidad.
+
+Nuestra actualización en 1D (malla uniforme, sin fuente) es:
+
+$$
+T_i^{n+1} = (1 - 2Fo)\,T_i^n + Fo\,(T_{i-1}^n + T_{i+1}^n)
+$$
+
+Schmidt elige el paso de tiempo para que $Fo = 1/2$. Así el término de la propia celda se anula y queda
+
+$$
+T_i^{n+1} = \frac{T_{i-1}^n + T_{i+1}^n}{2}
+$$
+
+es decir, **la nueva temperatura es el promedio de las dos vecinas**. Lo mismo vale en más dimensiones:
+
+| | Fo de Schmidt | Regla |
+|---|---|---|
+| 1D | 1/2 | promedio de 2 vecinas |
+| 2D | 1/4 | promedio de 4 vecinas |
+| 3D | 1/6 | promedio de 6 vecinas |
+
+Son **exactamente los límites de estabilidad** de la D.5. Lo comprobamos con
+`test_en_el_limite_es_el_metodo_de_schmidt`: con $\Delta t$ en el límite, nuestro solver da el
+promedio de las vecinas.
+
+Diferencias con nuestro solver:
+
+| | Schmidt clásico | Nuestro solver |
+|---|---|---|
+| Paso de tiempo | fijo por la malla ($\Delta t = \Delta x^2/2\alpha$ en 1D) | cualquiera hasta el límite (por defecto 90 %) |
+| Materiales | uno, o tratamiento especial | cada celda el suyo (resistencias en serie) |
+| Bordes | reglas para cada caso | Dirichlet/Neumann/Robin generales |
+| Riesgo | justo en el límite: estable, pero sin margen | 10 % de margen |
+
+Por qué el ICH lo menciona: muestra que un método simple de celdas basta para hormigón masivo y
+que se extiende a 2D/3D, secuencia de vertidas, aislación y otros materiales. Ese es el enfoque
+del curso.
+
+### D.12 Cómo usarlo
 
 ```python
 from mcplan.solver3d import Material, Malla3D, Dirichlet, Neumann, Robin, resolver
@@ -636,7 +767,7 @@ res.T[-1][15, 15, 0]               # T del último instante en la celda (i, j, l
 res.energia(), res.fourier, res.dt
 ```
 
-### D.8 Limitaciones actuales (próximas semanas)
+### D.13 Limitaciones actuales (próximas semanas)
 
 - La malla es una **caja**: la fundación octagonal real necesita marcar qué celdas son hormigón,
   suelo o aire (**voxelización del IFC**, semana 3).

@@ -209,3 +209,25 @@ def test_simetria_del_campo():
     assert np.allclose(T, T.transpose(1, 0, 2))
     assert np.allclose(T, T.transpose(2, 1, 0))
     assert np.allclose(T, T[::-1, :, :])
+
+
+# ---------------------------------------------------------------------------
+# Método de Schmidt (Anexo 4 del ICH)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("dims", [2, 3])
+def test_en_el_limite_es_el_metodo_de_schmidt(dims):
+    """Con Fo justo en el límite (1/4 en 2D, 1/6 en 3D) el término de la propia
+    celda desaparece: la nueva temperatura es el PROMEDIO de sus vecinas.
+    Esa es la regla del método de Schmidt, así que nuestro solver la contiene."""
+    malla = malla_cubo(6, dims)
+    T0 = 20.0 + 30.0 * np.random.default_rng(1).random(malla.forma)
+    dt = paso_tiempo_maximo(malla, {})  # Fo = 1/4 (2D) o 1/6 (3D)
+    T1 = resolver(malla, T0, {}, t_final=dt, dt=dt, n_guardados=1).T[-1]
+
+    i = j = 2
+    l = 2 if dims == 3 else 0
+    vecinas = [T0[i - 1, j, l], T0[i + 1, j, l], T0[i, j - 1, l], T0[i, j + 1, l]]
+    if dims == 3:
+        vecinas += [T0[i, j, l - 1], T0[i, j, l + 1]]
+    assert T1[i, j, l] == pytest.approx(np.mean(vecinas))
