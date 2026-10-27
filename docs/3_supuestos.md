@@ -10,11 +10,11 @@
 |---|---|---|---|---|
 | S01 | Planta exterior octagonal de 18 m entre caras opuestas | `config/caso_base.yaml`, `mcplan/bim.py` | Simplificación reproducible definida en la guía docente | Aplicada |
 | S02 | Espesor del borde 1,10 m; transición lineal hasta 3,30 m en el centro | `config/caso_base.yaml`, `mcplan/bim.py` | La publicación no entrega un CAD inequívoco; se usa la sección de la guía docente | Aplicada; transición octagonal faceteada |
-| S03 | Plataforma octagonal central de 7 m entre caras y pedestal cilíndrico Ø7 m × 1 m; sin pernos, armaduras ni ductos | `config/caso_base.yaml`, `mcplan/bim.py` | Simplificación docente; la altura total resultante es 4,30 m | Aplicada |
+| S03 | Plataforma octagonal central de 7 m entre caras y pedestal cilíndrico Ø7 m × 1 m; sin pernos, armaduras ni ductos | `config/caso_base.yaml`, `mcplan/bim.py` | Simplificación docente; la altura total resultante es 4,30 m | Aplicada; geometría del caso base (S01–S03) |
 | S04 | Hormigón: $k = 2{,}0$ W/(m·K), $\rho = 2400$ kg/m³, $c_p = 900$ J/(kg·K) | `config/caso_base.yaml` | Valores típicos (los del código de ejemplo del curso) | Calibrar en semana 3 (Ju y Lei, ICH) |
 | S05 | Plan docente de cinco vertidas, inicios a 0/6/12/18/24 h, 18 °C, hormigón M1, moldaje/aislación TBD y retiro a 72 h | `config/plan_v02.yaml` | Valores de ejemplo de la guía; **no son recomendación constructiva** | Aplicado; reemplazar al estudiar planes térmicos |
 | S06 | Fecha de inicio = 2026-12-01 08:00 (−03:00) | `config/plan_v02.yaml` | Fecha demostrativa; la fecha real se confirmará más adelante | Provisional |
-| S07 | Figuras 03 y 04: base adiabática, clima ficticio (onda de 24 h) y fuente ilustrativa $Q = Q_0 e^{-t/\tau}$ | `scripts/03_figuras_solver_1d.py` | Ilustrar la física antes de tener clima real e hidratación | Reemplazar en semanas 3–4 |
+| S07 | Figuras 03, 04 y 09–10: base adiabática, clima ficticio o aire constante y fuente ilustrativa $Q = Q_0 e^{-t/\tau}$ | `scripts/03_figuras_solver_1d.py`, `scripts/06_verificacion_3d.py` | Ilustrar la física antes de tener clima real e hidratación | Reemplazar en semanas 3–4 |
 
 ## Decisiones de modelación y de software
 
@@ -35,6 +35,6 @@
 
 ## Preguntas abiertas para el profesor / ayudante
 
-1. ¿Cuándo estará la geometría oficial del curso? (resuelve S01–S03)
+1. ~~¿Cuándo estará la geometría oficial del curso?~~ Resuelta: el grupo adopta la geometría octagonal de S01–S03 (la del modelo en Bonsai) como geometría del caso base.
 2. ¿Es aceptable representar cada vertida como una `IfcFooting` independiente (D09)?
 3. ¿El modelo IFC puede generarse por script y editarse en Bonsai, o se espera que la geometría base se modele a mano en Bonsai?

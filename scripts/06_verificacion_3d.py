@@ -14,7 +14,11 @@ Paso 6 — Verificación del solver 2D/3D (mcplan/solver3d.py).
    semana 3), aire por los costados y arriba (Robin) y base aislada. Muestra
    lo que el 1D no puede: núcleo, cara y ARISTA se enfrían distinto.
 
-Salida: resultados/figuras/fig07..fig09 y resultados/convergencia_2d_3d.csv
+4) fig10: el mismo bloque y la misma fuente con tres bordes distintos
+   (desnudo, con aislación, todo aislado). Muestra por qué las condiciones
+   de borde pueden dominar el resultado (pregunta del oral E04).
+
+Salida: resultados/figuras/fig07..fig10 y resultados/convergencia_2d_3d.csv
 """
 
 from pathlib import Path
@@ -149,10 +153,49 @@ def figura_bloque_hormigon():
     guardar(fig, "fig09_bloque_hormigon_3d.png")
 
 
+def figura_bordes_dominan():
+    """El MISMO bloque y la MISMA fuente de la fig09; solo cambia el borde."""
+    largos, n = (3.0, 3.0, 2.0), (30, 30, 20)
+    malla = Malla3D.uniforme(largos, n, HORMIGON)
+    Q0, tau = 1500.0, 1.0 * 86400.0
+    R_aislacion = 0.05 / 0.035   # 5 cm de poliestireno, k = 0,035 W/mK -> R ≈ 1,4 m²K/W
+    casos = (
+        ("superficie desnuda al aire", AZUL, Robin(h=10.0, T_inf=15.0)),
+        ("con 5 cm de aislación", NARANJO, Robin(h=10.0, T_inf=15.0, R_extra=R_aislacion)),
+        ("todo aislado (adiabático)", VERDE_AGUA, None),
+    )
+    i_c, j_c = n[0] // 2, n[1] // 2
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.5))
+    print("Bordes (mismo bloque, misma fuente):")
+    for nombre, color, borde in casos:
+        bordes = {} if borde is None else {c: borde for c in ("x-", "x+", "y-", "y+", "z+")}
+        res = resolver(malla, 18.0, bordes, 7 * 86400.0, n_guardados=168,
+                       fuente=lambda t, T: Q0 * np.exp(-t / tau))
+        dias = res.t / 86400.0
+        nucleo = res.T[:, i_c, j_c, 0]          # centro de la base
+        superficie = res.T[:, i_c, j_c, -1]     # celda superior central (5 cm bajo la cara)
+        diferencial = nucleo - superficie
+        print(f"  {nombre:28s} núcleo máx {nucleo.max():5.1f} °C   "
+              f"diferencial máx {diferencial.max():5.1f} °C")
+        a1.plot(dias, nucleo, color=color, label=f"{nombre}: núcleo")
+        a1.plot(dias, superficie, color=color, ls="--", lw=1.4, label=f"{nombre}: superficie")
+        a2.plot(dias, diferencial, color=color, label=nombre)
+    a1.set(xlabel="tiempo [días]", ylabel="T [°C]",
+           title="Núcleo (línea llena) y superficie superior (punteada)")
+    a1.legend(fontsize=7)
+    a2.axhline(20.0, color=GRIS, ls="--", lw=1.2, label="límite del proyecto 20 °C")
+    a2.set(xlabel="tiempo [días]", ylabel="núcleo − superficie [°C]",
+           title="Diferencial térmico")
+    a2.legend(fontsize=8)
+    fig.suptitle("Mismo hormigón y misma fuente: solo cambian las condiciones de borde")
+    guardar(fig, "fig10_bordes_dominan.png")
+
+
 def main():
     figura_seno_2d()
     figura_convergencia()
     figura_bloque_hormigon()
+    figura_bordes_dominan()
 
 
 if __name__ == "__main__":

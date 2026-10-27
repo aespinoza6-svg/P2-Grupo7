@@ -170,3 +170,119 @@ ecuación representa la realidad (comparando con mediciones de Ju y Lei, más ad
 4. `mcplan/solver1d.py`: docstring del módulo → `Robin` → `paso_tiempo_maximo` → bucle de `resolver`.
 5. `pytest -v`.
 6. Figuras fig01 (exacta), fig05 (estabilidad), fig06 (convergencia), fig04 (física del problema).
+
+
+---
+
+## E04 — 2D/3D, condiciones de borde y fuentes (miércoles 28 de octubre)
+
+> Objetivo del enunciado: *demostrar dominio del solver térmico general antes de introducir
+> hidratación y clima real.* Teoría: [Parte D](1_teoria.md#parte-d-solver-2d3d-mismo-método-en-tres-direcciones).
+> Código: `mcplan/solver3d.py` (los números de línea de abajo son de ese archivo).
+
+### Checklist individual (antes del miércoles)
+
+- [ ] `pytest -v` → **43 passed**.
+- [ ] `python scripts/06_verificacion_3d.py` y mirar fig07 a fig10.
+- [ ] Poder escribir **en la pizarra** el balance de un voxel y el criterio $Fo \le 1/6$.
+- [ ] Abrir `fundaciones/fundacion.ifc` en Bonsai y mostrar las 5 vertidas con sus propiedades.
+- [ ] Responder las 9 preguntas de abajo sin leer.
+
+### Lo que el repo debe mostrar (según el enunciado)
+
+| Pide | Dónde mostrarlo |
+|---|---|
+| 2D | `Malla3D.uniforme(..., (n, n, 1), ...)`, fig07, `test_solucion_exacta_seno[2]` |
+| 3D | `mcplan/solver3d.py`, fig08–fig10, `test_solucion_exacta_seno[3]` |
+| Dirichlet / Neumann / Robin | las mismas clases del 1D, una por cara: `bordes={"x-": ..., "z+": ...}` |
+| Fuente volumétrica | argumento `fuente=` (línea 340), `test_fuente_uniforme_adiabatica_aumento_lineal` |
+| Modelo BIM del caso base | `fundaciones/fundacion.ifc` en Bonsai + `python scripts/02_inspeccionar_ifc.py` |
+| Método de Schmidt | [teoría D.11](1_teoria.md), `test_en_el_limite_es_el_metodo_de_schmidt` |
+
+### Las 9 preguntas posibles
+
+**E1. Escribir el balance de un voxel.**
+Acumulación = lo que entra − lo que sale + lo que se genera, en cada una de las 3 direcciones:
+
+$$
+\rho c_p V\,\frac{dT}{dt} = (F_{x,atrás} - F_{x,adel}) + (F_{y,atrás} - F_{y,adel}) + (F_{z,abajo} - F_{z,arriba}) + Q\,V
+$$
+
+con $F = G\,(T_{celda} - T_{vecina})$ y $G = kA/d$ (mismo material). Con $k$ uniforme y celdas
+cúbicas, dividiendo por $\rho c_p V$ queda la clásica de 7 puntos:
+$\dfrac{dT}{dt} = \dfrac{\alpha}{\Delta x^2}\left(\sum_{6\ vecinas} T_v - 6T\right) + \dfrac{Q}{\rho c_p}$.
+*Mostrar:* líneas 321–341 (`balance += ...` y `T = T + dt * (balance + Q * V) / C`).
+
+**E2. Derivar el criterio de estabilidad.**
+Euler explícito con la forma anterior:
+$T^{n+1} = (1 - 6Fo)\,T^n + Fo\sum_{6} T_v^n$. La nueva temperatura es una mezcla de la propia y
+de las vecinas. Si el peso de la propia, $(1 - 6Fo)$, fuera **negativo**, la celda respondería al
+revés (más caliente ahora → más fría después, y se pasa): aparece un serrucho que crece. Exigimos
+$1 - 6Fo \ge 0$ → $Fo \le 1/6$. En 2D son 4 vecinas → $1/4$; en 1D → $1/2$. En general:
+$\Delta t \le C/S$ (capacidad / suma de conductancias), que también cubre bordes y materiales distintos.
+*Mostrar:* `paso_tiempo_maximo()` (línea 198), `test_paso_maximo_es_fourier_un_cuarto_en_2d_y_un_sexto_en_3d`.
+
+**E3. Explicar flujo y signos.**
+$F$ es positivo hacia $+x$, $+y$, $+z$, y $F = G\,(T_{atrás} - T_{adelante})$: el calor va de
+caliente a frío (el signo menos de Fourier). En los bordes, $q_{entrante} > 0$ significa que entra
+calor. Por la cara de inicio eso es $F = +q$; por la cara final es $F = -q$.
+*Mostrar:* líneas 326, 329–335, 337. Teoría D.7.
+
+**E4. Identificar una superficie adiabática.**
+Es una superficie por donde no cruza calor: `Neumann(0)`, $\partial T/\partial n = 0$. Puede ser
+una aislación ideal o un **plano de simetría** (permite simular 1/4 de la fundación). En el código,
+toda cara no nombrada en `bordes` es adiabática. En un gráfico, las isotermas llegan perpendiculares
+a ella (la base en fig09). *Mostrar:* `_completar_bordes()` (línea 174). Teoría D.9.
+
+**E5. Implementar conceptualmente la convección.**
+Ley de Newton: $q = h\,(T_{aire} - T_{sup})$. En una malla de celdas, la superficie no es una
+incógnita, así que se arma un **circuito de resistencias en serie** desde el centro de la celda
+hasta el aire: media celda $\Delta x/2k$ + moldaje/aislación $R_{extra}$ + película de aire $1/h$.
+$G_b = A / (\Delta x/2k + R_{extra} + 1/h)$ y $q = G_b\,(T_{aire} - T_{celda})$. Error típico:
+imponer $T_{aire}$ como Dirichlet en la superficie (equivale a $h = \infty$).
+*Mostrar:* clase `Robin` y `_conductancia_borde()` en `solver1d.py`; `test_estacionario_robin_con_moldaje`.
+
+**E6. Distinguir fuente volumétrica de flujo superficial.**
+$Q$ [W/m³] se genera **dentro** de todo el volumen (hidratación): suma $Q\,V$ en cada celda. $q$
+[W/m²] entra **por una cara** (sol): suma $q\,A$ solo en las celdas del borde. Tienen unidades
+distintas y van en lugares distintos del balance. La convección no es fuente: es intercambio por
+el borde. *Mostrar:* línea 340 vs. `Neumann(q)`; los dos tests (fuente pareja vs. cara que se
+calienta primero). Teoría D.8.
+
+**E7. Explicar cómo tratar dos materiales.**
+Cada celda tiene su $k$, $\rho$, $c_p$. Entre dos celdas distintas el calor cruza dos medias celdas
+**en serie**: $G = A/(d/2k_1 + d/2k_2)$, que equivale a la media armónica
+$k = 2k_1k_2/(k_1+k_2)$. No se usa el promedio porque una capa aislante controla todo el paso. Así
+se conserva el flujo en la interfaz. *Mostrar:* `Malla3D.por_materiales()` (línea 112),
+`conductancia_interior()`, `test_interfaz_hormigon_sobre_suelo` (quiebre del perfil en la interfaz).
+
+**E8. Explicar por qué las condiciones de borde pueden dominar el resultado.**
+*Mostrar la fig10:* el mismo hormigón y la misma fuente; solo con cambiar el borde, el diferencial
+núcleo–superficie pasa de 41 °C (desnudo) a 11 °C (5 cm de aislación) y a 0 °C (todo aislado),
+mientras el núcleo casi no cambia (73–78 °C). La razón: el calor penetra solo ~1 m en
+días ($\sqrt{\alpha t}$), así que el núcleo se comporta casi adiabático y la superficie la decide
+el borde. Además $Bi = hL/k \approx 5 \gg 1$: el aire saca calor más rápido de lo que el interior
+lo repone. Por eso moldaje, aislación y retiro son decisiones del plan. Teoría D.10.
+
+**E9. Mostrar el avance BIM de la fundación de referencia.**
+Geometría del caso base: planta **octagonal** de 18 m entre caras, borde de 1,10 m, 3,30 m al
+centro y pedestal Ø7 m × 1 m (altura total 4,30 m, 636,8 m³), dividida en **5 vertidas**
+(`IfcFooting`) con su pset `UANDES_HormigonMasivo` (ID, hormigón, inicio, temperatura de colocación,
+moldaje, aislación, retiro). Se genera por script desde `config/` y se edita en Bonsai; Python
+detecta cambios de propiedades y de geometría. **Próximo paso (semana 3):** voxelizar este IFC
+para que cada celda del solver sepa si es hormigón (y de qué vertida), suelo o aire.
+*Mostrar:* Bonsai (File → Open IFC Project) y `python scripts/02_inspeccionar_ifc.py fundaciones/fundacion.ifc`.
+
+### Si preguntan por el método de Schmidt
+
+Es nuestro mismo esquema explícito, usado justo en el límite: con $Fo = 1/2$ (1D), $1/4$ (2D) o
+$1/6$ (3D), el peso de la propia celda se anula y **la nueva temperatura es el promedio de las
+vecinas**. Se calculaba a mano. Nosotros usamos el 90 % del límite (con margen) y Robin y
+materiales generales. *Mostrar:* `test_en_el_limite_es_el_metodo_de_schmidt`. Teoría D.11.
+
+### Recorrido sugerido para la demo (≈ 5 min)
+
+1. Bonsai: la fundación octagonal con sus 5 vertidas y propiedades (E9).
+2. `mcplan/solver3d.py`: docstring (balance y caras) → bucle de `resolver()` (líneas 321–341).
+3. `pytest tests/test_solver3d.py -v`: la batería de verificación.
+4. fig07 (exacta 2D) → fig08 (orden 2) → fig10 (los bordes dominan).
