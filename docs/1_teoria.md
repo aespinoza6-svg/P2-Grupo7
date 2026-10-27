@@ -114,7 +114,7 @@ El IFC **no se dibuja a mano**: lo genera `scripts/01_crear_modelo_ifc.py` desde
 
 | Archivo | Contiene |
 |---|---|
-| `config/caso_base.yaml` | sitio, dimensiones de la simplificación geométrica docente y propiedades provisionales del hormigón |
+| `config/caso_base.yaml` | sitio, dimensiones de la geometría octagonal del caso base y propiedades provisionales del hormigón |
 | `config/plan_v02.yaml` | las cinco vertidas docentes: forma, cotas, inicio, temperatura y moldaje |
 
 Ventajas: cambiar una decisión (p. ej. la fecha de inicio o el número de capas) es cambiar un
@@ -159,8 +159,6 @@ automáticamente (editando con IfcOpenShell, que es lo que Bonsai usa por dentro
 
 ### A.6 Pendiente
 
-- Confirmar si el profesor entrega un IFC geométrico oficial; si es distinto, reemplazará esta
-  simplificación docente ([3_supuestos.md](3_supuestos.md)).
 - Practicar en Bonsai (cada integrante): abrir, editar una propiedad, guardar, comparar.
 - Semana 3: voxelizar la geometría del IFC (`geometria_vertidas()` ya entrega volúmenes y cotas).
 

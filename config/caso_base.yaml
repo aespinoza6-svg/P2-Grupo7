@@ -2,9 +2,10 @@
 #
 # Cada valor indica su ORIGEN:
 #   [CURSO]       dato entregado por el curso (enunciado o sitios.yaml)
-#   [PROVISIONAL] supuesto nuestro, porque el artículo no lo define de forma
-#                 inequívoca. Se reemplaza cuando el profesor entregue/valide
-#                 la geometría oficial. Registro completo: docs/3_supuestos.md
+#   [DOCENTE]     geometría de la guía del curso (GUIA_BONSAI_FUNDACION.md),
+#                 adoptada por el grupo como geometría del caso base
+#   [PROVISIONAL] supuesto nuestro que se calibrará más adelante
+#   Registro completo: docs/3_supuestos.md
 
 # ---------------------------------------------------------------------------
 # SITIO — fuente: 03_SITIOS_POR_GRUPO.md / sitios.yaml del curso.
@@ -24,8 +25,9 @@ sitio:
   zona_horaria: America/Santiago
 
 # ---------------------------------------------------------------------------
-# GEOMETRÍA DOCENTE — simplificación reproducible indicada en
-# Antecedentes/GUIA_BONSAI_FUNDACION.md. No incluye pernos, armaduras ni ductos.
+# GEOMETRÍA DEL CASO BASE — fundación octagonal indicada en
+# Antecedentes/GUIA_BONSAI_FUNDACION.md (la del modelo en Bonsai).
+# No incluye pernos, armaduras ni ductos.
 # ---------------------------------------------------------------------------
 geometria:
   lados_planta: 8
