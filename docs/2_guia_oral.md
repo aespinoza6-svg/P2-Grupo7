@@ -286,3 +286,104 @@ materiales generales. *Mostrar:* `test_en_el_limite_es_el_metodo_de_schmidt`. Te
 2. `mcplan/solver3d.py`: docstring (balance y caras) → bucle de `resolver()` (líneas 321–341).
 3. `pytest tests/test_solver3d.py -v`: la batería de verificación.
 4. fig07 (exacta 2D) → fig08 (orden 2) → fig10 (los bordes dominan).
+
+
+---
+
+## E05 — Lab: batería de verificación térmica (jueves 29 de octubre)
+
+> Enunciado: *ejecutar en vivo una batería de tests 1D/2D/3D y condiciones de borde. El
+> ayudante seleccionará tests al azar y puede cambiar parámetros. También se revisará
+> conservación de energía.*
+> Archivo del lab: [`tests/test_e05_bateria.py`](../tests/test_e05_bateria.py).
+
+### Antes de entrar (2 minutos)
+
+```bash
+cd "C:\Users\Administrador\OneDrive\Escritorio\UANDES\202602\Metodos computacionales\P2\P2-Grupo7"
+git pull
+C:\Users\Administrador\.venvs\p2-grupo7\Scripts\Activate.ps1
+pytest tests/test_e05_bateria.py -v -s
+```
+
+Deben salir **7 passed**, cada uno con sus números. Deja abierto `tests/test_e05_bateria.py` en el
+editor, en el bloque **PARÁMETROS DEL LAB**.
+
+### Los 7 casos: qué correr y qué decir
+
+`-s` hace que se vean los números; sin `-s` solo sale PASSED/FAILED.
+
+| # | Caso del enunciado | Comando | Qué comprueba | Qué mirar en los números |
+|---|---|---|---|---|
+| 1 | Solución 1D exacta | `pytest -k exacta_1d -s` | $T = T_0 + A\sin(\pi x/L_x)\,e^{-\alpha\lambda t}$, $\lambda = (\pi/L_x)^2$ | error < 1 % de A; λ medido ≈ λ teórico |
+| 2 | Seno 2D | `pytest -k seno_2d -s` | fórmula 2D del enunciado, $\lambda = (\pi/L_x)^2 + (\pi/L_y)^2$ | igual que el 1 |
+| 3 | Seno 3D | `pytest -k seno_3d -s` | fórmula 3D, $\lambda$ con tres términos | igual que el 1 |
+| 4 | Energía adiabática | `pytest -k energia -s` | todas las caras aisladas: $E$ constante | variación ~$10^{-10}$ J (redondeo) |
+| 5 | Fuente uniforme | `pytest -k fuente -s` | $dT/dt = q_0/(\rho c_p)$ en todas las celdas; $E = E_0 + q_0 V t$ | T final = exacta; energía ganada = $q_0Vt$ |
+| 6 | Neumann | `pytest -k neumann -s` | entra $q$ por la cara de arriba: $E = E_0 + qAt$ | energía ganada = $qAt$; arriba más caliente que abajo |
+| 7 | Robin | `pytest -k robin -s` | (a) estacionario = resistencias en serie; (b) el calor va hacia el aire más frío | error del perfil ~$10^{-13}$; la energía baja si el aire está más frío |
+
+**Cómo se "mide" λ (casos 1 a 3):** el test ve cuánto quedó del seno en el resultado del solver
+(su amplitud) y despeja $\lambda = -\ln(\text{amplitud}/A)/(\alpha t)$. Si da lo mismo que la
+fórmula $\sum(\pi/L_i)^2$, el seno se apagó a la velocidad que dice la teoría.
+
+**Por qué el tiempo por defecto:** si `T_FINAL = None`, se simula hasta que queda ~60 % del seno
+($t = 0{,}5/(\alpha\lambda)$). Así siempre hay algo que comparar, sea cual sea el material o el dominio.
+
+**Ojo con la notación:** en el enunciado $q_0$ es la fuente **volumétrica** [W/m³] (caso 5). El
+flujo por una cara es otra cosa, [W/m²], y en el archivo se llama `q_SUP` (caso 6).
+
+### Cuando el ayudante cambie parámetros
+
+1. Cambiar el valor en el bloque **PARÁMETROS DEL LAB** y guardar (Ctrl+S).
+2. Volver a correr el mismo comando.
+3. **Antes de correr, decir qué esperas.** Eso es lo que demuestra que entiendes.
+
+Lo que pasa en cada cambio (números reales del caso 2D):
+
+| Cambio | Qué predecir | Resultado |
+|---|---|---|
+| base (N = 20, L = 1 m, A = 40) | — | error 0,0196 °C (0,049 % de A), λ = 19,74 |
+| `N = 10` (celdas el doble de grandes) | orden 2: error **×4** | error 0,0775 °C (×3,95) ✅ |
+| `Lx = 2.0` | su término en λ se divide por 4: $\pi^2/4 + \pi^2 = 12{,}34$; se enfría más lento | λ teórico 12,34, medido 12,36 ✅ |
+| `A = 80` | la ecuación es lineal: el error se duplica, pero el % no cambia | error 0,039 °C (0,049 % de A) ✅ |
+| `T0 = 0` | solo desplaza todo; nada cambia | mismos errores ✅ |
+| hormigón (`k, rho, cp = 2.0, 2400.0, 900.0`) | el material solo cambia la **escala de tiempo** (α ~100 veces menor → ~100 veces más lento) | t = 27 360 s en vez de 253 s; mismo % de error ✅ |
+| `DT = 10` (paso muy grande) | **el solver se niega**: es inestable | `ValueError: dt = 9.742 s supera el paso máximo estable 4.167 s` ✅ |
+
+Al terminar, para volver a los valores originales (**no subir los cambios del lab**):
+
+```bash
+git restore tests/test_e05_bateria.py
+```
+
+### Si algo "falla" en vivo: casi siempre es correcto
+
+| Lo que ves | Por qué pasa | Qué decir |
+|---|---|---|
+| `ValueError: ... supera el paso máximo estable` | `DT` mayor que $C/S$ (Fo > 1/2, 1/4 o 1/6) | "Es inestable; el solver lo detecta antes de calcular. Con `DT = None` usa el 90 % del máximo." |
+| Falla el caso 3D con un `DT` que en 2D funcionaba | en 3D el límite es más estricto (6 vecinas; esquinas con 3 caras Dirichlet: $Fo \le 1/9$) | "Más vecinas → paso más chico." |
+| "el seno ya se apagó: no se mide λ" | `T_FINAL` muy largo: queda menos de 0,1 % del seno | "Todo llegó a $T_0$; no queda decaimiento que medir. El error sigue comprobándose." |
+| Fallan los casos 1–3 con `N` muy chico (4 o menos) | con tan pocas celdas el error supera el 1 % de A | "Es correcto que falle: la malla no resuelve el seno. Con N = 6 ya pasa." |
+| Neumann o Robin: la energía cambia | por esas caras entra o sale calor | "No tiene que conservarse: tiene que cambiar exactamente lo que entra ($qAt$)." |
+
+### Preguntas sobre conservación de energía
+
+**¿Qué es E y cómo se calcula?** $E = \sum_i \rho c_p V\,T_i$ [J], la energía interna medida
+desde 0 °C. *Mostrar:* `Resultado3D.energia()` en `mcplan/solver3d.py`.
+
+**¿Por qué se conserva exactamente?** Por cómo está armado el método de volúmenes finitos: el
+flujo por una cara interior se **resta** a una celda y se **suma** exactamente igual a su vecina.
+Al sumar todas las celdas, los flujos interiores se cancelan de a pares y solo quedan los de los
+bordes. Si los bordes son adiabáticos, no entra ni sale nada: $E$ no cambia.
+
+**¿Por qué no da exactamente 0 sino ~$10^{-10}$ J?** Por el **redondeo** del computador (unos
+16 dígitos). Sobre $E \approx 4\cdot10^5$ J, $10^{-10}$ J es un error relativo de
+$10^{-16}$: el mínimo posible. Equivale a $10^{-14}$ °C de temperatura promedio.
+
+**¿Se conserva con Dirichlet?** No, y no debe: por las caras a $T_0$ sale calor. Lo que se
+comprueba ahí es la solución exacta. Con Neumann y con fuente se comprueba el balance completo:
+energía ganada = $qAt$ o $q_0Vt$, exacto.
+
+**¿Qué pasaría si un signo estuviera mal?** La energía aumentaría con todo aislado, o un bloque
+caliente al aire frío se calentaría. Los casos 4 y 7b lo detectan.
