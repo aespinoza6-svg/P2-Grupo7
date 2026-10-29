@@ -1,0 +1,13 @@
+RESULTADOS DEL EJERCICIO 3D
+movie_cortes_comparacion.gif: cuatro cortes verticales sincronizados.
+movie_dirichlet_20.gif, movie_dirichlet_30.gif, movie_adiabatico.gif, movie_beta.gif: peliculas individuales.
+Las peliculas cubren 0 a 2 dias, en el plano y=1,5 m; escala de temperatura comun y fija.
+beta=0 coincide con adiabatico: no hay intercambio por las caras.
+comparacion_condiciones.png: centro e intercambio acumulado por bordes.
+fuente_temperaturas_energia.png: fuente, temperaturas y energia interna.
+cortes_verticales_dia2.png: cortes finales.
+*_historia.csv: temperaturas, fuente y balance de energia para cada caso.
+*_campos_3D.npz: todas las temperaturas 3D guardadas, tiempos y coordenadas.
+resumen_casos.csv y resumen.json: parametros y resultados resumidos.
+Los campos son temperaturas en centros de celda, no en la superficie exacta.
+La condicion Dirichlet se impone en la cara: su temperatura no tiene que coincidir con la de la celda adyacente.

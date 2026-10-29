@@ -1,0 +1,96 @@
+{
+  "dimensiones_m": [
+    3.0,
+    3.0,
+    0.6
+  ],
+  "centro_m": [
+    1.5,
+    1.5,
+    0.3
+  ],
+  "celdas": [
+    30,
+    30,
+    6
+  ],
+  "pasos_espaciales_m": [
+    0.1,
+    0.1,
+    0.09999999999999999
+  ],
+  "alpha_m2_s": 9.259259259259259e-07,
+  "Qmax_W_m3": 1300.0,
+  "duracion_pulso_dias": 2.0,
+  "duracion_simulacion_dias": 2.0,
+  "dt_s": 120.0,
+  "beta_1_m": 0.0,
+  "nota": "El Qmax de otro dominio NO impone aqui una temperatura central de 70 C.",
+  "casos": [
+    {
+      "caso": "dirichlet_20",
+      "condicion": "Dirichlet: todas las caras a 20 °C",
+      "dt_critico_coeficientes_positivos_s": 1200.0,
+      "Tmax_centro_C": 42.22167164825253,
+      "dia_max_centro": 1.3402777777777777,
+      "T_centro_final_C": 30.115891249803642,
+      "Tmax_global_guardada_C": 42.22167164825253,
+      "energia_generada_final_J": 606527999.9999999,
+      "intercambio_neto_por_bordes_J": -552657598.8420719,
+      "T_min_final_C": 20.054252620929404,
+      "T_max_final_C": 30.115891249803642,
+      "T_media_final_C": 24.61851861779217,
+      "energia_inicial_J": 233280000.0,
+      "energia_final_J": 287150401.157928
+    },
+    {
+      "caso": "dirichlet_30",
+      "condicion": "Dirichlet: todas las caras a 30 °C",
+      "dt_critico_coeficientes_positivos_s": 1200.0,
+      "Tmax_centro_C": 51.53419311099065,
+      "dia_max_centro": 1.3541666666666667,
+      "T_centro_final_C": 39.95178521230733,
+      "Tmax_global_guardada_C": 51.53869729552249,
+      "energia_generada_final_J": 606527999.9999999,
+      "intercambio_neto_por_bordes_J": -436664507.0293631,
+      "T_min_final_C": 30.05402526649882,
+      "T_max_final_C": 39.95178521230733,
+      "T_media_final_C": 34.56305666757861,
+      "energia_inicial_J": 233280000.0,
+      "energia_final_J": 403143492.9706368
+    },
+    {
+      "caso": "adiabatico",
+      "condicion": "Adiabático: dT/dn = 0",
+      "dt_critico_coeficientes_positivos_s": 1799.9999999999998,
+      "Tmax_centro_C": 71.99999999999999,
+      "dia_max_centro": 2.0,
+      "T_centro_final_C": 71.99999999999999,
+      "Tmax_global_guardada_C": 71.99999999999999,
+      "energia_generada_final_J": 606527999.9999999,
+      "intercambio_neto_por_bordes_J": 0.0,
+      "T_min_final_C": 71.99999999999999,
+      "T_max_final_C": 71.99999999999999,
+      "T_media_final_C": 71.99999999999999,
+      "energia_inicial_J": 233280000.0,
+      "energia_final_J": 839807999.9999999,
+      "error_adiabatico_C": 8.526512829121202e-14
+    },
+    {
+      "caso": "beta",
+      "condicion": "Robin: beta = 0 1/m (adiabático)",
+      "dt_critico_coeficientes_positivos_s": 1799.9999999999998,
+      "Tmax_centro_C": 71.99999999999999,
+      "dia_max_centro": 2.0,
+      "T_centro_final_C": 71.99999999999999,
+      "Tmax_global_guardada_C": 71.99999999999999,
+      "energia_generada_final_J": 606527999.9999999,
+      "intercambio_neto_por_bordes_J": 0.0,
+      "T_min_final_C": 71.99999999999999,
+      "T_max_final_C": 71.99999999999999,
+      "T_media_final_C": 71.99999999999999,
+      "energia_inicial_J": 233280000.0,
+      "energia_final_J": 839807999.9999999
+    }
+  ]
+}

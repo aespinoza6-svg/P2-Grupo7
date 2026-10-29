@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hormigón · visor térmico 3D</title>
+<style>
+:root{font-family:Segoe UI,Arial,sans-serif;color:#252b30;background:#f4f5f6;font-size:14px;color-scheme:light}*{box-sizing:border-box}body{margin:0}header{padding:20px 28px;background:#fff;border-bottom:1px solid #e0e3e5;display:flex;align-items:center;justify-content:space-between;gap:20px}h1{font-size:23px;font-weight:600;margin:0 0 5px}p{margin:5px 0;line-height:1.5}.sub{color:#697078;font-size:13px}.pill{border-radius:20px;background:#eef4ed;color:#456747;padding:7px 12px;font-size:12px;white-space:nowrap}main{display:grid;grid-template-columns:245px minmax(0,1fr);gap:18px;padding:20px;max-width:1650px;margin:auto}aside{background:white;border:1px solid #e0e3e5;border-radius:12px;padding:20px;align-self:start}h2{font-size:16px;font-weight:600;margin:0 0 14px}h3{font-size:14px;margin:0 0 8px}label{display:block;font-weight:500;margin:10px 0 7px}input[type=number],select{width:100%;padding:10px;border:1px solid #b9c0c5;border-radius:7px;background:white;color:#252b30;font-size:15px}input[type=range]{width:100%;accent-color:#8756a6;cursor:ew-resize}input:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #a5c7e8;outline-offset:2px}.equation{background:#f6f5f8;padding:10px;border-radius:7px;font-size:13px;line-height:1.7}.small{font-size:12px;color:#656d74;line-height:1.5}.divider{border-top:1px solid #e5e7e9;margin:18px 0}.facts{display:grid;grid-template-columns:1fr auto;gap:9px;font-size:12px}.facts span:nth-child(2n){font-variant-numeric:tabular-nums;font-weight:600}.status{font-size:12px;color:#626c74;margin-top:15px;min-height:38px}.error{color:#ad3434}.workspace{min-width:0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}.metric{background:#fff;border:1px solid #e0e3e5;border-radius:10px;padding:13px 17px}.metric span{display:block;color:#697078;font-size:12px}.metric strong{display:block;font-size:25px;font-weight:600;line-height:1.5;font-variant-numeric:tabular-nums}.views{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:15px}.panel{background:#fff;border:1px solid #e0e3e5;border-radius:12px;padding:16px;min-width:0}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.panelhead select{max-width:185px;font-size:13px;padding:7px}.surface{width:100%;height:350px;display:block;touch-action:none;cursor:grab}.surface:active{cursor:grabbing}.cuts{width:100%;height:350px;display:block}.legendbar{height:9px;border-radius:3px;background:linear-gradient(90deg,#000004,#3b0f70,#8c2981,#de4968,#fe9f6d,#fcfdbf);margin-top:8px}.legendlabels{display:flex;justify-content:space-between;font-size:11px;color:#666}.timeline{display:flex;gap:15px;align-items:center;margin:15px 0;background:white;border:1px solid #e0e3e5;border-radius:10px;padding:12px 15px}.timeline input{flex:1}.timevalue{min-width:148px;font-variant-numeric:tabular-nums;font-size:13px}button{padding:9px 14px;border:0;border-radius:6px;background:#343d46;color:#fff;font:inherit;cursor:pointer}button.secondary{background:#eceff2;color:#303943}.histories{height:240px;width:100%;display:block}.series{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin-top:9px}.series i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px}.callout{margin-top:12px;font-size:12px;color:#646b73}.currentbeta{font-size:12px;color:#8756a6}.footer{font-size:12px;color:#737b82;padding:10px 0}.camera-hint{font-size:11px;color:#737b82}.actions{display:flex;gap:8px;margin-top:12px}.busy-dot{display:inline-block;width:7px;height:7px;border-radius:100%;background:#8756a6;margin-right:7px}@media(max-width:1000px){main{grid-template-columns:205px minmax(0,1fr);padding:12px;gap:12px}.views{grid-template-columns:1fr}.surface{height:320px}.cuts{height:300px}.metric strong{font-size:20px}}@media(max-width:650px){header{padding:15px;display:block}.pill{display:inline-block;margin-top:8px}main{grid-template-columns:1fr}aside{padding:15px}.metrics{gap:6px}.metric{padding:10px}.metric strong{font-size:18px}.timeline{flex-wrap:wrap}.timeline input{min-width:160px}.panelhead{flex-wrap:wrap}.surface{height:290px}}
+</style></head>
+<body>
+<header><div><h1>Explorador térmico del hormigón</h1><div class="sub">Bloque 3 × 3 × 0,60 m · cuatro condiciones de borde · pulso de calor de dos días</div></div><span class="pill">Local · sin conexión · sin guardado automático</span></header>
+<main>
+<aside>
+<h2>Intercambio con el ambiente</h2>
+<div class="equation">Normal exterior<br><b>∂T/∂n = β (T − 20 °C)</b></div>
+<label for="beta">β [1/m]</label><input id="beta" type="number" value="0" max="0" step="0.5" inputmode="decimal">
+<input id="betaRange" type="range" min="-20" max="0" step="0.1" value="0" aria-label="Cambiar beta entre menos veinte y cero">
+<p class="small">0: aislado. Valores negativos: enfriamiento hacia aire a 20 °C. Puedes escribir valores fuera del rango del deslizador.</p>
+<p id="hInfo" class="currentbeta">h = 0 W/(m²·K) · límite adiabático</p>
+<div id="status" class="status" role="status" aria-live="polite">Calculando las referencias…</div>
+<div class="divider"></div><h3>Datos del ejercicio</h3>
+<div class="facts"><span>Temperatura inicial</span><span>20 °C</span><span>Q máximo</span><span>1300 W/m³</span><span>Máximo de Q</span><span>Día 1</span><span>Fin del pulso</span><span>Día 2</span><span>Celdas</span><span>30 × 30 × 6</span><span>Δx = Δy = Δz</span><span>0,10 m</span><span>Δt</span><span>120 s</span><span>k</span><span>2 W/(m·K)</span><span>ρ</span><span>2400 kg/m³</span><span>cₚ</span><span>900 J/(kg·K)</span></div>
+<div class="divider"></div><p class="small"><b>La altura del relieve representa temperatura.</b> No es una deformación mecánica ni un cambio de las dimensiones del hormigón.</p>
+<div class="actions"><button class="secondary" id="download">Descargar tabla</button></div><p class="small">Solo se descarga un CSV si pulsas este botón.</p>
+</aside>
+<section class="workspace">
+<div class="metrics"><div class="metric"><span>Máxima central · Robin</span><strong id="peak">—</strong><span id="peakDay">Durante los dos días</span></div><div class="metric"><span>Centro al día 2 · Robin</span><strong id="final">—</strong><span id="shownBeta">β = 0</span></div><div class="metric"><span>Fuente en el instante visible</span><strong id="source">0 W/m³</strong><span id="timeLabel">Día 0,000</span></div></div>
+<div class="views">
+<div class="panel"><div class="panelhead"><h2>Relieve térmico 3D</h2><select id="case" aria-label="Caso mostrado en 3D"><option value="0">Dirichlet 20 °C</option><option value="1">Dirichlet 30 °C</option><option value="2">Adiabático</option><option value="3" selected>Robin · β variable</option></select></div><p class="small">Temperatura en el plano horizontal z = 0,30 m. X e Y en metros; elevación proporcional a T.</p><canvas id="surface" class="surface" role="img" aria-label="Superficie tridimensional de temperatura; arrastra para girar"></canvas><div class="camera-hint">Arrastra para girar la vista · colores y escala de temperatura fijos</div><div class="legendbar"></div><div class="legendlabels"><span>20 °C</span><span>33 °C</span><span>46 °C</span><span>59 °C</span><span>72 °C</span></div><div class="actions"><button class="secondary" id="save3D">Guardar imagen 3D</button></div></div>
+<div class="panel"><h2>Cortes verticales</h2><p class="small">Plano y = 1,50 m · ancho 3 m × altura 0,60 m</p><canvas id="cuts" class="cuts" role="img" aria-label="Cuatro cortes verticales de temperatura a la misma escala de color"></canvas></div>
+</div>
+<div class="timeline"><button id="play" aria-label="Reproducir evolución">▶ Reproducir</button><input type="range" id="time" min="0" max="288" value="0" step="1" aria-label="Instante entre cero y dos días"><span class="timevalue" id="timeText">Día 0,000 / 2</span></div>
+<div class="panel"><div class="panelhead"><h2>Historias de temperatura del centro</h2><span class="small">Centro: (1,50; 1,50; 0,30) m</span></div><canvas id="history" class="histories" role="img" aria-label="Comparación de las temperaturas centrales durante dos días"></canvas><div class="series"><span><i style="background:#287bb5"></i>Dirichlet 20 °C</span><span><i style="background:#d97922"></i>Dirichlet 30 °C</span><span><i style="background:#258b62"></i>Adiabático</span><span><i style="background:#9e4eab"></i>Robin <b id="legendBeta">β = 0</b></span><span>— — referencia 70 °C</span></div></div>
+<p class="callout" id="meaning">Con β = 0, Robin coincide con adiabático: ambas curvas están superpuestas.</p><div class="footer">Balance de energía 3D por volúmenes finitos · fuente integrada por paso · β se recalcula en el navegador, sin Python.</div>
+</section></main>
+
+<script id="solver-worker" type="text/plain">
+const NX=30,NY=30,NZ=6,N=NX*NY*NZ,DX=.1,K=2,RHO=2400,CP=900,DT=120,DAY=86400,P=2*DAY,QMAX=1300,STEPS=1440,STRIDE=5;
+const A=K/(RHO*CP*DX*DX),C=RHO*CP*DX**3;
+const refs=[],cache=new Map();
+function IQ(t){t=Math.max(0,Math.min(P,t));return QMAX/2*(t-P/(2*Math.PI)*Math.sin(2*Math.PI*t/P));}
+function calc(type,beta=0){
+ let T=new Float64Array(N).fill(20),U=new Float64Array(N);
+ const count=STEPS/STRIDE+1,days=new Float64Array(count),center=new Float64Array(count),vertical=new Float32Array(count*NX*NZ),horizontal=new Float32Array(count*NX*NY),min=new Float64Array(count),max=new Float64Array(count),mean=new Float64Array(count);
+ const tb=type===1?30:20;
+ let gb=0;if(type===0||type===1)gb=2*K*DX;
+ else if(type===3&&beta<0){const h=-K*beta;gb=DX*DX/(DX/(2*K)+1/h);}
+ const B=gb/C,dtCritical=1/Math.max(6*A,3*A+3*B);if(DT>dtCritical+1e-9)throw Error('Paso de tiempo no estable');
+ let peak=20,peakDay=0,saved=0;
+ for(let step=0;step<=STEPS;step++){
+  let ct=0;for(let i=14;i<=15;i++)for(let j=14;j<=15;j++)for(let k=2;k<=3;k++)ct+=T[(i*NY+j)*NZ+k]/8;
+  if(ct>peak){peak=ct;peakDay=step*DT/DAY;}
+  if(step%STRIDE===0){
+   days[saved]=step*DT/DAY;center[saved]=ct;
+   let lo=Infinity,hi=-Infinity,sum=0;for(let p=0;p<N;p++){const v=T[p];lo=Math.min(lo,v);hi=Math.max(hi,v);sum+=v;}min[saved]=lo;max[saved]=hi;mean[saved]=sum/N;
+   for(let i=0;i<NX;i++)for(let k=0;k<NZ;k++)vertical[saved*NX*NZ+k*NX+i]=(T[(i*NY+14)*NZ+k]+T[(i*NY+15)*NZ+k])/2;
+   for(let i=0;i<NX;i++)for(let j=0;j<NY;j++)horizontal[saved*NX*NY+i*NY+j]=(T[(i*NY+j)*NZ+2]+T[(i*NY+j)*NZ+3])/2;
+   saved++;
+  }
+  if(step===STEPS)break;
+  const src=(IQ((step+1)*DT)-IQ(step*DT))/(RHO*CP);
+  for(let i=0;i<NX;i++)for(let j=0;j<NY;j++)for(let k=0;k<NZ;k++){
+   const p=(i*NY+j)*NZ+k,v=T[p];let rate=0;
+   rate+=i>0?A*(T[p-NY*NZ]-v):B*(tb-v);rate+=i<NX-1?A*(T[p+NY*NZ]-v):B*(tb-v);
+   rate+=j>0?A*(T[p-NZ]-v):B*(tb-v);rate+=j<NY-1?A*(T[p+NZ]-v):B*(tb-v);
+   rate+=k>0?A*(T[p-1]-v):B*(tb-v);rate+=k<NZ-1?A*(T[p+1]-v):B*(tb-v);
+   U[p]=v+DT*rate+src;
+  }
+  [T,U]=[U,T];
+ }
+ return {days,center,vertical,horizontal,min,max,mean,peak,peakDay,final:center[count-1],dtCritical,beta};
+}
+self.onmessage=e=>{try{
+ const beta=Number(e.data.beta);if(!Number.isFinite(beta)||beta>0)throw Error('β debe ser cero o negativo para la normal exterior indicada.');
+ if(!refs.length){for(let i=0;i<3;i++){self.postMessage({progress:'Calculando referencia '+(i+1)+' de 3…'});refs.push(calc(i));}cache.set(0,refs[2]);}
+ if(!cache.has(beta)){if(cache.size>20){cache.clear();cache.set(0,refs[2]);}cache.set(beta,calc(3,beta));}
+ self.postMessage({beta,data:[...refs,cache.get(beta)]});
+}catch(err){self.postMessage({error:err.message,beta:e.data.beta});}};
+</script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),colors=['#287bb5','#d97922','#258b62','#9e4eab'];
+const names=['Dirichlet 20 °C','Dirichlet 30 °C','Adiabático','Robin'];
+let results=null,currentBeta=0,wantedBeta=0,busy=false,timer=null,frame=0,playing=false,lastAnimation=0,yaw=-.72,pitch=.62;
+const fmt=(v,d=2)=>Number(v).toLocaleString('es-CL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const stops=[[0,0,4],[59,15,112],[140,41,129],[222,73,104],[254,159,109],[252,253,191]];
+function rgb(temp){let s=Math.max(0,Math.min(1,(temp-20)/52))*(stops.length-1),i=Math.min(stops.length-2,Math.floor(s)),f=s-i;return stops[i].map((v,k)=>Math.round(v+(stops[i+1][k]-v)*f));}
+function color(t){return 'rgb('+rgb(t).join(',')+')';}
+function setupCanvas(el){const r=el.getBoundingClientRect(),d=window.devicePixelRatio||1;if(el.width!==Math.round(r.width*d)||el.height!==Math.round(r.height*d)){el.width=Math.round(r.width*d);el.height=Math.round(r.height*d);}const c=el.getContext('2d');c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,r.width,r.height);return [c,r.width,r.height];}
+function label(c,text,x,y,align='left',size=12,col='#687179'){c.font=size+'px Segoe UI,Arial';c.fillStyle=col;c.textAlign=align;c.fillText(text,x,y);}
+function surface(){const [c,w,h]=setupCanvas($('surface'));if(!results){label(c,'Preparando el campo de temperaturas…',w/2,h/2,'center');return;}
+ const r=results[Number($('case').value)],offset=frame*900,scale=Math.min(w/5.8,h/4.3),cx=w*.49,cy=h*.67;
+ function project(x,y,z){const X=x-1.5,Y=y-1.5,u=X*Math.cos(yaw)-Y*Math.sin(yaw),v=X*Math.sin(yaw)+Y*Math.cos(yaw);return [cx+u*scale,cy+(v*Math.sin(pitch)-z*Math.cos(pitch))*scale,v*Math.cos(pitch)+z*Math.sin(pitch)];}
+ c.strokeStyle='#dce1e5';c.lineWidth=1;
+ for(let a=0;a<=3;a+=.5){for(const ends of [[[a,0,0],[a,3,0]],[[0,a,0],[3,a,0]]]){const p=project(...ends[0]),q=project(...ends[1]);c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();}}
+ let tiles=[];for(let i=0;i<29;i++)for(let j=0;j<29;j++){
+  let points=[],temps=[];for(const [ii,jj] of [[i,j],[i+1,j],[i+1,j+1],[i,j+1]]){const temp=r.horizontal[offset+ii*30+jj];temps.push(temp);points.push(project(.05+ii*.1,.05+jj*.1,(temp-20)/52*1.7));}
+  tiles.push({points,temp:temps.reduce((a,b)=>a+b)/4,depth:points.reduce((a,b)=>a+b[2],0)/4});
+ }
+ tiles.sort((a,b)=>a.depth-b.depth);for(const t of tiles){c.beginPath();t.points.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fillStyle=color(t.temp);c.fill();c.strokeStyle='rgba(35,25,45,.16)';c.lineWidth=.45;c.stroke();}
+ c.strokeStyle='#7f8991';c.lineWidth=1;
+ for(const end of [[3.35,0,0],[0,3.35,0],[0,0,1.9]]){const a=project(0,0,0),b=project(...end);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+ let p=project(3.3,0,0);label(c,'x [m]',p[0],p[1]+15,'center');p=project(0,3.3,0);label(c,'y [m]',p[0],p[1]+15,'center');
+ for(const temp of [20,40,60,72]){const p=project(0,0,(temp-20)/52*1.7);label(c,temp+' °C',p[0]-8,p[1]-2,'right',11);}
+ p=project(0,0,1.95);label(c,'T [°C]',p[0]-4,p[1]-3,'right');
+ label(c,names[Number($('case').value)]+(Number($('case').value)===3?' · β = '+fmt(currentBeta,2):''),14,19,'left',13,'#333c44');
+}
+function cuts(){const [c,w,h]=setupCanvas($('cuts'));if(!results)return;const left=34,right=12,top=30,gap=20,rowH=(h-10)/4;
+ for(let n=0;n<4;n++){const r=results[n],y0=n*rowH+top,ph=Math.min(rowH-35,(w-left-right)/5),pw=w-left-right;label(c,names[n]+(n===3?' · β = '+fmt(currentBeta,1):'')+'  |  '+fmt(r.center[frame],1)+' °C',left,n*rowH+16,'left',11,'#3c454d');
+ for(let i=0;i<30;i++)for(let k=0;k<6;k++){c.fillStyle=color(r.vertical[frame*180+k*30+i]);c.fillRect(left+i*pw/30,y0+(5-k)*ph/6,Math.ceil(pw/30+.3),Math.ceil(ph/6+.3));}
+ c.strokeStyle='#b8bfc5';c.lineWidth=.6;c.strokeRect(left,y0,pw,ph);label(c,'0,6',left-5,y0+5,'right',10);label(c,'0',left-5,y0+ph,'right',10);label(c,'0',left,y0+ph+12,'center',10);label(c,'3 m',left+pw,y0+ph+12,'right',10);}
+}
+function history(){const [c,w,h]=setupCanvas($('history')),l=46,r=14,t=15,b=34,pw=w-l-r,ph=h-t-b;
+ const x=d=>l+d/2*pw,y=T=>t+(76-T)/58*ph;
+ for(const v of [20,30,40,50,60,70]){c.strokeStyle='#e9ecee';c.lineWidth=1;c.beginPath();c.moveTo(l,y(v));c.lineTo(w-r,y(v));c.stroke();label(c,String(v),l-9,y(v)+4,'right',11);}
+ for(const d of [0,.5,1,1.5,2])label(c,fmt(d,1),x(d),h-14,'center',11);
+ label(c,'T [°C]',4,12,'left',11);label(c,'Tiempo [días]',w/2,h-1,'center',11);
+ c.setLineDash([5,5]);c.strokeStyle='#9b9fa3';c.beginPath();c.moveTo(l,y(70));c.lineTo(w-r,y(70));c.stroke();c.setLineDash([]);
+ if(!results)return;
+ results.forEach((data,n)=>{c.strokeStyle=colors[n];c.lineWidth=n===3?2.7:2;c.setLineDash(n===2?[6,4]:[]);c.beginPath();for(let j=0;j<data.days.length;j++){if(j===0)c.moveTo(x(data.days[j]),y(data.center[j]));else c.lineTo(x(data.days[j]),y(data.center[j]));}c.stroke();c.setLineDash([]);c.fillStyle=colors[n];c.beginPath();c.arc(x(data.days[frame]),y(data.center[frame]),3.5,0,Math.PI*2);c.fill();});
+ c.strokeStyle='#7d858c';c.lineWidth=1;c.beginPath();c.moveTo(x(results[0].days[frame]),t);c.lineTo(x(results[0].days[frame]),h-b);c.stroke();
+}
+function render(){surface();cuts();history();}
+function timeChange(){frame=Number($('time').value);const day=frame/144,source=day<2?650*(1-Math.cos(Math.PI*day)):0;$('timeText').textContent='Día '+fmt(day,3)+' / 2';$('timeLabel').textContent='Día '+fmt(day,3);$('source').textContent=fmt(source,0)+' W/m³';render();}
+let worker;
+try{worker=new Worker(URL.createObjectURL(new Blob([$('solver-worker').textContent],{type:'text/javascript'})));}catch(e){$('status').textContent='El navegador bloqueó el cálculo local: '+e.message;$('status').classList.add('error');}
+function dispatch(){if(!worker||busy)return;busy=true;$('status').classList.remove('error');$('status').textContent='Calculando β = '+fmt(wantedBeta,2)+'…';worker.postMessage({beta:wantedBeta});}
+if(worker){worker.onmessage=e=>{if(e.data.progress){$('status').textContent=e.data.progress;return;}busy=false;if(e.data.error){$('status').textContent=e.data.error;$('status').classList.add('error');return;}if(e.data.beta!==wantedBeta){dispatch();return;}
+ results=e.data.data;currentBeta=e.data.beta;const r=results[3];$('peak').textContent=fmt(r.peak)+' °C';$('peakDay').textContent='Máximo cerca del día '+fmt(r.peakDay,3);$('final').textContent=fmt(r.final)+' °C';$('shownBeta').textContent='β = '+fmt(currentBeta,2)+' 1/m';$('legendBeta').textContent='β = '+fmt(currentBeta,2);$('status').textContent='Actualizado. Cambia β para recalcular; mueve el tiempo para explorar.';$('meaning').textContent=currentBeta===0?'Con β = 0, Robin coincide con adiabático: ambas curvas están superpuestas.':'Con β = '+fmt(currentBeta,2)+', el intercambio equivale a h = '+fmt(-2*currentBeta,2)+' W/(m²·K) con aire a 20 °C.';
+ window.thermalViewer={beta:currentBeta,results,ready:true};timeChange();};worker.onerror=e=>{busy=false;$('status').textContent='Error de cálculo: '+e.message;$('status').classList.add('error');};dispatch();}
+function requestBeta(){const beta=Number($('beta').value);if($('beta').value.trim()===''||!Number.isFinite(beta)||beta>0){$('status').textContent='Usa β = 0 o negativo: con normal exterior, h = −kβ.';$('status').classList.add('error');return;}
+ wantedBeta=Object.is(beta,-0)?0:beta;$('betaRange').value=Math.max(-20,beta);$('hInfo').textContent='h = '+fmt(-2*beta,2)+' W/(m²·K)'+(beta===0?' · límite adiabático':' · aire a 20 °C');clearTimeout(timer);timer=setTimeout(dispatch,400);}
+$('beta').addEventListener('input',requestBeta);$('betaRange').addEventListener('input',()=>{$('beta').value=$('betaRange').value;requestBeta();});$('time').addEventListener('input',timeChange);$('case').addEventListener('change',surface);
+$('play').addEventListener('click',()=>{playing=!playing;if(playing&&frame>=288){frame=0;$('time').value=0;}$('play').textContent=playing?'❚❚ Pausar':'▶ Reproducir';lastAnimation=0;if(playing)requestAnimationFrame(animate);});
+function animate(ts){if(!playing)return;if(!lastAnimation)lastAnimation=ts;if(ts-lastAnimation>=65){frame=Math.min(288,frame+2);$('time').value=frame;timeChange();lastAnimation=ts;if(frame>=288){playing=false;$('play').textContent='▶ Reproducir';return;}}requestAnimationFrame(animate);}
+let drag=null;$('surface').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};$('surface').setPointerCapture(e.pointerId);});$('surface').addEventListener('pointermove',e=>{if(!drag)return;yaw=drag.yaw+(e.clientX-drag.x)*.009;pitch=Math.max(.2,Math.min(1.15,drag.pitch+(e.clientY-drag.y)*.006));surface();});$('surface').addEventListener('pointerup',()=>drag=null);$('surface').addEventListener('pointercancel',()=>drag=null);
+new ResizeObserver(()=>render()).observe(document.querySelector('.workspace'));
+$('download').addEventListener('click',()=>{if(!results)return;let s='beta_1_m,dia,caso,T_centro_C,T_min_C,T_max_C,T_media_C\n';results.forEach((r,n)=>{for(let j=0;j<r.days.length;j++)s+=[currentBeta,r.days[j],names[n],r.center[j],r.min[j],r.max[j],r.mean[j]].join(',')+'\n';});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8'}));a.download='comparacion_beta_'+currentBeta+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);});
+$('save3D').addEventListener('click',()=>{if(!results)return;const src=$('surface'),out=document.createElement('canvas');out.width=src.width;out.height=src.height;const c=out.getContext('2d');c.fillStyle='white';c.fillRect(0,0,out.width,out.height);c.drawImage(src,0,0);const a=document.createElement('a');a.href=out.toDataURL('image/png');a.download='relieve_termico_beta_'+currentBeta+'_dia_'+(frame/144).toFixed(3)+'.png';a.click();});
+render();
+</script></body></html>
