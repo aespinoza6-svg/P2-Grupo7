@@ -1,0 +1,14 @@
+{
+  "alcance": "Sensibilidad temporal a grilla fija; no prueba convergencia espacial ni validacion experimental.",
+  "horizonte_h": 72.0,
+  "max_dt_base_s": 600.0,
+  "max_dt_refinado_s": 300.0,
+  "Tmax_base_C": 57.30163204697719,
+  "Tmax_refinada_C": 57.2978462918283,
+  "diferencia_Tmax_C": 0.003785755148889791,
+  "diferencia_maxima_campo_final_C": 0.010789724371754517,
+  "diferencia_media_absoluta_campo_final_C": 0.0046614755923226735,
+  "diferencia_maxima_historia_Tmax_C": 0.005803350499057558,
+  "residuo_balance_relativo_base": 6.467071458110241e-16,
+  "residuo_balance_relativo_refinado": 6.699011713849699e-16
+}

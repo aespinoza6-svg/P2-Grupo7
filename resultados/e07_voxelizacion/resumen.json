@@ -1,0 +1,95 @@
+{
+  "ifc": "C:\\Users\\natig\\OneDrive\\Escritorio\\2026\\P0MCOC\\P2-Grupo7\\fundaciones\\fundacion.ifc",
+  "ifc_sha256": "de5ecf8a51616f424ee9d3fb37f51768b939d90833705833d130e4ec16613c9d",
+  "forma": [
+    90,
+    90,
+    86
+  ],
+  "origen_m": [
+    -9.0,
+    -8.999999999999998,
+    0.0
+  ],
+  "paso_m": [
+    0.2,
+    0.2,
+    0.05
+  ],
+  "celdas_hormigon": 317972,
+  "volumen_ifc_m3": 636.7752269543597,
+  "volumen_voxel_m3": 635.9440000000002,
+  "error_relativo_porcentaje": -0.13053694917360525,
+  "centros_compartidos": 0,
+  "volumenes_por_vertida": [
+    {
+      "vertida_id": 1,
+      "nombre": "Vertida_01",
+      "celdas": 73656,
+      "volumen_ifc_m3": 147.62571362977107,
+      "volumen_voxel_m3": 147.31200000000004,
+      "error_relativo_porcentaje": -0.21250608857870718
+    },
+    {
+      "vertida_id": 2,
+      "nombre": "Vertida_02",
+      "celdas": 73656,
+      "volumen_ifc_m3": 147.62571362977107,
+      "volumen_voxel_m3": 147.31200000000004,
+      "error_relativo_porcentaje": -0.21250608857870718
+    },
+    {
+      "vertida_id": 3,
+      "nombre": "Vertida_03",
+      "celdas": 107216,
+      "volumen_ifc_m3": 214.22435089999186,
+      "volumen_voxel_m3": 214.43200000000004,
+      "error_relativo_porcentaje": 0.09693067064309678
+    },
+    {
+      "vertida_id": 4,
+      "nombre": "Vertida_04",
+      "celdas": 44404,
+      "volumen_ifc_m3": 88.92474828213058,
+      "volumen_voxel_m3": 88.80800000000002,
+      "error_relativo_porcentaje": -0.13128885308750307
+    },
+    {
+      "vertida_id": 5,
+      "nombre": "Vertida_05",
+      "celdas": 19040,
+      "volumen_ifc_m3": 38.37470051269517,
+      "volumen_voxel_m3": 38.08000000000001,
+      "error_relativo_porcentaje": -0.7679552120482734
+    }
+  ],
+  "metodo": "Centro de celda y angulo solido de triangulos IFC cerrados y orientados",
+  "exterior": "ID 0 significa fuera del hormigon; no define todavia aire, suelo ni condicion termica",
+  "activacion": "Solo geometria; Inicio_h y temperatura de colocacion se conservan en metadata, sin activar celdas aun",
+  "comparacion_mallas": [
+    {
+      "dx_m": 0.4,
+      "dy_m": 0.4,
+      "dz_m": 0.05,
+      "celdas": 174150,
+      "volumen_voxel_m3": 634.2880000000001,
+      "error_relativo_porcentaje": -0.3905973174012711
+    },
+    {
+      "dx_m": 0.2,
+      "dy_m": 0.2,
+      "dz_m": 0.05,
+      "celdas": 696600,
+      "volumen_voxel_m3": 635.9440000000002,
+      "error_relativo_porcentaje": -0.13053694917360525
+    },
+    {
+      "dx_m": 0.1,
+      "dy_m": 0.1,
+      "dz_m": 0.05,
+      "celdas": 2786400,
+      "volumen_voxel_m3": 637.4040000000002,
+      "error_relativo_porcentaje": 0.09874332716237735
+    }
+  ]
+}

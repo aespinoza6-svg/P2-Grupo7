@@ -1,0 +1,51 @@
+{
+  "alcance": "Simulacion numerica acoplada demostrativa; no es prediccion validada ni plan constructivo recomendado.",
+  "hidratacion": {
+    "estado": "pedagogico_no_calibrado",
+    "fuente": "Guía DIFUSION_DE_CALOR_1D_2D_3D.md, sección 24",
+    "referencia_edad": "desde_colocacion",
+    "dependencia_de_temperatura": "no_implementada",
+    "mezclas": {
+      "M1": {
+        "modelo": "adiabatico_exponencial",
+        "elevacion_final_C": 45.0,
+        "tau_h": 30.0
+      }
+    }
+  },
+  "termica": {
+    "horizonte_h": 72.0,
+    "max_dt_s": 300.0,
+    "intervalo_salida_h": 1.0,
+    "ambiente": {
+      "temperatura_C": 15.0,
+      "h_W_m2K": 10.0
+    },
+    "base": {
+      "condicion": "adiabatica"
+    },
+    "interfaces": {
+      "contacto": "perfecto"
+    }
+  },
+  "horizonte_h": 72.0,
+  "grilla_sha256": "e2ef901d7b92efdb3805230835a76f84ea7fe5815f8176fafe9940b579fbf792",
+  "maximo_global_C": 57.2978462918283,
+  "tiempo_maximo_h": 72.0,
+  "pasos": 864,
+  "residuo_balance_max_J": 5.91278076171875e-05,
+  "residuo_balance_relativo_max": 6.699011713849699e-16,
+  "energia_final_J": 69054104014.09308,
+  "energia_colocacion_J": 24725502720.000004,
+  "energia_hidratacion_J": 53933288521.764755,
+  "energia_bordes_J": -9604687227.671618,
+  "diferencial_normativo": "No evaluado: faltan definicion y muestreo de nucleo-superficie a 25 mm",
+  "limitaciones": [
+    "Parametros termicos e hidratacion pendientes de calibracion",
+    "Aire constante ilustrativo, no clima de Renaico",
+    "Base aislada provisional, sin suelo",
+    "Superficie escalonada de voxeles",
+    "Contacto perfecto y sin retiro de moldajes",
+    "No se incorpora dependencia de hidratacion con temperatura"
+  ]
+}

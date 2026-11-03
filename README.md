@@ -199,3 +199,40 @@ incorporar hidratación.
 ## Repositorio
 
 URL: https://github.com/aespinoza6-svg/P2-Grupo7
+
+## E07 — Voxelización IFC
+
+Primer voxelizador del IFC real: grilla cartesiana con `vertida_id`, estimación de volumen por vertida y exportación VTK. Método, alcance y preparación oral en [docs/E07_voxelizacion.md](docs/E07_voxelizacion.md).
+
+Desde la raíz del repositorio:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts/07_voxelizar_ifc.py --comparar
+.\.venv\Scripts\python.exe -X utf8 -m pytest tests/test_voxelizacion.py -v
+```
+
+Los resultados se guardan en `resultados/e07_voxelizacion/`. Este paso prepara geometría y etiquetas. El diseño pedagógico de hidratación y la estructura de activación se explican en [docs/E07_vertidas_hidratacion.md](docs/E07_vertidas_hidratacion.md); el prototipo de difusión por etapas se documenta en [docs/E07_simulacion_acoplada.md](docs/E07_simulacion_acoplada.md).
+
+### Activación e hidratación iniciales
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts/08_vertidas_hidratacion.py
+.\.venv\Scripts\python.exe -X utf8 -m pytest tests/test_construccion_hidratacion.py -v
+```
+
+Se leen las propiedades de la grilla generada desde el IFC. Cada vertida tiene su horario, temperatura de colocación y reloj de hidratación. Los parámetros en `config/hidratacion_e07.yaml` proceden del ejemplo docente de la guía y están pendientes de calibrar. Resultados y alcance: [docs/E07_vertidas_hidratacion.md](docs/E07_vertidas_hidratacion.md).
+
+### Primera simulación acoplada por vertidas
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts/09_simular_fundacion_vertidas.py
+.\.venv\Scripts\python.exe -X utf8 -m pytest tests/test_solver_vertidas.py -v
+```
+
+Este prototipo resuelve difusión en la geometría activa, incorpora cada vertida en su horario y usa la fuente pedagógica por edad. Se demuestra con aire constante a 15 °C, h=10 W/(m² K), base adiabática y contacto perfecto: **no es una predicción validada ni el plan constructivo final**. La configuración está en `config/termica_e07.yaml`. Resultados en `resultados/e07_simulacion_acoplada/`; método y alcance en [docs/E07_simulacion_acoplada.md](docs/E07_simulacion_acoplada.md).
+
+### Verificación temporal y horizonte de 14 días
+
+Se ejecutó el prototipo durante 14 días y se compararon pasos máximos de 600 y 300 s durante las primeras 72 h. Configuración, resultados y comandos en [verificación acoplada E07](docs/E07_verificacion_acoplada.md).
+
+Para preparar el recorrido por el código y las preguntas individuales: [guía oral E07](docs/E07_guia_oral.md).

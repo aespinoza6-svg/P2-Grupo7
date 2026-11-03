@@ -38,3 +38,23 @@
 1. ~~¿Cuándo estará la geometría oficial del curso?~~ Resuelta: el grupo adopta la geometría octagonal de S01–S03 (la del modelo en Bonsai) como geometría del caso base.
 2. ¿Es aceptable representar cada vertida como una `IfcFooting` independiente (D09)?
 3. ¿El modelo IFC puede generarse por script y editarse en Bonsai, o se espera que la geometría base se modele a mano en Bonsai?
+
+## Diseño inicial E07 de hidratación
+
+| ID | Supuesto | Fuente | Estado |
+|---|---|---|---|
+| S08 | Curva adiabática exponencial con elevación final 45 °C y tiempo característico 30 h; parámetros por mezcla, densidad y calor específico del caso base | Ejemplo pedagógico de las secciones 23–25 de `Antecedentes/guias/DIFUSION_DE_CALOR_1D_2D_3D.md` | Diseño inicial no calibrado, declarado en `config/hidratacion_e07.yaml` |
+| S09 | El reloj de hidratación comienza al colocar cada vertida; cinética dependiente solo de la edad real | `mcplan/hidratacion.py`, `mcplan/construccion.py` | Implementado; falta dependencia de temperatura y calibración |
+
+Las curvas de temperatura de la demostración son referencias adiabáticas independientes por vertida. No constituyen resultados de difusión térmica en la fundación construida por etapas.
+
+## Prototipo acoplado E07
+
+| ID | Supuesto | Dónde | Estado |
+|---|---|---|---|
+| S10 | Aire constante a 15 °C con h=10 W/(m² K) en caras expuestas laterales y superiores | `config/termica_e07.yaml` | Ilustrativo; no es clima meteorológico de Renaico |
+| S11 | Caras expuestas de orientación z- adiabáticas | `config/termica_e07.yaml` | Base simplificada; falta modelo de suelo |
+| S12 | Contacto perfecto entre hormigones y colocación instantánea de cada vertida en su horario | `mcplan/solver_vertidas.py` | Prototipo; sin resistencia de junta ni duración de vertida |
+| S13 | Primer ejemplo acoplado de 72 horas | `config/termica_e07.yaml` | Demostración; horizonte final del proyecto de 14 días |
+
+Las salidas del prototipo no evalúan todavía el diferencial núcleo-superficie a 25 mm ni confiabilidad, y no constituyen un Plan de Control de Temperatura.

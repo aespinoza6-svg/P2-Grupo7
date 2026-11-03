@@ -1,0 +1,120 @@
+{
+  "alcance": "Diseno de hidratacion y estructura de activacion. Sin simulacion de conduccion de la fundacion.",
+  "estado_parametros": "pedagogico_no_calibrado",
+  "fuente_parametros": "Guía DIFUSION_DE_CALOR_1D_2D_3D.md, sección 24",
+  "modelo": "theta_ad(a)=theta_inf*(1-exp(-a/tau)); q_h=rho*cp*dtheta_ad/da",
+  "edad": "a=t_global-t_colocacion, independiente para cada vertida",
+  "dependencia_de_temperatura": "No implementada; futura extension de edad equivalente/Arrhenius a calibrar",
+  "grilla_sha256": "e2ef901d7b92efdb3805230835a76f84ea7fe5815f8176fafe9940b579fbf792",
+  "configuracion_sha256": "6b95e9d8bfa4db888e4cc6f027c79edd2160f26bea36bfcf0de505de30acb5f8",
+  "programa_vertidas": [
+    {
+      "vertida_id": 1,
+      "inicio_h": 0.0,
+      "temperatura_colocacion_C": 18.0,
+      "mezcla": "M1",
+      "volumen_voxel_m3": 147.31200000000004,
+      "elevacion_adiabatica_final_C": 45.0,
+      "tau_h": 30.0,
+      "fuente_inicial_W_m3": 900.0
+    },
+    {
+      "vertida_id": 2,
+      "inicio_h": 6.0,
+      "temperatura_colocacion_C": 18.0,
+      "mezcla": "M1",
+      "volumen_voxel_m3": 147.31200000000004,
+      "elevacion_adiabatica_final_C": 45.0,
+      "tau_h": 30.0,
+      "fuente_inicial_W_m3": 900.0
+    },
+    {
+      "vertida_id": 3,
+      "inicio_h": 12.0,
+      "temperatura_colocacion_C": 18.0,
+      "mezcla": "M1",
+      "volumen_voxel_m3": 214.43200000000004,
+      "elevacion_adiabatica_final_C": 45.0,
+      "tau_h": 30.0,
+      "fuente_inicial_W_m3": 900.0
+    },
+    {
+      "vertida_id": 4,
+      "inicio_h": 18.0,
+      "temperatura_colocacion_C": 18.0,
+      "mezcla": "M1",
+      "volumen_voxel_m3": 88.80800000000002,
+      "elevacion_adiabatica_final_C": 45.0,
+      "tau_h": 30.0,
+      "fuente_inicial_W_m3": 900.0
+    },
+    {
+      "vertida_id": 5,
+      "inicio_h": 24.0,
+      "temperatura_colocacion_C": 18.0,
+      "mezcla": "M1",
+      "volumen_voxel_m3": 38.08000000000001,
+      "elevacion_adiabatica_final_C": 45.0,
+      "tau_h": 30.0,
+      "fuente_inicial_W_m3": 900.0
+    }
+  ],
+  "eventos": [
+    {
+      "t_h": 0.0,
+      "vertidas_activas": [
+        1
+      ],
+      "celdas_nuevas": 73656,
+      "celdas_activas": 73656,
+      "volumen_activo_m3": 147.31200000000004
+    },
+    {
+      "t_h": 6.0,
+      "vertidas_activas": [
+        1,
+        2
+      ],
+      "celdas_nuevas": 73656,
+      "celdas_activas": 147312,
+      "volumen_activo_m3": 294.6240000000001
+    },
+    {
+      "t_h": 12.0,
+      "vertidas_activas": [
+        1,
+        2,
+        3
+      ],
+      "celdas_nuevas": 107216,
+      "celdas_activas": 254528,
+      "volumen_activo_m3": 509.0560000000001
+    },
+    {
+      "t_h": 18.0,
+      "vertidas_activas": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "celdas_nuevas": 44404,
+      "celdas_activas": 298932,
+      "volumen_activo_m3": 597.8640000000001
+    },
+    {
+      "t_h": 24.0,
+      "vertidas_activas": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "celdas_nuevas": 19040,
+      "celdas_activas": 317972,
+      "volumen_activo_m3": 635.9440000000002
+    }
+  ],
+  "energia_total_generada_al_final_J": 53933288521.76471
+}
