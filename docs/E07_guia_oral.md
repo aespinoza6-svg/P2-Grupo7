@@ -112,3 +112,30 @@ Además, el máximo de las primeras 72 h no tiene por qué ser el máximo del ho
 ```
 
 Para el oral pueden mostrar resultados ya guardados y ejecutar una prueba pequeña. La capacidad de explicarlos individualmente sigue siendo central.
+
+## Lab: cambios en vivo
+
+Antes del lab, activen su entorno y corran una vez el caso base, así queda listo y el ayudante no espera:
+
+```powershell
+python -X utf8 scripts/11_lab_vertidas.py
+```
+
+| Si el ayudante pide | Comando | Qué mostrar |
+|---|---|---|
+| Cambiar Δx y reportar el error de volumen | `python -X utf8 scripts/11_lab_vertidas.py --solo-voxelizar --dx .1 --dy .1` | La línea `Error de volumen` |
+| Ocultar una vertida | `python -X utf8 scripts/11_lab_vertidas.py --solo-voxelizar --ocultar V05` | `vista_3d_sin_V05.png` |
+| Mostrarla de nuevo | `python -X utf8 scripts/11_lab_vertidas.py --solo-voxelizar` | `vista_3d_todas.png` |
+| Cambiar hora de inicio | `python -X utf8 scripts/11_lab_vertidas.py --inicio V05=36` | La tabla del programa y `comparacion_72h.png` |
+| Cambiar temperatura de colocación | `python -X utf8 scripts/11_lab_vertidas.py --temp V05=10` | Igual |
+| Probar un IFC editado en Bonsai | `python -X utf8 scripts/11_lab_vertidas.py --ifc-cambiado fundaciones/fundacion_lab.ifc` | Igual |
+
+Los resultados quedan en `resultados/lab/`, en una carpeta por malla y otra por cambio. Git ignora esa carpeta.
+
+**¿Cómo demuestran que la secuencia está en los inputs?** El script copia el IFC, cambia la propiedad en la copia y vuelve a correr los mismos scripts 07 y 09. El solver no se edita. El horario entra por `mcplan/construccion.py`, que lee `Inicio_h` y `TemperaturaColocacion_C` de cada vertida.
+
+**¿Ocultar una vertida cambia el cálculo?** No, solo cambia el dibujo. Para que una vertida no entre al cálculo, pongan su inicio después del horizonte, por ejemplo `--inicio V05=100`.
+
+**¿Por qué Tmax casi no cambia con Δx?** A las 72 h el máximo está en el núcleo, lejos de la superficie escalonada. Refinar sí cambia el volumen y el área expuesta. Tampoco esperen que el error de volumen baje siempre al refinar: los errores de distintas celdas se compensan.
+
+**¿Qué pasa si piden un orden imposible?** El script avisa con `AVISO`, pero igual simula. El solver no revisa el orden constructivo: esa revisión es del plan, y una vertida sin apoyo se debe descartar.
