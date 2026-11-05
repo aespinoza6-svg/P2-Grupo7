@@ -26,3 +26,4 @@ desktop.ini
 
 # Salidas temporales (lo que sí queremos versionar va en resultados/figuras)
 resultados/tmp/
+resultados/lab/
