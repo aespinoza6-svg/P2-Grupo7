@@ -10,7 +10,7 @@ import pytest
 from mcplan import bim
 from mcplan.construccion import ProgramaVertidas
 from mcplan.hidratacion import modelos_desde_configuracion
-from mcplan.solver1d import Material, Neumann, Robin
+from mcplan.solver1d import Dirichlet, Material, Neumann, Robin
 from mcplan.solver3d import CARAS
 from mcplan.solver_vertidas import resolver_vertidas
 from mcplan.voxelizacion import extraer_mallas, voxelizar_mallas
@@ -44,8 +44,21 @@ def test_la_geometria_del_visor_es_la_del_ifc():
         assert g['vol'] == pytest.approx(reales[g['id']].volumen_ifc_m3)
 
 
+REPO = dict(arriba=dict(tipo='robin', h=10, R=0, T=15), lados=dict(tipo='robin', h=10, R=0, T=15), base=dict(tipo='neumann', q=0))
+MEZCLA = dict(arriba=dict(tipo='dirichlet', T=20), lados=dict(tipo='neumann', q=50), base=dict(tipo='robin', h=5, R=0.1, T=12))
+
+
+def borde_python(b):
+    if b['tipo'] == 'robin':
+        return Robin(b['h'], b['T'], R_extra=b['R'])
+    if b['tipo'] == 'dirichlet':
+        return Dirichlet(b['T'])
+    return Neumann(b['q'])
+
+
 @pytest.mark.skipif(shutil.which('node') is None, reason='Node no esta instalado')
-def test_el_motor_del_visor_da_lo_mismo_que_python(tmp_path):
+@pytest.mark.parametrize('caras', [REPO, MEZCLA], ids=['bordes_del_repo', 'dirichlet_neumann_robin'])
+def test_el_motor_del_visor_da_lo_mismo_que_python(tmp_path, caras):
     horas, paso = 12.0, (.4, .4, .05)
     caso = bim.cargar_yaml(RAIZ / 'config' / 'caso_base.yaml')
     hc = bim.cargar_yaml(RAIZ / 'config' / 'hidratacion_e07.yaml')
@@ -53,8 +66,8 @@ def test_el_motor_del_visor_da_lo_mismo_que_python(tmp_path):
     grilla = voxelizar_mallas(extraer_mallas(IFC), paso, max_celdas=4_000_000)
     programa = ProgramaVertidas(grilla, modelos_desde_configuracion(caso, hc))
     materiales = {'M1': Material('M1', h['conductividad_W_mK'], h['densidad_kg_m3'], h['calor_especifico_J_kgK'])}
-    bordes = {c: Robin(10.0, 15.0) for c in CARAS}
-    bordes['z-'] = Neumann(0.0)
+    grupo = {'x-': 'lados', 'x+': 'lados', 'y-': 'lados', 'y+': 'lados', 'z-': 'base', 'z+': 'arriba'}
+    bordes = {c: borde_python(caras[grupo[c]]) for c in CARAS}
     r = resolver_vertidas(programa, materiales, bordes, horas * 3600, max_dt_s=600.0,
                           tiempos_guardado_s=np.arange(0, horas + 1) * 3600)
     filas = grilla.resumen_volumenes()
@@ -66,8 +79,7 @@ def test_el_motor_del_visor_da_lo_mismo_que_python(tmp_path):
     (tmp_path / 'arnes.js').write_text(ARNES, encoding='utf-8')
     (tmp_path / 'geo.json').write_text(json.dumps(visor12.geometria_del_visor(TEXTO)), encoding='utf-8')
     P = dict(d=list(paso), k=h['conductividad_W_mK'], rho=h['densidad_kg_m3'], cp=h['calor_especifico_J_kgK'],
-             theta=45, tau=30, horizonte=horas, maxdt=600, intervalo=1,
-             arriba=dict(tipo='robin', h=10, R=0, T=15), lados=dict(tipo='robin', h=10, R=0, T=15), base=dict(tipo='adiabatica'),
+             theta=45, tau=30, horizonte=horas, maxdt=600, intervalo=1, **caras,
              vertidas=[dict(id=v, inicio=p['Inicio_h'], temp=p['TemperaturaColocacion_C'], calc=True) for v, p in grilla.vertidas.items()])
     (tmp_path / 'p.json').write_text(json.dumps(P), encoding='utf-8')
     salida = subprocess.run(['node', tmp_path / 'arnes.js', tmp_path / 'worker.js', tmp_path / 'geo.json', tmp_path / 'p.json'],
