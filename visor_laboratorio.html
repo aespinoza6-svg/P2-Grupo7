@@ -300,6 +300,17 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
     </section>
   </div>
 
+  <section class="card graf" id="sec-estrategias">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2>Cómo bajar el diferencial</h2>
+      <button type="button" class="prim" id="btn-estrategias">Comparar estrategias</button>
+    </div>
+    <p class="nota" style="margin:0">Parte del caso que tienes ahora y prueba un cambio a la vez, con la misma malla y el mismo horizonte. Tarda unos 40 s con 72 h y unos 2 min con 14 días. Las resistencias son valores típicos: madera de 18 mm (R ≈ 0,14 m²K/W) y poliestireno de 5 o 10 cm (R ≈ 1,43 o 2,86 m²K/W).</p>
+    <div class="tabla" id="t-estrategias"></div>
+    <canvas id="g-estrategias" hidden></canvas>
+    <div class="leyenda" id="l-estrategias"></div>
+  </section>
+
   <div class="dos-col">
     <section class="card graf">
       <h2>Volumen: IFC contra vóxeles</h2>
@@ -438,23 +449,28 @@ function simular(vox,P,avisar){
   const maxFrames=Math.max(8,Math.min(160,Math.floor(110e6/(4*Math.max(ncon,1)))));
   const cada=Math.max(1,Math.ceil(salidas.length/maxFrames));
   const esFrame=new Set(salidas.filter((_,i)=>i%cada===0));esFrame.add(H);eventos.forEach(e=>esFrame.add(e));
-  const serie={t:[],gmax:[],gmin:[],gsup:[],vol:[],E:[],Ecol:[],Ehid:[],Ebor:[],res:[],dtcrit:[],pv:{}};
+  const serie={t:[],gmax:[],gmin:[],gns:[],pns:[],vol:[],E:[],Ecol:[],Ehid:[],Ebor:[],res:[],dtcrit:[],pv:{}};
   ids.forEach(id=>serie.pv[id]={max:[],media:[],min:[]});
   const frames=[];
   function guardar(t){
     // Extremos del instante. Superficie: celda con al menos una cara expuesta que no es adiabática.
-    let E=0,gmx=-Infinity,gmn=Infinity,gsu=Infinity,imx=-1,imn=-1,isu=-1;const s={},c={},mx={},mn={};
-    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];E+=C*v;if(v>gmx){gmx=v;imx=l;}if(v<gmn){gmn=v;imn=l;}if(sup[a]&&v<gsu){gsu=v;isu=l;}
-      s[p]=(s[p]||0)+v;c[p]=(c[p]||0)+1;mx[p]=Math.max(mx[p]??-Infinity,v);mn[p]=Math.min(mn[p]??Infinity,v);}
+    // El diferencial se mide dentro de cada vertida: su celda más caliente menos su superficie más fría.
+    let E=0,gmx=-Infinity,gmn=Infinity,imx=-1,imn=-1;const s={},c={},mx={},mn={},imxp={},msp={},isp={};
+    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];E+=C*v;if(v>gmx){gmx=v;imx=l;}if(v<gmn){gmn=v;imn=l;}
+      s[p]=(s[p]||0)+v;c[p]=(c[p]||0)+1;if(!(v<=mx[p])){mx[p]=v;imxp[p]=l;}mn[p]=Math.min(mn[p]??Infinity,v);
+      if(sup[a]&&!(v>=msp[p])){msp[p]=v;isp[p]=l;}}
+    let pw=-1,dw=-Infinity;for(const p in msp){const dd=mx[p]-msp[p];if(dd>dw){dw=dd;pw=+p;}}
+    let inc=pw>=0?imxp[pw]:-1,ins=pw>=0?isp[pw]:-1;
     // La fundación es simétrica: entre celdas empatadas se marca la de y ≥ 0, que el corte 3D deja a la vista.
     const yc=l=>vox.org[1]+((((cid[l]/nx)|0)%ny)+.5)*d[1];
-    if(imx>=0||isu>=0)for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l];if(yc(l)<0)continue;
-      if(imx>=0&&yc(imx)<0&&v>=gmx-1e-9)imx=l;if(imn>=0&&yc(imn)<0&&v<=gmn+1e-9)imn=l;if(isu>=0&&sup[a]&&yc(isu)<0&&v<=gsu+1e-9)isu=l;}
-    serie.t.push(t/3600);serie.gmax.push(lista.length?gmx:NaN);serie.gmin.push(lista.length?gmn:NaN);serie.gsup.push(isu>=0?gsu:NaN);
+    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];if(yc(l)<0)continue;
+      if(yc(imx)<0&&v>=gmx-1e-9)imx=l;if(yc(imn)<0&&v<=gmn+1e-9)imn=l;
+      if(p===pw){if(yc(inc)<0&&v>=mx[pw]-1e-9)inc=l;if(sup[a]&&yc(ins)<0&&v<=msp[pw]+1e-9)ins=l;}}
+    serie.t.push(t/3600);serie.gmax.push(lista.length?gmx:NaN);serie.gmin.push(lista.length?gmn:NaN);serie.gns.push(pw>=0?dw:NaN);serie.pns.push(pw);
     serie.vol.push(lista.length*V);serie.E.push(E);serie.Ecol.push(Ecol);serie.Ehid.push(Ehid);serie.Ebor.push(Ebor);
     serie.res.push(E-Ecol-Ehid-Ebor);serie.dtcrit.push(isFinite(dtcrit)?dtcrit:null);
     ids.forEach(id=>{const q=serie.pv[id];if(c[id]){q.max.push(mx[id]);q.min.push(mn[id]);q.media.push(s[id]/c[id]);}else{q.max.push(NaN);q.min.push(NaN);q.media.push(NaN);}});
-    if(esFrame.has(t)){const F=new Float32Array(ncon);for(let l=0;l<ncon;l++)F[l]=T[l];frames.push({t:t/3600,T:F,imax:imx,imin:imn,isup:isu});}
+    if(!P.sinCampos&&esFrame.has(t)){const F=new Float32Array(ncon);for(let l=0;l<ncon;l++)F[l]=T[l];frames.push({t:t/3600,T:F,imax:imx,imin:imn,inuc:inc,isup:ins,pns:pw});}
   }
   incorporar(0);medir(0);guardar(0);
   const P2=new Float64Array(ncon);let t=0,ultimo=Date.now();
@@ -487,6 +503,15 @@ const cache={};
 self.onmessage=e=>{
   const m=e.data;
   try{
+    if(m.cmd==='estrategias'){
+      const clave=m.d.join(',');let vox=cache[clave];
+      if(!vox){vox=voxelizar(m.mallas,m.d);for(const c in cache)delete cache[c];cache[clave]=vox;}
+      const filas=m.casos.map((c,i)=>{
+        const r=simular(vox,{...c.P,sinCampos:true},f=>postMessage({tipo:'progreso',etapa:`Estrategia ${i+1} de ${m.casos.length}`,frac:(i+f)/m.casos.length}));
+        const s=r.serie,ns=s.gns;let im=-1;ns.forEach((v,j)=>{if(Number.isFinite(v)&&(im<0||v>ns[im]))im=j;});
+        return {nombre:c.nombre,detalle:c.detalle,maximo:r.maximo,tmax:r.tmax,dt:im<0?NaN:ns[im],tdt:im<0?NaN:s.t[im],dtFinal:ns[ns.length-1],t:s.t,ns};});
+      postMessage({tipo:'estrategias',filas});return;
+    }
     if(m.cmd==='barrido'){
       const filas=[];
       m.pasos.forEach((d,i)=>{const t0=performance.now();
@@ -934,39 +959,98 @@ const estadoC=(ok,lim)=>`<span class="estado-c ${ok?'ok':'mal'}">${ok?'Cumple':'
 function instante(){
   const r=estado.r;if(!r)return;const f=r.frames[estado.frame],lt=num('lim-tmax'),ld=num('lim-dt');
   if(f.imax<0){$('instante').innerHTML='<p class="nota">En este instante aún no hay hormigón colocado.</p>';$('n-instante').textContent='';return;}
-  const F=f.T,tmx=F[f.imax],tmn=F[f.imin],tsu=f.isup>=0?F[f.isup]:NaN,dns=tmx-tsu,dtot=tmx-tmn;
+  const F=f.T,tmx=F[f.imax],tmn=F[f.imin],tnu=f.pns>=0?F[f.inuc]:NaN,tsu=f.pns>=0?F[f.isup]:NaN,dns=tnu-tsu,dtot=tmx-tmn;
   const datos=[
-    ['T máxima',`${fmt(tmx,2)} °C`,`<span class="marca" style="background:${COL_MAX}"></span>${donde(f.imax)}`,estadoC(tmx<=lt,lt)],
+    ['T máxima',`${fmt(tmx,2)} °C`,donde(f.imax),estadoC(tmx<=lt,lt)],
     ['T mínima',`${fmt(tmn,2)} °C`,donde(f.imin),''],
-    ['Núcleo − superficie (aprox.)',Number.isFinite(dns)?`${fmt(dns,2)} °C`:'—',f.isup>=0?`<span class="marca" style="background:${COL_SUP}"></span>superficie más fría: ${donde(f.isup)} · ${fmt(tsu,2)} °C`:'No hay caras expuestas no adiabáticas',Number.isFinite(dns)?estadoC(dns<=ld,ld):''],
-    ['T máxima − T mínima',`${fmt(dtot,2)} °C`,'todo el hormigón colocado, incluida una vertida recién colocada',estadoC(dtot<=ld,ld)]];
+    ['Núcleo − superficie (aprox.)',Number.isFinite(dns)?`${fmt(dns,2)} °C`:'—',f.pns>=0?`peor vertida: ${etiqueta(f.pns)}<br><span class="marca" style="background:${COL_MAX}"></span>núcleo ${fmt(tnu,2)} °C · ${donde(f.inuc)}<br><span class="marca" style="background:${COL_SUP}"></span>superficie ${fmt(tsu,2)} °C · ${donde(f.isup)}`:'No hay caras expuestas no adiabáticas',Number.isFinite(dns)?estadoC(dns<=ld,ld):''],
+    ['T máxima − T mínima',`${fmt(dtot,2)} °C`,'todo el hormigón colocado, entre vertidas distintas; no es el criterio',estadoC(dtot<=ld,ld)]];
   $('instante').innerHTML=datos.map(([a,b,c,d])=>`<div class="dato"><span>${a}</span><strong>${b}</strong><small>${c}</small>${d}</div>`).join('');
   const [dx,,dz]=estado.vox.d;
-  $('n-instante').textContent=`La superficie es cada celda con una cara al aire o con temperatura o flujo impuesto. Su centro queda a ${fmt(dz*500,1)} mm de la cara superior y a ${fmt(dx*500,0)} mm de los lados; el curso mide a 25 mm. Es una aproximación: el repo todavía no evalúa el diferencial normativo por sección.`;
+  $('n-instante').textContent=`Núcleo − superficie se mide dentro de cada vertida y se muestra la peor: su celda más caliente menos su celda de superficie más fría. La superficie es cada celda con una cara al aire o con temperatura o flujo impuesto. Su centro queda a ${fmt(dz*500,1)} mm de la cara superior y a ${fmt(dx*500,0)} mm de los lados; el curso mide a 25 mm. Es una aproximación: el repo todavía no evalúa el diferencial normativo por sección.`;
 }
 function marcadores(){
   if(!escena)return;const r=estado.r,f=r?r.frames[estado.frame]:null,ver=$('marcas').checked&&f;
-  [[marcaMax,f?.imax],[marcaSup,f?.isup]].forEach(([m,l])=>{
+  [[marcaMax,f&&f.pns>=0?f.inuc:-1],[marcaSup,f&&f.pns>=0?f.isup:-1]].forEach(([m,l])=>{
     if(!m)return;m.visible=!!ver&&l>=0;if(m.visible){const c=celda(l);m.position.set(c.x,c.y,c.z);}});
 }
 function diferenciales(){
-  const s=estado.r.serie,ns=s.gmax.map((m,i)=>m-s.gsup[i]),tot=s.gmax.map((m,i)=>m-s.gmin[i]);
+  const s=estado.r.serie,ns=s.gns,tot=s.gmax.map((m,i)=>m-s.gmin[i]);
   let im=-1;ns.forEach((v,i)=>{if(Number.isFinite(v)&&(im<0||v>ns[im]))im=i;});
   return {ns,tot,max:im<0?null:{v:ns[im],t:s.t[im]}};
 }
 function graficoDT(){
   const r=estado.r;if(!r)return;const s=r.serie,ld=num('lim-dt'),tc=r.frames[estado.frame]?.t,{ns,tot,max}=diferenciales();
-  const ser=[{name:'Núcleo − superficie (aprox.)',x:s.t,y:ns,color:css('--accent'),w:2.4},
+  const ser=[{name:'Núcleo − superficie por vertida (aprox.)',x:s.t,y:ns,color:css('--accent'),w:2.4},
     {name:'T máx − T mín',x:s.t,y:tot,color:css('--ink'),w:1.4,dash:[5,4]},
     {name:'Límite',x:s.t,y:s.t.map(()=>ld),color:css('--bad'),w:1.4,dash:[2,3]}];
   grafico($('g-dt'),{series:ser,xlab:'Tiempo desde la primera vertida [h]',ylab:'ΔT [°C]',cursor:tc,y0:0});
   leyenda('l-dt',ser.map(x=>[x.name,x.color,!!x.dash]));
   const primero=ns.findIndex(v=>v>ld);
   $('n-dt').textContent=!max?'No hay caras expuestas no adiabáticas: no se puede estimar el diferencial.':
-    `Máximo núcleo − superficie: ${fmt(max.v,2)} °C a las ${fmt(max.t,1)} h. `+(primero<0?`Nunca supera ${fmt(ld,0)} °C en el horizonte.`:`Supera ${fmt(ld,0)} °C por primera vez a las ${fmt(s.t[primero],1)} h.`)+' Los saltos de la línea discontinua ocurren cuando entra una vertida fría.';
+    `Máximo núcleo − superficie: ${fmt(max.v,2)} °C a las ${fmt(max.t,1)} h, en ${etiqueta(s.pns[s.t.indexOf(max.t)])}. `+(primero<0?`Nunca supera ${fmt(ld,0)} °C en el horizonte.`:`Supera ${fmt(ld,0)} °C por primera vez a las ${fmt(s.t[primero],1)} h.`)+' La línea discontinua compara vertidas distintas: salta cuando entra una vertida fría.';
 }
 ['lim-tmax','lim-dt'].forEach(id=>$(id).addEventListener('input',()=>{instante();graficoDT();kpis();}));
 $('marcas').onchange=()=>{marcadores();dibujar3D();};
+
+// ---------- Estrategias para bajar el diferencial ----------
+// Cada estrategia es una lista de cambios en el formulario: así «Aplicar» deja la pantalla igual a lo comparado.
+const ESTRATEGIAS=[
+  ['Caso actual','sin cambios',()=>[]],
+  ['Moldaje de madera en los lados','R = 0,14 m²K/W en los lados',()=>[['tipo-lados','robin'],['r-lados',0.14]]],
+  ['Aislación de 5 cm arriba y en los lados','R = 1,43 m²K/W',()=>[['tipo-arriba','robin'],['r-arriba',1.43],['tipo-lados','robin'],['r-lados',1.43]]],
+  ['Aislación de 10 cm arriba y en los lados','R = 2,86 m²K/W',()=>[['tipo-arriba','robin'],['r-arriba',2.86],['tipo-lados','robin'],['r-lados',2.86]]],
+  ['Protección del viento','h a la mitad arriba y en los lados',()=>[['h-arriba',num('h-arriba')/2],['h-lados',num('h-lados')/2]]],
+  ['Hormigón colocado a 10 °C','todas las vertidas',()=>GEO.map(g=>['tc-'+g.id,10])],
+  ['Vertidas cada 24 h','mismo orden que ahora',()=>ordenVertidas().map((id,i)=>['ini-'+id,24*i])],
+  ['Vertidas cada 48 h','mismo orden que ahora',()=>ordenVertidas().map((id,i)=>['ini-'+id,48*i])],
+  ['Aislación de 5 cm y colocación a 10 °C','R = 1,43 m²K/W y 10 °C',()=>[['tipo-arriba','robin'],['r-arriba',1.43],['tipo-lados','robin'],['r-lados',1.43],...GEO.map(g=>['tc-'+g.id,10])]],
+  ['Cemento con menos calor','θ∞ 10 °C menor',()=>[['theta',Math.max(0,num('theta')-10)]]]];
+const ordenVertidas=()=>GEO.map(g=>g.id).sort((a,b)=>num('ini-'+a)-num('ini-'+b)||a-b);
+function formulario(){const m={};document.querySelectorAll('aside input,aside select').forEach(el=>{if(el.id)m[el.id]=el.type==='checkbox'?el.checked:el.value;});return m;}
+function ponerFormulario(m){Object.entries(m).forEach(([id,v])=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=v;else el.value=String(v);});}
+let workerEst=null,estrategias=null;
+function finEstrategias(texto,clase){if(workerEst)workerEst.terminate();workerEst=null;$('btn-estrategias').textContent='Comparar estrategias';pillEstado(texto,clase);}
+$('btn-estrategias').onclick=()=>{
+  if(workerEst){finEstrategias('Comparación detenida','');return;}
+  const {malos}=leer();if(malos.length){pillEstado('Revisa los valores','err');return;}
+  const antes=formulario(),casos=[];
+  ESTRATEGIAS.forEach(([nombre,detalle,cambios])=>{const c=cambios();ponerFormulario(Object.fromEntries(c));const {P,malos}=leer();ponerFormulario(antes);if(!malos.length)casos.push({nombre,detalle,P,cambios:c});});
+  estrategias={casos,filas:null};
+  workerEst=new Worker(URL.createObjectURL(new Blob([$('worker-src').textContent],{type:'text/javascript'})));
+  $('btn-estrategias').textContent='Detener';$('t-estrategias').innerHTML='<p class="nota">Calculando…</p>';
+  workerEst.onmessage=e=>{const m=e.data;
+    if(m.tipo==='progreso'){pillEstado(`${m.etapa} · ${(100*m.frac).toFixed(0)} %`,'run');$('progreso').style.width=(100*m.frac).toFixed(0)+'%';}
+    else if(m.tipo==='estrategias'){estrategias.filas=m.filas;finEstrategias('Comparación de estrategias lista','ok');tablaEstrategias();}
+    else if(m.tipo==='error'){finEstrategias('Error','err');$('t-estrategias').innerHTML=`<div class="aviso">${m.msg}</div>`;}};
+  workerEst.postMessage({cmd:'estrategias',mallas:GEO,d:casos[0].P.d,casos:casos.map(({nombre,detalle,P})=>({nombre,detalle,P}))});
+};
+function tablaEstrategias(){
+  if(!estrategias||!estrategias.filas)return;
+  const F=estrategias.filas,lt=num('lim-tmax'),ld=num('lim-dt'),tope=Math.max(...F.map(f=>f.dt).filter(Number.isFinite),ld);
+  const actual=F[0],orden=F.map((f,i)=>i).sort((a,b)=>(F[a].dt-F[b].dt)||a-b);
+  const chip=ok=>`<span class="estado-c ${ok?'ok':'mal'}">${ok?'Cumple':'No'}</span>`;
+  const filas=orden.map(i=>{const f=F[i],c=estrategias.casos[i],delta=f.dt-actual.dt;
+    return `<tr${i===0?' style="font-weight:600"':''}><td style="white-space:normal;min-width:180px">${f.nombre}<br><small style="color:var(--muted);font-weight:400">${f.detalle}</small></td>
+      <td class="num">${fmt(f.maximo,1)} °C</td><td>${chip(f.maximo<=lt)}</td>
+      <td class="num">${fmt(f.dt,1)} °C${i?`<br><small style="color:var(--muted);font-weight:400">${delta>=0?'+':''}${fmt(delta,1)}</small>`:''}</td>
+      <td class="num">${fmt(f.tdt,0)} h</td><td>${chip(f.dt<=ld)}</td>
+      <td class="num">${fmt(f.dtFinal,1)} °C</td>
+      <td><div style="height:8px;border-radius:2px;background:var(--grid)"><div style="height:8px;border-radius:2px;width:${Math.max(2,100*f.dt/tope)}%;background:${f.dt<=ld?'var(--ok)':'var(--accent)'}"></div></div></td>
+      <td>${i?`<button type="button" data-aplicar="${i}">Aplicar</button>`:''}</td></tr>`;}).join('');
+  $('t-estrategias').innerHTML=`<table><thead><tr><th>Estrategia</th><th>T máx</th><th>≤ ${fmt(lt,0)} °C</th><th>ΔT máx</th><th>A las</th><th>≤ ${fmt(ld,0)} °C</th><th>ΔT al final</th><th style="min-width:110px"></th><th></th></tr></thead><tbody>${filas}</tbody></table>
+  <p class="nota" style="margin:6px 0 0">Ordenadas de menor a mayor diferencial; la segunda línea de ΔT es la diferencia con el caso actual. ΔT es la aproximación núcleo − superficie dentro de cada vertida. La aislación se mantiene todo el horizonte; su retiro y el choque térmico que produce no están modelados.</p>`;
+  $('t-estrategias').querySelectorAll('[data-aplicar]').forEach(b=>b.onclick=()=>{
+    const c=estrategias.casos[+b.dataset.aplicar];ponerFormulario(Object.fromEntries(c.cambios));derivados();calcular();
+    $('visor').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});});
+  const top=[0,...orden.filter(i=>i!==0).slice(0,3)],cols=[css('--ink'),COLORES[1],COLORES[3],COLORES[2]];
+  const ser=top.map((i,k)=>({name:F[i].nombre,x:F[i].t,y:F[i].ns,color:cols[k],w:k?2:1.6,dash:k?[]:[5,4]}));
+  ser.push({name:'Límite',x:F[0].t,y:F[0].t.map(()=>ld),color:css('--bad'),dash:[2,3],w:1.4});
+  const cv=$('g-estrategias');cv.hidden=false;
+  grafico(cv,{series:ser,xlab:'Tiempo [h]',ylab:'ΔT núcleo − superficie [°C]',y0:0});
+  leyenda('l-estrategias',ser.map(x=>[x.name,x.color,!!x.dash]));
+}
+['lim-tmax','lim-dt'].forEach(id=>$(id).addEventListener('input',tablaEstrategias));
 
 function todo(){kpis();instante();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
 function ponerReloj(){const r=estado.r;if(!r)return;const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;}
