@@ -170,21 +170,8 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
   <section class="card">
     <fieldset>
       <legend><h2>Condiciones de borde</h2></legend>
-      <div class="campos dos">
-        <label class="f">Aire T∞ [°C]<input type="number" id="taire" value="15" step="1"></label>
-        <span></span>
-        <label class="f">Arriba: h [W/m²K]<input type="number" id="h-arriba" value="10" min="0.1" step="1"></label>
-        <label class="f">Arriba: R extra [m²K/W]<input type="number" id="r-arriba" value="0" min="0" step="0.05"></label>
-        <label class="f">Lados: h [W/m²K]<input type="number" id="h-lados" value="10" min="0.1" step="1"></label>
-        <label class="f">Lados: R extra [m²K/W]<input type="number" id="r-lados" value="0" min="0" step="0.05"></label>
-        <label class="f">Base (z−)<select id="base">
-          <option value="adiabatica" selected>Adiabática</option>
-          <option value="dirichlet">Temperatura fija</option>
-          <option value="robin">Convección</option>
-        </select></label>
-        <label class="f" id="lbl-tbase">T base [°C]<input type="number" id="tbase" value="12" step="1"></label>
-        <label class="f" id="lbl-hbase">Base: h [W/m²K]<input type="number" id="hbase" value="5" min="0.1" step="1"></label>
-      </div>
+      <p class="deriv" style="margin:0;display:block"><b>Dirichlet:</b> temperatura fija en la cara. <b>Neumann:</b> flujo fijo q; con q = 0 es adiabática y con q &gt; 0 entra calor. <b>Robin:</b> convección con el aire a T, coeficiente h y resistencia extra R (moldaje o aislación).</p>
+      <div id="bordes"></div>
       <div class="deriv" id="deriv-borde"></div>
     </fieldset>
   </section>
@@ -379,11 +366,12 @@ function simular(vox,P,avisar){
   const V=d[0]*d[1]*d[2],A=[V/d[0],V/d[1],V/d[2]],k=P.k,Cv=P.rho*P.cp,C=Cv*V;
   const G=[k*A[0]/d[0],k*A[1]/d[1],k*A[2]/d[2]];
   const caras=[P.lados,P.lados,P.lados,P.lados,P.base,P.arriba];
-  const Gb=new Float64Array(6),Tref=new Float64Array(6);
+  // Igual que mcplan.solver1d._conductancia_borde: Robin y Dirichlet dependen de T; Neumann es un flujo fijo q·A.
+  const Gb=new Float64Array(6),Tref=new Float64Array(6),Qb=new Float64Array(6);
   caras.forEach((b,f)=>{const e=f>>1,r=d[e]/(2*k);
     if(b.tipo==='robin'){Gb[f]=A[e]/(r+b.R+1/b.h);Tref[f]=b.T;}
     else if(b.tipo==='dirichlet'){Gb[f]=A[e]/r;Tref[f]=b.T;}
-    else{Gb[f]=0;Tref[f]=0;}});
+    else{Qb[f]=(b.q||0)*A[e];}});
   let ncon=0;for(let i=0;i<N;i++)if(lab[i])ncon++;
   const cid=new Int32Array(ncon),loc=new Int32Array(N).fill(-1),pv=new Uint8Array(ncon);
   {let q=0;for(let i=0;i<N;i++)if(lab[i]){cid[q]=i;loc[i]=q;pv[q]=lab[i];q++;}}
@@ -403,7 +391,7 @@ function simular(vox,P,avisar){
       for(let f=0;f<6;f++){
         const ln=dentro[f]?loc[g+off[f]]:-1;
         if(ln>=0&&act[ln]){nb[a*6+f]=ln;S+=G[f>>1];}
-        else{nb[a*6+f]=-1;ge+=Gb[f];gt+=Gb[f]*Tref[f];}
+        else{nb[a*6+f]=-1;ge+=Gb[f];gt+=Gb[f]*Tref[f]+Qb[f];}
       }
       S+=ge;lista[a]=l;Gext[a]=ge;GextT[a]=gt;if(S>0)dtcrit=Math.min(dtcrit,C/S);a++;
     }
@@ -496,7 +484,7 @@ const fmt=(v,dec=2)=>Number.isFinite(v)?v.toLocaleString('es-CL',{minimumFractio
 const etiqueta=id=>'V'+String(id).padStart(2,'0');
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-const BASE={dx:.2,dy:.2,dz:.05,k:2,rho:2400,cp:900,theta:45,tau:30,taire:15,'h-arriba':10,'r-arriba':0,'h-lados':10,'r-lados':0,base:'adiabatica',tbase:12,hbase:5,horizonte:72,maxdt:600,intervalo:1};
+const BASE={dx:.2,dy:.2,dz:.05,k:2,rho:2400,cp:900,theta:45,tau:30,horizonte:72,maxdt:600,intervalo:1};
 
 // ---------- Programa de vertidas ----------
 function dibujarPrograma(){
@@ -508,21 +496,44 @@ function dibujarPrograma(){
     <td><input type="checkbox" id="ver-${g.id}" checked aria-label="Dibujar ${etiqueta(g.id)}"></td></tr>`).join('');
 }
 dibujarPrograma();
+// ---------- Condiciones de borde: un tipo por grupo de caras ----------
+const CARAS_UI=[['arriba','Arriba (z+)','robin'],['lados','Lados (x±, y±)','robin'],['base','Base (z−)','neumann']];
+const BORDE_BASE={robin:{t:15,h:10,r:0,q:0},neumann:{t:12,h:5,r:0,q:0}};
+const NOMBRE_TIPO={robin:'Robin',dirichlet:'Dirichlet',neumann:'Neumann'};
+function dibujarBordes(){
+  $('bordes').innerHTML=CARAS_UI.map(([c,nombre,tipo])=>{const v=BORDE_BASE[tipo];return `<div class="campos" style="margin-top:8px">
+    <label class="f">${nombre}<select id="tipo-${c}">
+      <option value="robin"${tipo==='robin'?' selected':''}>Robin (convección)</option>
+      <option value="dirichlet">Dirichlet (T fija)</option>
+      <option value="neumann"${tipo==='neumann'?' selected':''}>Neumann (flujo q)</option></select></label>
+    <label class="f" data-cara="${c}" data-para="robin dirichlet">T [°C]<input type="number" id="t-${c}" value="${v.t}" step="1"></label>
+    <label class="f" data-cara="${c}" data-para="robin">h [W/m²K]<input type="number" id="h-${c}" value="${v.h}" min="0.1" step="1"></label>
+    <label class="f" data-cara="${c}" data-para="robin">R extra [m²K/W]<input type="number" id="r-${c}" value="${v.r}" min="0" step="0.05"></label>
+    <label class="f" data-cara="${c}" data-para="neumann">q entrante [W/m²]<input type="number" id="q-${c}" value="${v.q}" step="10"></label></div>`;}).join('');
+}
+dibujarBordes();
 const num=id=>parseFloat($(id).value);
+function leerBorde(c){
+  const tipo=$('tipo-'+c).value;
+  if(tipo==='robin')return {tipo,h:num('h-'+c),R:num('r-'+c),T:num('t-'+c)};
+  if(tipo==='dirichlet')return {tipo,T:num('t-'+c)};
+  return {tipo,q:num('q-'+c)};
+}
+function textoBorde(b){return b.tipo==='robin'?`Robin h = ${fmt(b.h,1)}, T = ${fmt(b.T,1)} °C${b.R?`, R = ${fmt(b.R,2)}`:''}`:b.tipo==='dirichlet'?`Dirichlet T = ${fmt(b.T,1)} °C`:b.q?`Neumann q = ${fmt(b.q,0)} W/m²`:'Neumann q = 0 (adiabática)';}
 function leer(){
   const P={d:[num('dx'),num('dy'),num('dz')],k:num('k'),rho:num('rho'),cp:num('cp'),theta:num('theta'),tau:num('tau'),
     horizonte:num('horizonte'),maxdt:num('maxdt'),intervalo:num('intervalo'),
-    arriba:{tipo:'robin',h:num('h-arriba'),R:num('r-arriba'),T:num('taire')},
-    lados:{tipo:'robin',h:num('h-lados'),R:num('r-lados'),T:num('taire')},
-    base:$('base').value==='adiabatica'?{tipo:'adiabatica'}:$('base').value==='dirichlet'?{tipo:'dirichlet',T:num('tbase')}:{tipo:'robin',h:num('hbase'),R:0,T:num('tbase')},
+    arriba:leerBorde('arriba'),lados:leerBorde('lados'),base:leerBorde('base'),
     vertidas:GEO.map(g=>({id:g.id,inicio:num('ini-'+g.id),temp:num('tc-'+g.id),calc:$('calc-'+g.id).checked}))};
   const malos=[];
   if(P.d.some(x=>!(x>0)))malos.push('Δx, Δy y Δz deben ser positivos.');
   [['k',P.k],['ρ',P.rho],['cp',P.cp],['τ',P.tau],['horizonte',P.horizonte],['Δt máx',P.maxdt],['salida',P.intervalo]].forEach(([n,v])=>{if(!(v>0))malos.push(`${n} debe ser positivo.`)});
   if(!(P.theta>=0))malos.push('θ∞ no puede ser negativa.');
-  if(!(P.arriba.h>0&&P.lados.h>0))malos.push('h debe ser positivo; para aislar, use una R extra grande.');
-  if(!(P.arriba.R>=0&&P.lados.R>=0))malos.push('La resistencia extra no puede ser negativa.');
-  if(P.base.tipo==='robin'&&!(P.base.h>0))malos.push('h de la base debe ser positivo.');
+  CARAS_UI.forEach(([c,nombre])=>{const b=P[c];
+    if(b.tipo==='robin'&&!(b.h>0))malos.push(`${nombre}: h debe ser positivo. Para aislar, use Neumann con q = 0.`);
+    if(b.tipo==='robin'&&!(b.R>=0))malos.push(`${nombre}: la resistencia extra no puede ser negativa.`);
+    if(b.tipo!=='neumann'&&!Number.isFinite(b.T))malos.push(`${nombre}: falta la temperatura.`);
+    if(b.tipo==='neumann'&&!Number.isFinite(b.q))malos.push(`${nombre}: falta el flujo q.`);});
   P.vertidas.forEach(v=>{if(!(v.inicio>=0))malos.push(`${etiqueta(v.id)}: el inicio no puede ser negativo.`);if(!Number.isFinite(v.temp))malos.push(`${etiqueta(v.id)}: falta la temperatura de colocación.`);});
   if(!P.vertidas.some(v=>v.calc))malos.push('Al menos una vertida debe entrar al cálculo.');
   if(P.horizonte/P.intervalo>5000)malos.push('Demasiadas salidas: aumente el intervalo.');
@@ -536,15 +547,16 @@ function derivados(){
   $('deriv-malla').innerHTML=`<span>Grilla <b>${n.join(' × ')}</b></span><span>Celdas <b>${celdas.toLocaleString('es-CL')}</b></span>`+(celdas>4e6?'<span style="color:var(--warn-ink)">Supera 4.000.000</span>':'');
   const dtlim=1/(2*alpha*(1/dx**2+1/dy**2+1/dz**2));
   $('deriv-mat').innerHTML=`<span>α = k/ρcp <b>${(alpha*1e7).toLocaleString('es-CL',{maximumFractionDigits:2})}·10⁻⁷ m²/s</b></span><span>Q̇ inicial <b>${fmt(q0,0)} W/m³</b></span>`;
-  const hef=(h,R)=>1/(1/h+R),ba=-hef(P.arriba.h,P.arriba.R)/P.k,bl=-hef(P.lados.h,P.lados.R)/P.k;
-  $('deriv-borde').innerHTML=`<span>β arriba <b>${fmt(ba,2)} m⁻¹</b></span><span>β lados <b>${fmt(bl,2)} m⁻¹</b></span>`;
-  $('lbl-tbase').hidden=P.base.tipo==='adiabatica';$('lbl-hbase').hidden=P.base.tipo!=='robin';
-  const des=[];
-  if(P.base.tipo!=='adiabatica')des.push('Base no adiabática: el script 09 del repo no lo permite todavía.');
-  if(P.arriba.h!==P.lados.h||P.arriba.R||P.lados.R)des.push('h distinto por cara o R extra: el solver lo admite, pero el script 09 usa un solo h sin R.');
+  document.querySelectorAll('#bordes [data-para]').forEach(el=>{el.hidden=!el.dataset.para.split(' ').includes(P[el.dataset.cara].tipo);});
+  const beta=b=>b.tipo==='robin'?`${fmt(-1/(1/b.h+b.R)/P.k,2)} m⁻¹`:b.tipo==='dirichlet'?'no aplica (T fija)':b.q?'no aplica (flujo fijo)':'0 (adiabática)';
+  $('deriv-borde').innerHTML=CARAS_UI.map(([c,nombre])=>`<span>β ${nombre.split(' ')[0].toLowerCase()} <b>${beta(P[c])}</b></span>`).join('');
+  const des=[],igual=(b,ref)=>JSON.stringify(b)===JSON.stringify(ref);
+  if(!igual(P.base,{tipo:'neumann',q:0}))des.push(`Base con ${textoBorde(P.base)}: el script 09 del repo solo acepta base adiabática.`);
+  const repo={tipo:'robin',h:10,R:0,T:15};
+  if(!igual(P.arriba,repo)||!igual(P.lados,repo))des.push('Arriba o lados distintos de Robin con h = 10 y T = 15 °C sin R: el solver lo admite, pero config/termica_e07.yaml usa esos valores.');
   if(GEO.some(g=>!$('calc-'+g.id).checked))des.push('Hay vertidas fuera del cálculo.');
   $('desvios').innerHTML=des.map(d=>`<div class="desvio">${d}</div>`).join('');
-  return {alpha,q0,dtlim,ba,bl,P};
+  return {alpha,q0,dtlim,beta,P};
 }
 
 // ---------- Worker ----------
@@ -574,7 +586,8 @@ function recibir(e){
     pillEstado(`Listo en ${fmt((performance.now()-estado.t0)/1000,1)} s`,'ok');
     const loc=new Int32Array(estado.vox.lab.length).fill(-1);m.r.cid.forEach((g,l)=>loc[g]=l);estado.loc=loc;
     let mn=Infinity,mx=-Infinity;m.r.frames.forEach(f=>{for(const v of f.T)if(v===v){if(v<mn)mn=v;if(v>mx)mx=v;}});
-    estado.rango=[Math.floor(Math.min(mn,leer().P.arriba.T)),Math.ceil(mx)];
+    const Ts=['arriba','lados','base'].map(c=>estado.P[c]).filter(b=>b.tipo!=='neumann').map(b=>b.T);
+    estado.rango=[Math.floor(Math.min(mn,...Ts)),Math.ceil(mx)];
     const s=$('slider');s.max=m.r.frames.length-1;s.value=s.max;estado.frame=+s.max;
     todo();
   }
@@ -859,16 +872,17 @@ function tablaRef(){
    <tbody>${GEO.map((g,i)=>`<tr><td><span class="chipc" style="background:${color(g.id)}"></span>${etiqueta(g.id)}</td>${filas[i].map(([a,b])=>`<td class="num">${c(a)}</td><td class="num"${Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)>.005?' style="font-weight:600"':''}>${c(b)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function conceptos(){
-  const dd=derivados(),P=dd.P,r=estado.r,hef=1/(1/P.arriba.h+P.arriba.R),tcol=Math.max(...P.vertidas.filter(v=>v.calc).map(v=>v.temp));
+  const dd=derivados(),P=dd.P,r=estado.r,A=P.arriba,tcol=Math.max(...P.vertidas.filter(v=>v.calc).map(v=>v.temp));
+  const sinPerdidas=['arriba','lados','base'].every(c=>P[c].tipo==='neumann'&&!P[c].q)?'Con todas las caras adiabáticas se alcanza; con pérdidas queda debajo.':'Sin aportes de calor por los bordes, ninguna celda puede pasarlo.';
   const items=[
     ['α difusividad',`${(dd.alpha*1e7).toLocaleString('es-CL',{maximumFractionDigits:2})}·10⁻⁷ m²/s`,'k/(ρcp): qué tan rápido viaja el calor dentro del hormigón.'],
-    ['β en la cara superior',`${fmt(dd.ba,2)} m⁻¹`,'−h/k, con la normal hacia afuera. Negativo: el hormigón caliente pierde calor. β = 0 sería adiabático.'],
-    ['k/h',`${fmt(P.k/hef,2)} m`,'El aire frena el calor como esa capa de hormigón. La fundación mide metros: frena más el propio hormigón.'],
+    ['β en la cara superior',dd.beta(A),'Robin escrito como ∂T/∂n = β(T − T∞), con β = −h/k y la normal hacia afuera. Negativo: el hormigón caliente pierde calor. β = 0 sería adiabático.'],
+    ['k/h arriba',A.tipo==='robin'?`${fmt(P.k*(1/A.h+A.R),2)} m`:'no aplica','El aire frena el calor como esa capa de hormigón. La fundación mide metros: frena más el propio hormigón.'],
     ['Fuente inicial Q̇h',`${fmt(dd.q0,0)} W/m³`,'ρcp·θ∞/τ, al colocar. Decae con e^(−a/τ) según la edad de cada vertida.'],
-    ['Límite sin pérdidas',`${fmt(tcol+P.theta,1)} °C`,'T de colocación + θ∞. Ninguna celda puede pasarlo con estas condiciones.'],
+    ['Límite sin pérdidas',`${fmt(tcol+P.theta,1)} °C`,`T de colocación + θ∞. ${sinPerdidas}`],
     ['Δt estable (interior)',`${fmt(dd.dtlim,0)} s`,'1/(2α(1/Δx² + 1/Δy² + 1/Δz²)). Lo fija sobre todo Δz. Se usa 0,8 × crítico o Δt máx.'],
     ['Temperatura inicial','Por vertida','Cada vertida parte con su T de colocación cuando entra. Antes no existe (gris).'],
-    ['Condiciones de borde',$('base').value==='adiabatica'?'Robin + base adiabática':'Robin + base modificada','Caras expuestas al aire: Robin. Base: flujo cero. Juntas entre vertidas activas: contacto perfecto.']];
+    ['Condiciones de borde',CARAS_UI.map(([c])=>NOMBRE_TIPO[P[c].tipo]).join(' · '),`Arriba: ${textoBorde(P.arriba)}. Lados: ${textoBorde(P.lados)}. Base: ${textoBorde(P.base)}. Se aplican a toda cara expuesta según su orientación, también la cara superior de una vertida aún sin cubrir. Juntas entre vertidas activas: contacto perfecto.`]];
   $('conceptos').innerHTML=items.map(([a,b,c])=>`<div class="concepto"><span style="font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${a}</span><b>${b}</b><p>${c}</p></div>`).join('');
 }
 function todo(){kpis();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
@@ -877,10 +891,10 @@ function ponerReloj(){const r=estado.r;if(!r)return;const t=r.frames[estado.fram
 // ---------- Eventos de entrada ----------
 document.querySelector('aside').addEventListener('input',e=>{
   const id=e.target.id||'';if(id.startsWith('ver-')){construirMalla();return;}if(id==='auto')return;programar();});
-document.querySelector('aside').addEventListener('change',e=>{const id=e.target.id||'';if(id==='base'||id.startsWith('calc-'))programar();});
+document.querySelector('aside').addEventListener('change',e=>{const id=e.target.id||'';if(id.startsWith('tipo-')||id.startsWith('calc-'))programar();});
 $('btn-calcular').onclick=calcular;
 $('btn-ifc').onclick=()=>{dibujarPrograma();programar();};
-$('btn-reset').onclick=()=>{Object.entries(BASE).forEach(([k,v])=>{$(k).value=v;});dibujarPrograma();programar();};
+$('btn-reset').onclick=()=>{Object.entries(BASE).forEach(([k,v])=>{$(k).value=v;});dibujarPrograma();dibujarBordes();programar();};
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{graficos();corte();});
 new ResizeObserver(()=>{graficos();corte();}).observe(document.querySelector('.graficos'));
 
