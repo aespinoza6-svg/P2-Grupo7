@@ -132,6 +132,8 @@ python -X utf8 scripts/11_lab_vertidas.py
 
 Los resultados quedan en `resultados/lab/`, en una carpeta por malla y otra por cambio. Git ignora esa carpeta.
 
+**Sin terminal:** `visor_laboratorio.html` hace lo mismo en el navegador y recalcula al cambiar cada valor, en unos 4 s con la malla base. Para comparar, pulsen «Guardar como referencia» antes del cambio. El IFC original sigue siendo la fuente: el visor lleva una copia de su geometría y de su programa.
+
 **¿Cómo demuestran que la secuencia está en los inputs?** El script copia el IFC, cambia la propiedad en la copia y vuelve a correr los mismos scripts 07 y 09. El solver no se edita. El horario entra por `mcplan/construccion.py`, que lee `Inicio_h` y `TemperaturaColocacion_C` de cada vertida.
 
 **¿Ocultar una vertida cambia el cálculo?** No, solo cambia el dibujo. Para que una vertida no entre al cálculo, pongan su inicio después del horizonte, por ejemplo `--inicio V05=100`.

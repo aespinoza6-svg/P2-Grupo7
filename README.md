@@ -48,6 +48,8 @@ P2-Grupo7/
 ├── README.md          <- este archivo
 ├── requirements.txt   <- dependencias (versiones exactas probadas)
 ├── pyproject.toml     <- define el paquete "mcplan" (técnico, no se toca)
+├── visor_e07.html     <- resultados guardados de E07, se abre sin conexión
+├── visor_laboratorio.html <- laboratorio que recalcula en vivo en el navegador
 │
 ├── config/            ENTRADAS: datos y decisiones (se cambian aquí, no en el código)
 │   ├── caso_base.yaml     sitio + geometría + hormigón
@@ -236,3 +238,18 @@ Este prototipo resuelve difusión en la geometría activa, incorpora cada vertid
 Se ejecutó el prototipo durante 14 días y se compararon pasos máximos de 600 y 300 s durante las primeras 72 h. Configuración, resultados y comandos en [verificación acoplada E07](docs/E07_verificacion_acoplada.md).
 
 Para preparar el recorrido por el código y las preguntas individuales: [guía oral E07](docs/E07_guia_oral.md).
+
+### Visores HTML
+
+Los dos se abren con doble clic desde la carpeta del repositorio.
+
+| Archivo | Qué hace | Cuándo usarlo |
+|---|---|---|
+| `visor_e07.html` | Muestra resultados ya calculados por los scripts: 14 días, cortes, balance y lab. Funciona sin conexión. | Para presentar resultados guardados |
+| `visor_laboratorio.html` | Recalcula en el navegador al cambiar malla, horarios, temperaturas, material, hidratación o bordes. Incluye vista 3D animada, corte térmico, comparación con una referencia y barrido de tamaños de celda. La vista 3D necesita internet. | Para cambios en vivo |
+
+El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triángulos del IFC. El test `tests/test_visor_laboratorio.py` revisa que esa copia coincida con el IFC y, si Node está instalado, que su cálculo dé lo mismo que el solver Python. Si el IFC cambia:
+
+```powershell
+python -X utf8 scripts/12_actualizar_visor_laboratorio.py
+```

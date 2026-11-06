@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Laboratorio de vertidas Renaico</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Banco de trabajo: columna de parámetros a la izquierda, resultados a la derecha; el 3D manda. */
+:root{
+  --bg:#f3f3f1;--panel:#ffffff;--ink:#1d2326;--muted:#5d666b;--line:#d9dcdb;--grid:#e8eae9;
+  --accent:#b4531f;--accent-ink:#ffffff;--field:#fbfbfa;--warn-bg:#fff4e0;--warn-ink:#7a4a00;
+  --ok:#2c7a4b;--chip:#eef0ef;--viewer:#e6e8e7;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#161a1c;--panel:#1f2427;--ink:#e7eaeb;--muted:#9aa3a7;--line:#343b3f;--grid:#2a3034;
+  --accent:#e0874f;--accent-ink:#1a1a1a;--field:#252b2e;--warn-bg:#3a2c12;--warn-ink:#f2c879;
+  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161a1c;--panel:#1f2427;--ink:#e7eaeb;--muted:#9aa3a7;--line:#343b3f;--grid:#2a3034;
+  --accent:#e0874f;--accent-ink:#1a1a1a;--field:#252b2e;--warn-bg:#3a2c12;--warn-ink:#f2c879;
+  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 32px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:1.65rem;letter-spacing:.01em}
+h2{font-size:1.05rem;letter-spacing:.02em}
+h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--body)}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+header.top p{margin:2px 0 0;color:var(--muted);max-width:70ch}
+.estado{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--chip);font-size:.82rem;white-space:nowrap}
+.pill.ok{color:var(--ok)} .pill.run{color:var(--accent)} .pill.err{background:var(--warn-bg);color:var(--warn-ink)}
+.barra{width:120px;height:6px;border-radius:3px;background:var(--grid);overflow:hidden}
+.barra i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+aside{display:flex;flex-direction:column;gap:12px}
+@media (min-width:981px){aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+legend{padding:0;margin-bottom:6px}
+.campos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.campos.dos{grid-template-columns:repeat(2,minmax(0,1fr))}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--muted);min-width:0}
+input[type=number],select{width:100%;min-width:0;padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:var(--field);color:var(--ink);font-family:var(--mono);font-size:.85rem}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.deriv{font-size:.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.deriv b{color:var(--ink);font-weight:500;font-family:var(--mono)}
+table{border-collapse:collapse;width:100%;font-size:.82rem}
+th,td{padding:4px 5px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:.74rem}
+th:first-child,td:first-child{text-align:left}
+td input[type=number]{width:62px;padding:3px 5px}
+.chipc{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.botones{display:flex;flex-wrap:wrap;gap:8px}
+button{font-family:var(--body);font-size:.85rem;padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.prim{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+.toggle{display:flex;align-items:center;gap:6px;font-size:.82rem}
+main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:0}
+.kpi span{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.kpi strong{display:block;font-family:var(--mono);font-size:1.25rem;font-weight:500;margin-top:2px}
+.kpi small{color:var(--muted);font-size:.76rem}
+.avisos{display:flex;flex-direction:column;gap:6px}
+.aviso{background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;padding:7px 10px;font-size:.84rem}
+.aviso.info{background:var(--chip);color:var(--ink)}
+.visor{position:relative;border-radius:8px;overflow:hidden;background:var(--viewer);border:1px solid var(--line);height:min(62vh,560px);min-height:320px}
+.visor canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.visor .ov{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.visor .ov>*{pointer-events:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;border-radius:0;padding:5px 10px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.ovcaja{background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:.8rem;display:flex;flex-direction:column;gap:4px}
+.reloj{position:absolute;right:10px;top:10px;font-family:var(--mono);font-size:1.3rem;background:color-mix(in srgb,var(--panel) 88%,transparent);padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
+.escala{position:absolute;right:10px;bottom:10px;width:min(260px,60%);font-size:.74rem;background:color-mix(in srgb,var(--panel) 88%,transparent);padding:6px 9px;border-radius:6px;border:1px solid var(--line)}
+.escala .grad{height:9px;border-radius:2px;margin:3px 0}
+.escala .ext{display:flex;justify-content:space-between;font-family:var(--mono)}
+.sinvisor{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:var(--muted)}
+.tiempo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tiempo input[type=range]{flex:1;min-width:160px;accent-color:var(--accent)}
+.graficos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.graficos{grid-template-columns:minmax(0,1fr)}}
+.graf{display:flex;flex-direction:column;gap:6px;min-width:0}
+.graf canvas{width:100%;height:230px;display:block}
+.graf .nota{font-size:.78rem;color:var(--muted);margin:0}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.78rem;color:var(--muted)}
+.leyenda i{display:inline-block;width:16px;height:0;border-top:2px solid;margin-right:5px;vertical-align:3px}
+.tabla{overflow-x:auto}
+.dos-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.dos-col{grid-template-columns:minmax(0,1fr)}}
+.conceptos{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.concepto{border-left:3px solid var(--line);padding:2px 0 2px 10px;font-size:.84rem}
+.concepto b{font-family:var(--mono);font-weight:500;font-size:.95rem;display:block}
+.concepto p{margin:2px 0 0;color:var(--muted)}
+.desvio{font-size:.78rem;color:var(--warn-ink);background:var(--warn-bg);border-radius:5px;padding:4px 8px}
+.pie{color:var(--muted);font-size:.8rem;max-width:90ch}
+@media (prefers-reduced-motion:reduce){.barra i{transition:none}}
+</style>
+
+<header class="top">
+  <div>
+    <h1>Laboratorio de vertidas Renaico</h1>
+    <p>Fundación octagonal del IFC del Grupo 7: vóxeles, colocación por etapas, hidratación y difusión de calor. Todo se calcula en este navegador con las mismas reglas que el código del repo.</p>
+  </div>
+  <div class="estado">
+    <span id="estado" class="pill">Preparando…</span>
+    <span class="barra" aria-hidden="true"><i id="progreso"></i></span>
+  </div>
+</header>
+
+<div class="layout">
+<aside>
+  <section class="card">
+    <fieldset>
+      <legend><h2>Malla de vóxeles</h2></legend>
+      <div class="campos">
+        <label class="f">Δx [m]<input type="number" id="dx" value="0.2" min="0.02" step="0.05"></label>
+        <label class="f">Δy [m]<input type="number" id="dy" value="0.2" min="0.02" step="0.05"></label>
+        <label class="f">Δz [m]<input type="number" id="dz" value="0.05" min="0.01" step="0.025"></label>
+      </div>
+      <div class="deriv" id="deriv-malla"></div>
+      <div class="botones"><button type="button" id="btn-barrido">Comparar tamaños de celda</button></div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <fieldset>
+      <legend><h2>Programa de vertidas (propiedades del IFC)</h2></legend>
+      <div class="tabla"><table>
+        <thead><tr><th>Vertida</th><th>Inicio [h]</th><th>T col. [°C]</th><th title="Entra al cálculo">Calc.</th><th title="Se dibuja en 3D">Ver</th></tr></thead>
+        <tbody id="tabla-programa"></tbody>
+      </table></div>
+      <p class="deriv" style="margin:0">«Ver» solo cambia el dibujo. «Calc.» la saca del cálculo, igual que poner su inicio después del horizonte.</p>
+      <div class="botones"><button type="button" id="btn-ifc">Volver al programa del IFC</button></div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <fieldset>
+      <legend><h2>Hormigón e hidratación</h2></legend>
+      <div class="campos">
+        <label class="f">k [W/m·K]<input type="number" id="k" value="2" min="0.1" step="0.1"></label>
+        <label class="f">ρ [kg/m³]<input type="number" id="rho" value="2400" min="100" step="50"></label>
+        <label class="f">cp [J/kg·K]<input type="number" id="cp" value="900" min="100" step="10"></label>
+      </div>
+      <div class="campos dos">
+        <label class="f">θ∞ elevación final [°C]<input type="number" id="theta" value="45" min="0" step="1"></label>
+        <label class="f">τ [h]<input type="number" id="tau" value="30" min="0.5" step="1"></label>
+      </div>
+      <div class="deriv" id="deriv-mat"></div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <fieldset>
+      <legend><h2>Condiciones de borde</h2></legend>
+      <div class="campos dos">
+        <label class="f">Aire T∞ [°C]<input type="number" id="taire" value="15" step="1"></label>
+        <span></span>
+        <label class="f">Arriba: h [W/m²K]<input type="number" id="h-arriba" value="10" min="0.1" step="1"></label>
+        <label class="f">Arriba: R extra [m²K/W]<input type="number" id="r-arriba" value="0" min="0" step="0.05"></label>
+        <label class="f">Lados: h [W/m²K]<input type="number" id="h-lados" value="10" min="0.1" step="1"></label>
+        <label class="f">Lados: R extra [m²K/W]<input type="number" id="r-lados" value="0" min="0" step="0.05"></label>
+        <label class="f">Base (z−)<select id="base">
+          <option value="adiabatica" selected>Adiabática</option>
+          <option value="dirichlet">Temperatura fija</option>
+          <option value="robin">Convección</option>
+        </select></label>
+        <label class="f" id="lbl-tbase">T base [°C]<input type="number" id="tbase" value="12" step="1"></label>
+        <label class="f" id="lbl-hbase">Base: h [W/m²K]<input type="number" id="hbase" value="5" min="0.1" step="1"></label>
+      </div>
+      <div class="deriv" id="deriv-borde"></div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <fieldset>
+      <legend><h2>Simulación</h2></legend>
+      <div class="campos">
+        <label class="f">Horizonte [h]<input type="number" id="horizonte" value="72" min="1" step="12"></label>
+        <label class="f">Δt máx [s]<input type="number" id="maxdt" value="600" min="1" step="60"></label>
+        <label class="f">Salida [h]<input type="number" id="intervalo" value="1" min="0.25" step="0.25"></label>
+      </div>
+      <label class="toggle"><input type="checkbox" id="auto" checked> Recalcular al cambiar un valor</label>
+      <div class="botones">
+        <button type="button" class="prim" id="btn-calcular">Calcular</button>
+        <button type="button" id="btn-ref">Guardar como referencia</button>
+        <button type="button" id="btn-reset">Restablecer caso base</button>
+      </div>
+      <div id="desvios" class="avisos"></div>
+    </fieldset>
+  </section>
+</aside>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+  <div class="avisos" id="avisos"></div>
+
+  <section class="card" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2>Fundación en 3D</h2>
+      <div class="seg" role="group" aria-label="Color">
+        <button type="button" id="modo-temp" aria-pressed="true">Temperatura</button>
+        <button type="button" id="modo-vert" aria-pressed="false">Vertida</button>
+      </div>
+    </div>
+    <div class="visor" id="visor">
+      <canvas id="lienzo3d" aria-label="Vista 3D de la fundación voxelizada"></canvas>
+      <div class="ov">
+        <div class="ovcaja">
+          <label class="toggle"><input type="checkbox" id="corte" checked> Cortar en y = 0 (ver el interior)</label>
+          <label class="toggle"><input type="checkbox" id="todo"> Mostrar también lo no colocado</label>
+        </div>
+      </div>
+      <div class="reloj" id="reloj">t = 0 h</div>
+      <div class="escala" id="escala"></div>
+      <div class="sinvisor" id="sinvisor" hidden></div>
+    </div>
+    <div class="tiempo">
+      <button type="button" id="btn-play" aria-label="Reproducir">▶ Reproducir</button>
+      <input type="range" id="slider" min="0" max="0" value="0" aria-label="Tiempo">
+      <span class="mono" id="t-label">—</span>
+    </div>
+    <p class="nota" style="margin:0;color:var(--muted);font-size:.8rem">Arrastra para girar, rueda para acercar, doble clic para volver a la vista inicial. Cada cubo es una celda; el color es su temperatura en ese instante.</p>
+  </section>
+
+  <div class="graficos">
+    <section class="card graf">
+      <h2>Temperatura por vertida</h2>
+      <canvas id="g-vertidas"></canvas>
+      <div class="leyenda" id="l-vertidas"></div>
+      <p class="nota">Continua: máxima de la vertida. Discontinua: media. Clic en el gráfico para mover el tiempo.</p>
+    </section>
+    <section class="card graf">
+      <h2>Máxima de toda la fundación</h2>
+      <canvas id="g-max"></canvas>
+      <div class="leyenda" id="l-max"></div>
+      <p class="nota" id="n-max">Guarda una referencia para comparar dos escenarios.</p>
+    </section>
+    <section class="card graf">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h2>Corte térmico</h2>
+        <select id="plano" aria-label="Plano del corte" style="width:auto">
+          <option value="xz">Vertical XZ (y fijo)</option>
+          <option value="yz">Vertical YZ (x fijo)</option>
+          <option value="xy">Planta XY (z fijo)</option>
+        </select>
+      </div>
+      <canvas id="g-corte"></canvas>
+      <div class="tiempo"><input type="range" id="pos-corte" min="0" max="0" value="0" aria-label="Posición del corte"><span class="mono" id="pos-label"></span></div>
+      <p class="nota">Gris: exterior o aún sin colocar. Pasa el mouse para leer la temperatura.</p>
+    </section>
+    <section class="card graf">
+      <h2>Balance de energía</h2>
+      <canvas id="g-energia"></canvas>
+      <div class="leyenda" id="l-energia"></div>
+      <p class="nota" id="n-energia"></p>
+    </section>
+    <section class="card graf">
+      <h2>Curva adiabática de hidratación</h2>
+      <canvas id="g-hid"></canvas>
+      <p class="nota" id="n-hid"></p>
+    </section>
+    <section class="card graf">
+      <h2>Volumen colocado</h2>
+      <canvas id="g-vol"></canvas>
+      <p class="nota">Cada escalón es una vertida que entra según su Inicio_h.</p>
+    </section>
+  </div>
+
+  <div class="dos-col">
+    <section class="card graf">
+      <h2>Volumen: IFC contra vóxeles</h2>
+      <div class="tabla" id="t-volumen"></div>
+      <div class="tabla" id="t-barrido"></div>
+    </section>
+    <section class="card graf">
+      <h2>Comparación con la referencia</h2>
+      <div class="tabla" id="t-ref"><p class="nota">Aún no hay referencia. Calcula el caso base, pulsa «Guardar como referencia», cambia algo y vuelve aquí.</p></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2 style="margin-bottom:10px">Valores clave del caso actual</h2>
+    <div class="conceptos" id="conceptos"></div>
+  </section>
+
+  <p class="pie">Supuestos del repo: hidratación pedagógica sin calibrar (θ∞ = 45 °C, τ = 30 h) que no depende de la temperatura, aire constante, contacto perfecto entre vertidas, sin sol, viento, suelo ni moldaje. Un máximo bajo 70 °C no aprueba un plan. Geometría: los triángulos del archivo fundaciones/fundacion.ifc; la geometría no se edita aquí. Si el IFC cambia, actualízala con scripts/12_actualizar_visor_laboratorio.py.</p>
+</main>
+</div>
+
+<script type="application/json" id="geometria">[{"id":1,"nombre":"Vertida_01","v":[-9.0,-3.727922,0.0,-9.0,-3.727922,0.55,-9.0,3.727922,0.0,-9.0,3.727922,0.55,-3.727922,-9.0,0.0,-3.727922,-9.0,0.55,-3.727922,9.0,0.0,-3.727922,9.0,0.55,3.727922,-9.0,0.0,3.727922,-9.0,0.55,3.727922,9.0,0.0,3.727922,9.0,0.55,9.0,-3.727922,0.0,9.0,-3.727922,0.55,9.0,3.727922,0.0,9.0,3.727922,0.55],"t":[0,12,8,0,8,4,2,12,0,6,10,14,6,14,12,6,12,2,13,5,9,15,7,3,15,3,1,15,1,5,15,5,13,11,7,15,11,14,10,11,15,14,11,10,6,11,6,7,6,2,3,6,3,7,0,1,3,0,3,2,5,0,4,5,1,0,4,8,9,4,9,5,8,12,13,8,13,9,15,12,14,15,13,12],"vol":147.62571362977107,"inicio":0.0,"temp":18.0,"mezcla":"M1","elemento":"losa_borde"},{"id":2,"nombre":"Vertida_02","v":[-9.0,-3.727922,0.55,-9.0,-3.727922,1.1,-9.0,3.727922,0.55,-9.0,3.727922,1.1,-3.727922,-9.0,0.55,-3.727922,-9.0,1.1,-3.727922,9.0,0.55,-3.727922,9.0,1.1,3.727922,-9.0,0.55,3.727922,-9.0,1.1,3.727922,9.0,0.55,3.727922,9.0,1.1,9.0,-3.727922,0.55,9.0,-3.727922,1.1,9.0,3.727922,0.55,9.0,3.727922,1.1],"t":[0,12,8,0,8,4,2,12,0,6,10,14,6,14,12,6,12,2,13,5,9,15,7,3,15,3,1,15,1,5,15,5,13,11,7,15,11,14,10,11,15,14,11,10,6,11,6,7,6,2,3,6,3,7,0,1,3,0,3,2,5,0,4,5,1,0,4,8,9,4,9,5,8,12,13,8,13,9,15,12,14,15,13,12],"vol":147.62571362977107,"inicio":6.0,"temp":18.0,"mezcla":"M1","elemento":"losa_borde"},{"id":3,"nombre":"Vertida_03","v":[-9.0,-3.727922,1.1,-9.0,3.727922,1.1,-6.25,-2.588835,2.2,-6.25,2.588835,2.2,-3.727922,-9.0,1.1,-3.727922,9.0,1.1,-2.588835,-6.25,2.2,-2.588835,6.25,2.2,2.588835,-6.25,2.2,2.588835,6.25,2.2,3.727922,-9.0,1.1,3.727922,9.0,1.1,6.25,-2.588835,2.2,6.25,2.588835,2.2,9.0,-3.727922,1.1,9.0,3.727922,1.1],"t":[0,14,10,0,10,4,1,14,0,5,11,15,5,15,14,5,14,1,7,3,2,9,2,6,9,6,8,9,8,12,9,12,13,9,7,2,11,9,13,11,13,15,5,7,9,5,9,11,5,3,7,1,3,5,1,0,2,3,1,2,2,0,4,2,4,6,4,10,8,6,4,8,8,10,14,8,14,12,15,13,12,15,12,14],"vol":214.22435089999186,"inicio":12.0,"temp":18.0,"mezcla":"M1","elemento":"transicion"},{"id":4,"nombre":"Vertida_04","v":[-6.25,-2.588835,2.2,-6.25,2.588835,2.2,-3.5,-1.449747,3.3,-3.5,1.449747,3.3,-2.588835,-6.25,2.2,-2.588835,6.25,2.2,-1.449747,-3.5,3.3,-1.449747,3.5,3.3,1.449747,-3.5,3.3,1.449747,3.5,3.3,2.588835,-6.25,2.2,2.588835,6.25,2.2,3.5,-1.449747,3.3,3.5,1.449747,3.3,6.25,-2.588835,2.2,6.25,2.588835,2.2],"t":[0,14,10,0,10,4,11,15,14,1,11,14,1,14,0,5,11,1,7,3,2,7,2,6,13,6,8,13,8,12,9,7,6,9,6,13,11,9,13,11,13,15,5,7,9,5,9,11,1,3,7,1,7,5,3,1,0,3,0,2,2,0,4,2,4,6,6,4,10,6,10,8,12,10,14,8,10,12,15,13,12,15,12,14],"vol":88.92474828213058,"inicio":18.0,"temp":18.0,"mezcla":"M1","elemento":"transicion"},{"id":5,"nombre":"Vertida_05","v":[-3.5,0.0,3.3,-3.5,0.0,4.3,-3.470057,-0.456842,3.3,-3.470057,-0.456842,4.3,-3.470057,0.456842,3.3,-3.470057,0.456842,4.3,-3.38074,-0.905867,3.3,-3.38074,-0.905867,4.3,-3.38074,0.905867,3.3,-3.38074,0.905867,4.3,-3.233578,-1.339392,3.3,-3.233578,-1.339392,4.3,-3.233578,1.339392,3.3,-3.233578,1.339392,4.3,-3.031089,-1.75,3.3,-3.031089,-1.75,4.3,-3.031089,1.75,3.3,-3.031089,1.75,4.3,-2.776737,-2.130665,3.3,-2.776737,-2.130665,4.3,-2.776737,2.130665,3.3,-2.776737,2.130665,4.3,-2.474874,-2.474874,3.3,-2.474874,-2.474874,4.3,-2.474874,2.474874,3.3,-2.474874,2.474874,4.3,-2.130665,-2.776737,3.3,-2.130665,-2.776737,4.3,-2.130665,2.776737,3.3,-2.130665,2.776737,4.3,-1.75,-3.031089,3.3,-1.75,-3.031089,4.3,-1.75,3.031089,3.3,-1.75,3.031089,4.3,-1.339392,-3.233578,3.3,-1.339392,-3.233578,4.3,-1.339392,3.233578,3.3,-1.339392,3.233578,4.3,-0.905867,-3.38074,3.3,-0.905867,-3.38074,4.3,-0.905867,3.38074,3.3,-0.905867,3.38074,4.3,-0.456842,-3.470057,3.3,-0.456842,-3.470057,4.3,-0.456842,3.470057,3.3,-0.456842,3.470057,4.3,-0.0,-3.5,3.3,-0.0,-3.5,4.3,0.0,3.5,3.3,0.0,3.5,4.3,0.456842,-3.470057,3.3,0.456842,-3.470057,4.3,0.456842,3.470057,3.3,0.456842,3.470057,4.3,0.905867,-3.38074,3.3,0.905867,-3.38074,4.3,0.905867,3.38074,3.3,0.905867,3.38074,4.3,1.339392,-3.233578,3.3,1.339392,-3.233578,4.3,1.339392,3.233578,3.3,1.339392,3.233578,4.3,1.75,-3.031089,3.3,1.75,-3.031089,4.3,1.75,3.031089,3.3,1.75,3.031089,4.3,2.130665,-2.776737,3.3,2.130665,-2.776737,4.3,2.130665,2.776737,3.3,2.130665,2.776737,4.3,2.474874,-2.474874,3.3,2.474874,-2.474874,4.3,2.474874,2.474874,3.3,2.474874,2.474874,4.3,2.776737,-2.130665,3.3,2.776737,-2.130665,4.3,2.776737,2.130665,3.3,2.776737,2.130665,4.3,3.031089,-1.75,3.3,3.031089,-1.75,4.3,3.031089,1.75,3.3,3.031089,1.75,4.3,3.233578,-1.339392,3.3,3.233578,-1.339392,4.3,3.233578,1.339392,3.3,3.233578,1.339392,4.3,3.38074,-0.905867,3.3,3.38074,-0.905867,4.3,3.38074,0.905867,3.3,3.38074,0.905867,4.3,3.470057,-0.456842,3.3,3.470057,-0.456842,4.3,3.470057,0.456842,3.3,3.470057,0.456842,4.3,3.5,0.0,3.3,3.5,0.0,4.3],"t":[58,70,66,58,66,62,54,74,70,54,70,58,42,50,46,34,42,38,34,50,42,84,88,92,84,92,94,80,90,86,80,86,82,80,82,78,80,78,74,80,94,90,80,84,94,26,54,50,26,34,30,26,50,34,68,72,76,68,76,80,64,80,74,64,68,80,14,22,18,6,14,10,52,56,60,52,60,64,2,14,6,48,52,64,0,22,14,0,14,2,0,26,22,36,40,44,12,4,8,32,64,74,32,48,64,32,36,44,32,44,48,32,74,54,24,26,0,24,0,4,24,12,16,24,4,12,24,16,20,24,28,32,24,32,54,24,54,26,39,27,31,39,31,35,1,3,7,1,7,11,1,11,15,5,15,19,5,19,23,5,1,15,13,9,5,63,39,43,63,43,47,63,47,51,63,51,55,63,55,59,79,63,67,79,67,71,79,71,75,33,29,25,37,33,25,87,63,79,87,79,83,45,41,37,95,87,91,53,49,45,89,95,93,89,87,95,85,87,89,85,39,63,85,63,87,61,45,37,61,57,53,61,53,45,81,17,13,81,23,27,81,39,85,81,27,39,81,5,23,81,13,5,69,65,61,73,37,25,73,81,77,73,69,61,73,25,21,73,21,17,73,17,81,73,61,37,93,94,92,93,95,94,89,92,88,89,93,92,85,88,84,85,89,88,81,84,80,81,85,84,77,80,76,77,81,80,73,76,72,73,77,76,72,68,69,72,69,73,68,64,65,68,65,69,64,60,61,64,61,65,60,56,57,60,57,61,56,52,53,56,53,57,52,48,49,52,49,53,48,44,45,48,45,49,44,40,41,44,41,45,40,36,37,40,37,41,36,32,33,36,33,37,32,28,29,32,29,33,28,24,25,28,25,29,21,24,20,21,25,24,17,20,16,17,21,20,13,16,12,13,17,16,9,12,8,9,13,12,5,8,4,5,9,8,1,4,0,1,5,4,3,0,2,3,1,0,7,2,6,7,3,2,11,6,10,11,7,6,15,10,14,15,11,10,19,14,18,19,15,14,23,18,22,23,19,18,22,26,27,22,27,23,26,30,31,26,31,27,30,34,35,30,35,31,34,38,39,34,39,35,38,42,43,38,43,39,42,46,47,42,47,43,46,50,51,46,51,47,50,54,55,50,55,51,54,58,59,54,59,55,58,62,63,58,63,59,62,66,67,62,67,63,66,70,71,66,71,67,75,70,74,75,71,70,79,74,78,79,75,74,83,78,82,83,79,78,87,82,86,87,83,82,91,86,90,91,87,86,95,90,94,95,91,90],"vol":38.37470051269517,"inicio":24.0,"temp":18.0,"mezcla":"M1","elemento":"pedestal"}]</script>
+
+<script type="text/plain" id="worker-src">
+'use strict';
+const TOL=1e-8;
+function prepararMalla(m){
+  const v=m.v,t=m.t,nt=t.length/3,D=new Float64Array(nt*24);
+  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+  for(let i=0;i<v.length;i+=3)for(let e=0;e<3;e++){lo[e]=Math.min(lo[e],v[i+e]);hi[e]=Math.max(hi[e],v[i+e]);}
+  for(let k=0;k<nt;k++){
+    const a=t[3*k]*3,b=t[3*k+1]*3,c=t[3*k+2]*3,o=k*24;
+    const x0=v[a],y0=v[a+1],z0=v[a+2],x1=v[b],y1=v[b+1],z1=v[b+2],x2=v[c],y2=v[c+1],z2=v[c+2];
+    const ux=x1-x0,uy=y1-y0,uz=z1-z0,wx=x2-x0,wy=y2-y0,wz=z2-z0;
+    const nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,nz=ux*wy-uy*wx;
+    const uu=ux*ux+uy*uy+uz*uz,uv=ux*wx+uy*wy+uz*wz,vv=wx*wx+wy*wy+wz*wz;
+    D[o]=x0;D[o+1]=y0;D[o+2]=z0;D[o+3]=x1;D[o+4]=y1;D[o+5]=z1;D[o+6]=x2;D[o+7]=y2;D[o+8]=z2;
+    D[o+9]=nx;D[o+10]=ny;D[o+11]=nz;D[o+12]=Math.hypot(nx,ny,nz);
+    D[o+13]=ux;D[o+14]=uy;D[o+15]=uz;D[o+16]=wx;D[o+17]=wy;D[o+18]=wz;
+    D[o+19]=uu;D[o+20]=uv;D[o+21]=vv;D[o+22]=uu*vv-uv*uv;D[o+23]=TOL/Math.max(Math.sqrt(uu),Math.sqrt(vv));
+  }
+  return {id:m.id,vol:m.vol,D,lo,hi};
+}
+// Igual que mcplan.voxelizacion.clasificar_puntos: 0 fuera, 1 interior estricto, 2 sobre la superficie.
+function clasificar(D,px,py,pz){
+  let tot=0,surf=false;
+  for(let o=0;o<D.length;o+=24){
+    const ax=D[o]-px,ay=D[o+1]-py,az=D[o+2]-pz,bx=D[o+3]-px,by=D[o+4]-py,bz=D[o+5]-pz,cx=D[o+6]-px,cy=D[o+7]-py,cz=D[o+8]-pz;
+    const la=Math.sqrt(ax*ax+ay*ay+az*az),lb=Math.sqrt(bx*bx+by*by+bz*bz),lc=Math.sqrt(cx*cx+cy*cy+cz*cz);
+    const num=ax*(by*cz-bz*cy)+ay*(bz*cx-bx*cz)+az*(bx*cy-by*cx);
+    const den=la*lb*lc+(ax*bx+ay*by+az*bz)*lc+(bx*cx+by*cy+bz*cz)*la+(cx*ax+cy*ay+cz*az)*lb;
+    tot+=2*Math.atan2(num,den);
+    if(!surf){
+      const dist=-(ax*D[o+9]+ay*D[o+10]+az*D[o+11]);
+      if(Math.abs(dist)<=TOL*D[o+12]){
+        const wu=-(ax*D[o+13]+ay*D[o+14]+az*D[o+15]),wv=-(ax*D[o+16]+ay*D[o+17]+az*D[o+18]);
+        const s=(D[o+21]*wu-D[o+20]*wv)/D[o+22],t=(D[o+19]*wv-D[o+20]*wu)/D[o+22],eps=D[o+23];
+        if(s>=-eps&&t>=-eps&&s+t<=1+eps)surf=true;
+      }
+    }
+  }
+  if(surf)return 2;
+  return Math.abs(tot)>2*Math.PI?1:0;
+}
+function voxelizar(mallas,d,avisar){
+  const M=mallas.map(prepararMalla).sort((a,b)=>a.id-b.id);
+  const org=[0,1,2].map(e=>Math.min(...M.map(m=>m.lo[e]))),sup=[0,1,2].map(e=>Math.max(...M.map(m=>m.hi[e])));
+  const n=[0,1,2].map(e=>Math.max(1,Math.ceil((sup[e]-org[e])/d[e]-1e-10)));
+  const N=n[0]*n[1]*n[2];
+  if(N>4e6)throw new Error(`La grilla requiere ${N.toLocaleString('es-CL')} celdas (límite 4.000.000, igual que el script 07). Use un paso mayor.`);
+  const c=[0,1,2].map(e=>Float64Array.from({length:n[e]},(_,i)=>org[e]+(i+.5)*d[e]));
+  const lab=new Uint8Array(N),est=new Uint8Array(N);let compartidos=0;
+  M.forEach((m,im)=>{
+    const r=[0,1,2].map(e=>{let a=-1,b=-1;for(let i=0;i<n[e];i++)if(c[e][i]>=m.lo[e]-1e-8&&c[e][i]<=m.hi[e]+1e-8){if(a<0)a=i;b=i;}return [a,b];});
+    if(r.some(x=>x[0]<0))return;
+    for(let k=r[2][0];k<=r[2][1];k++)for(let j=r[1][0];j<=r[1][1];j++)for(let i=r[0][0];i<=r[0][1];i++){
+      const idx=i+n[0]*(j+n[1]*k),code=clasificar(m.D,c[0][i],c[1][j],c[2][k]);
+      const dentro=code===1,borde=code===2;
+      if(dentro&&est[idx])throw new Error(`Traslape real: centros interiores a la vertida ${m.id} y a la ${lab[idx]}.`);
+      if(borde&&lab[idx]!==0)compartidos++;
+      if(dentro||(borde&&lab[idx]===0)){lab[idx]=m.id;est[idx]=dentro?1:0;}
+    }
+    if(avisar)avisar((im+1)/M.length);
+  });
+  const V=d[0]*d[1]*d[2],cuenta={};
+  for(let i=0;i<N;i++)if(lab[i])cuenta[lab[i]]=(cuenta[lab[i]]||0)+1;
+  const tabla=M.map(m=>{const celdas=cuenta[m.id]||0,vox=celdas*V;return {id:m.id,celdas,ifc:m.vol,vox,error:100*(vox-m.vol)/m.vol};});
+  return {lab,n,org,d,compartidos,tabla};
+}
+// Igual que mcplan.solver_vertidas.resolver_vertidas: Euler explícito, eventos de colocación, energía de hidratación exacta por paso.
+function simular(vox,P,avisar){
+  const n=vox.n,nx=n[0],ny=n[1],nz=n[2],N=nx*ny*nz,lab=vox.lab,d=vox.d;
+  const V=d[0]*d[1]*d[2],A=[V/d[0],V/d[1],V/d[2]],k=P.k,Cv=P.rho*P.cp,C=Cv*V;
+  const G=[k*A[0]/d[0],k*A[1]/d[1],k*A[2]/d[2]];
+  const caras=[P.lados,P.lados,P.lados,P.lados,P.base,P.arriba];
+  const Gb=new Float64Array(6),Tref=new Float64Array(6);
+  caras.forEach((b,f)=>{const e=f>>1,r=d[e]/(2*k);
+    if(b.tipo==='robin'){Gb[f]=A[e]/(r+b.R+1/b.h);Tref[f]=b.T;}
+    else if(b.tipo==='dirichlet'){Gb[f]=A[e]/r;Tref[f]=b.T;}
+    else{Gb[f]=0;Tref[f]=0;}});
+  let ncon=0;for(let i=0;i<N;i++)if(lab[i])ncon++;
+  const cid=new Int32Array(ncon),loc=new Int32Array(N).fill(-1),pv=new Uint8Array(ncon);
+  {let q=0;for(let i=0;i<N;i++)if(lab[i]){cid[q]=i;loc[i]=q;pv[q]=lab[i];q++;}}
+  const prog={};P.vertidas.forEach(v=>{prog[v.id]={ini:v.inicio*3600,T:v.temp,calc:v.calc}});
+  const ids=Object.keys(prog).map(Number).sort((a,b)=>a-b);
+  const tau=P.tau*3600,theta=P.theta,H=P.horizonte*3600,maxdt=P.maxdt,inter=P.intervalo*3600;
+  const T=new Float64Array(ncon).fill(NaN),act=new Uint8Array(ncon),pourAct={};
+  let lista=new Int32Array(0),nb=new Int32Array(0),Gext=new Float64Array(0),GextT=new Float64Array(0),dtcrit=Infinity;
+  const off=[-1,1,-nx,nx,-nx*ny,nx*ny];
+  function construir(){
+    let na=0;for(let l=0;l<ncon;l++)if(act[l])na++;
+    lista=new Int32Array(na);nb=new Int32Array(na*6);Gext=new Float64Array(na);GextT=new Float64Array(na);dtcrit=Infinity;
+    let a=0;
+    for(let l=0;l<ncon;l++){if(!act[l])continue;
+      const g=cid[l],i=g%nx,j=((g/nx)|0)%ny,kk=(g/(nx*ny))|0;let S=0,ge=0,gt=0;
+      const dentro=[i>0,i<nx-1,j>0,j<ny-1,kk>0,kk<nz-1];
+      for(let f=0;f<6;f++){
+        const ln=dentro[f]?loc[g+off[f]]:-1;
+        if(ln>=0&&act[ln]){nb[a*6+f]=ln;S+=G[f>>1];}
+        else{nb[a*6+f]=-1;ge+=Gb[f];gt+=Gb[f]*Tref[f];}
+      }
+      S+=ge;lista[a]=l;Gext[a]=ge;GextT[a]=gt;if(S>0)dtcrit=Math.min(dtcrit,C/S);a++;
+    }
+  }
+  let Ecol=0,Ehid=0,Ebor=0,maximo=-Infinity,tmax=0,pasos=0,dtmin=Infinity,dtmaxu=0;
+  function incorporar(t){
+    let nuevas=false;
+    for(const id of ids){const p=prog[id];if(p.calc&&!pourAct[id]&&t>=p.ini){pourAct[id]=true;nuevas=true;}}
+    if(nuevas){for(let l=0;l<ncon;l++)if(!act[l]&&pourAct[pv[l]]){act[l]=1;T[l]=prog[pv[l]].T;Ecol+=C*T[l];}construir();}
+  }
+  function medir(t){for(let a=0;a<lista.length;a++){const v=T[lista[a]];if(v>maximo){maximo=v;tmax=t;}}}
+  const salidas=[];for(let t=0;t<H-1e-9;t+=inter)salidas.push(t);salidas.push(H);
+  const eventos=ids.filter(id=>prog[id].calc&&prog[id].ini<=H).map(id=>prog[id].ini);
+  const paradas=[...new Set([0,...salidas,...eventos,H])].sort((a,b)=>a-b);
+  const maxFrames=Math.max(8,Math.min(160,Math.floor(110e6/(4*Math.max(ncon,1)))));
+  const cada=Math.max(1,Math.ceil(salidas.length/maxFrames));
+  const esFrame=new Set(salidas.filter((_,i)=>i%cada===0));esFrame.add(H);eventos.forEach(e=>esFrame.add(e));
+  const serie={t:[],gmax:[],gmin:[],vol:[],E:[],Ecol:[],Ehid:[],Ebor:[],res:[],dtcrit:[],pv:{}};
+  ids.forEach(id=>serie.pv[id]={max:[],media:[],min:[]});
+  const frames=[];
+  function guardar(t){
+    let E=0,gmx=-Infinity,gmn=Infinity;const s={},c={},mx={},mn={};
+    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];E+=C*v;if(v>gmx)gmx=v;if(v<gmn)gmn=v;
+      s[p]=(s[p]||0)+v;c[p]=(c[p]||0)+1;mx[p]=Math.max(mx[p]??-Infinity,v);mn[p]=Math.min(mn[p]??Infinity,v);}
+    serie.t.push(t/3600);serie.gmax.push(lista.length?gmx:NaN);serie.gmin.push(lista.length?gmn:NaN);
+    serie.vol.push(lista.length*V);serie.E.push(E);serie.Ecol.push(Ecol);serie.Ehid.push(Ehid);serie.Ebor.push(Ebor);
+    serie.res.push(E-Ecol-Ehid-Ebor);serie.dtcrit.push(isFinite(dtcrit)?dtcrit:null);
+    ids.forEach(id=>{const q=serie.pv[id];if(c[id]){q.max.push(mx[id]);q.min.push(mn[id]);q.media.push(s[id]/c[id]);}else{q.max.push(NaN);q.min.push(NaN);q.media.push(NaN);}});
+    if(esFrame.has(t)){const F=new Float32Array(ncon);for(let l=0;l<ncon;l++)F[l]=T[l];frames.push({t:t/3600,T:F});}
+  }
+  incorporar(0);medir(0);guardar(0);
+  const P2=new Float64Array(ncon);let t=0,ultimo=Date.now();
+  for(let ip=1;ip<paradas.length;ip++){
+    const parada=paradas[ip];
+    while(t<parada-1e-8){
+      const pref=Math.min(maxdt,.8*dtcrit),dt=Math.min(pref,parada-t);
+      if(!(dt>0)||!isFinite(dt))throw new Error('Paso temporal inválido.');
+      const eh={};
+      for(const id of ids)if(pourAct[id]){const age=t-prog[id].ini;eh[id]=Cv*theta*Math.exp(-age/tau)*(-Math.expm1(-dt/tau))*V;}
+      let pext=0;const na=lista.length;
+      for(let a=0;a<na;a++){
+        const l=lista[a],Ti=T[l],o=a*6,ex=GextT[a]-Gext[a]*Ti;let p=ex;pext+=ex;
+        let j=nb[o];if(j>=0)p+=G[0]*(T[j]-Ti);j=nb[o+1];if(j>=0)p+=G[0]*(T[j]-Ti);
+        j=nb[o+2];if(j>=0)p+=G[1]*(T[j]-Ti);j=nb[o+3];if(j>=0)p+=G[1]*(T[j]-Ti);
+        j=nb[o+4];if(j>=0)p+=G[2]*(T[j]-Ti);j=nb[o+5];if(j>=0)p+=G[2]*(T[j]-Ti);
+        P2[a]=p;
+      }
+      for(let a=0;a<na;a++){const l=lista[a],e=eh[pv[l]];T[l]+=(dt*P2[a]+e)/C;Ehid+=e;}
+      Ebor+=dt*pext;t+=dt;pasos++;dtmin=Math.min(dtmin,dt);dtmaxu=Math.max(dtmaxu,dt);medir(t);
+      if(Date.now()-ultimo>150){avisar(t/H);ultimo=Date.now();}
+    }
+    t=parada;incorporar(t);medir(t);guardar(t);
+  }
+  let relmax=0;
+  for(let i=0;i<serie.t.length;i++){const esc=Math.max(1,Math.abs(serie.Ecol[i])+Math.abs(serie.Ehid[i])+Math.abs(serie.Ebor[i]));relmax=Math.max(relmax,Math.abs(serie.res[i])/esc);}
+  return {serie,frames,cid,ncon,maximo:isFinite(maximo)?maximo:NaN,tmax:tmax/3600,pasos,dtmin,dtmax:dtmaxu,relmax,dtcritFinal:dtcrit};
+}
+const cache={};
+self.onmessage=e=>{
+  const m=e.data;
+  try{
+    if(m.cmd==='barrido'){
+      const filas=[];
+      m.pasos.forEach((d,i)=>{const t0=performance.now();
+        try{const v=voxelizar(m.mallas,d);const ifc=v.tabla.reduce((s,r)=>s+r.ifc,0),vx=v.tabla.reduce((s,r)=>s+r.vox,0);
+          filas.push({d,celdas:v.tabla.reduce((s,r)=>s+r.celdas,0),grilla:v.n[0]*v.n[1]*v.n[2],error:100*(vx-ifc)/ifc,ms:performance.now()-t0});}
+        catch(err){filas.push({d,falla:err.message});}
+        postMessage({tipo:'progreso',etapa:'Comparando tamaños',frac:(i+1)/m.pasos.length});});
+      postMessage({tipo:'barrido',filas});return;
+    }
+    const clave=m.d.join(',');let vox=cache[clave];const t0=performance.now();
+    if(!vox){vox=voxelizar(m.mallas,m.d,f=>postMessage({tipo:'progreso',etapa:'Voxelizando',frac:f}));for(const c in cache)delete cache[c];cache[clave]=vox;}
+    const tv=performance.now();
+    postMessage({tipo:'vox',vox:{lab:vox.lab.slice(),n:vox.n,org:vox.org,d:vox.d,compartidos:vox.compartidos,tabla:vox.tabla},ms:tv-t0});
+    const r=simular(vox,m.P,f=>postMessage({tipo:'progreso',etapa:'Simulando',frac:f}));
+    r.ms=performance.now()-tv;
+    postMessage({tipo:'fin',r},[r.cid.buffer,...r.frames.map(f=>f.T.buffer)]);
+  }catch(err){postMessage({tipo:'error',msg:err.message});}
+};
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+const GEO=JSON.parse(document.getElementById('geometria').textContent);
+const COLORES={1:'#287bb5',2:'#d97922',3:'#258b62',4:'#985bad',5:'#cd4c44'};
+const color=id=>COLORES[id]||'#888888';
+const $=id=>document.getElementById(id);
+const fmt=(v,dec=2)=>Number.isFinite(v)?v.toLocaleString('es-CL',{minimumFractionDigits:dec,maximumFractionDigits:dec}):'—';
+const etiqueta=id=>'V'+String(id).padStart(2,'0');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+const BASE={dx:.2,dy:.2,dz:.05,k:2,rho:2400,cp:900,theta:45,tau:30,taire:15,'h-arriba':10,'r-arriba':0,'h-lados':10,'r-lados':0,base:'adiabatica',tbase:12,hbase:5,horizonte:72,maxdt:600,intervalo:1};
+
+// ---------- Programa de vertidas ----------
+function dibujarPrograma(){
+  $('tabla-programa').innerHTML=GEO.map(g=>`<tr>
+    <td><span class="chipc" style="background:${color(g.id)}"></span>${etiqueta(g.id)}</td>
+    <td><input type="number" id="ini-${g.id}" value="${g.inicio}" min="0" step="1" aria-label="Inicio de ${etiqueta(g.id)} en horas"></td>
+    <td><input type="number" id="tc-${g.id}" value="${g.temp}" step="1" aria-label="Temperatura de colocación de ${etiqueta(g.id)}"></td>
+    <td><input type="checkbox" id="calc-${g.id}" checked aria-label="${etiqueta(g.id)} entra al cálculo"></td>
+    <td><input type="checkbox" id="ver-${g.id}" checked aria-label="Dibujar ${etiqueta(g.id)}"></td></tr>`).join('');
+}
+dibujarPrograma();
+const num=id=>parseFloat($(id).value);
+function leer(){
+  const P={d:[num('dx'),num('dy'),num('dz')],k:num('k'),rho:num('rho'),cp:num('cp'),theta:num('theta'),tau:num('tau'),
+    horizonte:num('horizonte'),maxdt:num('maxdt'),intervalo:num('intervalo'),
+    arriba:{tipo:'robin',h:num('h-arriba'),R:num('r-arriba'),T:num('taire')},
+    lados:{tipo:'robin',h:num('h-lados'),R:num('r-lados'),T:num('taire')},
+    base:$('base').value==='adiabatica'?{tipo:'adiabatica'}:$('base').value==='dirichlet'?{tipo:'dirichlet',T:num('tbase')}:{tipo:'robin',h:num('hbase'),R:0,T:num('tbase')},
+    vertidas:GEO.map(g=>({id:g.id,inicio:num('ini-'+g.id),temp:num('tc-'+g.id),calc:$('calc-'+g.id).checked}))};
+  const malos=[];
+  if(P.d.some(x=>!(x>0)))malos.push('Δx, Δy y Δz deben ser positivos.');
+  [['k',P.k],['ρ',P.rho],['cp',P.cp],['τ',P.tau],['horizonte',P.horizonte],['Δt máx',P.maxdt],['salida',P.intervalo]].forEach(([n,v])=>{if(!(v>0))malos.push(`${n} debe ser positivo.`)});
+  if(!(P.theta>=0))malos.push('θ∞ no puede ser negativa.');
+  if(!(P.arriba.h>0&&P.lados.h>0))malos.push('h debe ser positivo; para aislar, use una R extra grande.');
+  if(!(P.arriba.R>=0&&P.lados.R>=0))malos.push('La resistencia extra no puede ser negativa.');
+  if(P.base.tipo==='robin'&&!(P.base.h>0))malos.push('h de la base debe ser positivo.');
+  P.vertidas.forEach(v=>{if(!(v.inicio>=0))malos.push(`${etiqueta(v.id)}: el inicio no puede ser negativo.`);if(!Number.isFinite(v.temp))malos.push(`${etiqueta(v.id)}: falta la temperatura de colocación.`);});
+  if(!P.vertidas.some(v=>v.calc))malos.push('Al menos una vertida debe entrar al cálculo.');
+  if(P.horizonte/P.intervalo>5000)malos.push('Demasiadas salidas: aumente el intervalo.');
+  return {P,malos};
+}
+
+// ---------- Valores derivados y desvíos del caso base ----------
+function derivados(){
+  const {P}=leer(),alpha=P.k/(P.rho*P.cp),q0=P.rho*P.cp*P.theta/(P.tau*3600);
+  const [dx,dy,dz]=P.d,n=[18/dx,18/dy,4.3/dz].map(Math.ceil),celdas=n[0]*n[1]*n[2];
+  $('deriv-malla').innerHTML=`<span>Grilla <b>${n.join(' × ')}</b></span><span>Celdas <b>${celdas.toLocaleString('es-CL')}</b></span>`+(celdas>4e6?'<span style="color:var(--warn-ink)">Supera 4.000.000</span>':'');
+  const dtlim=1/(2*alpha*(1/dx**2+1/dy**2+1/dz**2));
+  $('deriv-mat').innerHTML=`<span>α = k/ρcp <b>${(alpha*1e7).toLocaleString('es-CL',{maximumFractionDigits:2})}·10⁻⁷ m²/s</b></span><span>Q̇ inicial <b>${fmt(q0,0)} W/m³</b></span>`;
+  const hef=(h,R)=>1/(1/h+R),ba=-hef(P.arriba.h,P.arriba.R)/P.k,bl=-hef(P.lados.h,P.lados.R)/P.k;
+  $('deriv-borde').innerHTML=`<span>β arriba <b>${fmt(ba,2)} m⁻¹</b></span><span>β lados <b>${fmt(bl,2)} m⁻¹</b></span>`;
+  $('lbl-tbase').hidden=P.base.tipo==='adiabatica';$('lbl-hbase').hidden=P.base.tipo!=='robin';
+  const des=[];
+  if(P.base.tipo!=='adiabatica')des.push('Base no adiabática: el script 09 del repo no lo permite todavía.');
+  if(P.arriba.h!==P.lados.h||P.arriba.R||P.lados.R)des.push('h distinto por cara o R extra: el solver lo admite, pero el script 09 usa un solo h sin R.');
+  if(GEO.some(g=>!$('calc-'+g.id).checked))des.push('Hay vertidas fuera del cálculo.');
+  $('desvios').innerHTML=des.map(d=>`<div class="desvio">${d}</div>`).join('');
+  return {alpha,q0,dtlim,ba,bl,P};
+}
+
+// ---------- Worker ----------
+let worker=null,estado={vox:null,r:null,ref:null,frame:0,corriendo:false,P:null},trabajoBarrido=false;
+function nuevoWorker(){
+  if(worker)worker.terminate();
+  worker=new Worker(URL.createObjectURL(new Blob([$('worker-src').textContent],{type:'text/javascript'})));
+  worker.onmessage=recibir;
+}
+function pillEstado(txt,clase){const p=$('estado');p.textContent=txt;p.className='pill '+(clase||'');}
+function calcular(){
+  derivados();
+  const {P,malos}=leer();
+  if(malos.length){pillEstado('Revisa los valores','err');$('avisos').innerHTML=malos.map(m=>`<div class="aviso">${m}</div>`).join('');return;}
+  nuevoWorker();estado.corriendo=true;estado.P=P;estado.t0=performance.now();
+  pillEstado('Calculando…','run');$('progreso').style.width='0%';
+  worker.postMessage({cmd:'run',mallas:GEO,d:P.d,P});
+}
+function recibir(e){
+  const m=e.data;
+  if(m.tipo==='progreso'){$('progreso').style.width=(100*m.frac).toFixed(0)+'%';pillEstado(`${m.etapa} ${(100*m.frac).toFixed(0)} %`,'run');}
+  else if(m.tipo==='vox'){
+    if(!estado.vox||estado.vox.n.join()!==m.vox.n.join()||estado.vox.d.join()!==m.vox.d.join()){estado.r=null;claveMalla='';}
+    estado.vox=m.vox;estado.voxMs=m.ms;prepararVox();tablaVolumen();}
+  else if(m.tipo==='fin'){
+    estado.r=m.r;estado.corriendo=false;$('progreso').style.width='100%';
+    pillEstado(`Listo en ${fmt((performance.now()-estado.t0)/1000,1)} s`,'ok');
+    const loc=new Int32Array(estado.vox.lab.length).fill(-1);m.r.cid.forEach((g,l)=>loc[g]=l);estado.loc=loc;
+    let mn=Infinity,mx=-Infinity;m.r.frames.forEach(f=>{for(const v of f.T)if(v===v){if(v<mn)mn=v;if(v>mx)mx=v;}});
+    estado.rango=[Math.floor(Math.min(mn,leer().P.arriba.T)),Math.ceil(mx)];
+    const s=$('slider');s.max=m.r.frames.length-1;s.value=s.max;estado.frame=+s.max;
+    todo();
+  }
+  else if(m.tipo==='barrido'){trabajoBarrido=false;tablaBarrido(m.filas);pillEstado('Comparación de tamaños lista','ok');}
+  else if(m.tipo==='error'){estado.corriendo=false;trabajoBarrido=false;pillEstado('Error','err');$('avisos').innerHTML=`<div class="aviso">${m.msg}</div>`;}
+}
+let espera=null;
+function programar(){derivados();if(!$('auto').checked)return;clearTimeout(espera);espera=setTimeout(calcular,650);}
+
+// ---------- Vóxeles: contactos para avisos ----------
+function prepararVox(){
+  const v=estado.vox,[nx,ny,nz]=v.n,lab=v.lab,pares=new Set();
+  for(let k=1;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+    const a=lab[i+nx*(j+ny*k)],b=lab[i+nx*(j+ny*(k-1))];if(a&&b&&a!==b)pares.add(a+','+b);}
+  v.pares=[...pares].map(s=>s.split(',').map(Number));
+  v.centros=[0,1,2].map(e=>Float64Array.from({length:v.n[e]},(_,i)=>v.org[e]+(i+.5)*v.d[e]));
+  configurarCorte();
+}
+function avisos(){
+  const P=estado.P,v=estado.vox,out=[];if(!P||!v)return;
+  const prog={};P.vertidas.forEach(x=>prog[x.id]=x);
+  v.pares.forEach(([arriba,abajo])=>{const a=prog[arriba],b=prog[abajo];if(!a.calc)return;
+    if(!b.calc)out.push(`${etiqueta(arriba)} se apoya sobre ${etiqueta(abajo)}, que está fuera del cálculo: su cara inferior queda adiabática.`);
+    else if(a.inicio<b.inicio)out.push(`${etiqueta(arriba)} entra a las ${fmt(a.inicio,1)} h, antes que ${etiqueta(abajo)} que está debajo (${fmt(b.inicio,1)} h): quedaría sin apoyo. El solver no revisa el orden constructivo.`);});
+  P.vertidas.forEach(x=>{if(x.calc&&x.inicio>=P.horizonte)out.push(`${etiqueta(x.id)} entra a las ${fmt(x.inicio,1)} h, después del horizonte: no alcanza a simularse.`);});
+  if(v.compartidos)out.push(`${v.compartidos.toLocaleString('es-CL')} centros cayeron justo sobre una junta; se asignaron a la vertida de menor ID. Con Δz = 5 cm no ocurre.`);
+  const r=estado.r;
+  if(r&&r.tmax>=P.horizonte-1e-9&&r.maximo>0)out.push(`El máximo ocurre al final del horizonte (${fmt(P.horizonte,0)} h): la temperatura sigue subiendo. Alarga el horizonte para ver el peak.`);
+  $('avisos').innerHTML=out.map((m,i)=>`<div class="aviso${i>=0&&m.startsWith('El máximo')?' info':''}">${m}</div>`).join('');
+}
+
+// ---------- Tablas ----------
+function tablaVolumen(){
+  const v=estado.vox,ifc=v.tabla.reduce((s,r)=>s+r.ifc,0),vx=v.tabla.reduce((s,r)=>s+r.vox,0),cel=v.tabla.reduce((s,r)=>s+r.celdas,0);
+  $('t-volumen').innerHTML=`<table><thead><tr><th>Vertida</th><th>Celdas</th><th>IFC [m³]</th><th>Vóxeles [m³]</th><th>Error</th></tr></thead><tbody>${
+    v.tabla.map(r=>`<tr><td><span class="chipc" style="background:${color(r.id)}"></span>${etiqueta(r.id)}</td><td class="num">${r.celdas.toLocaleString('es-CL')}</td><td class="num">${fmt(r.ifc,3)}</td><td class="num">${fmt(r.vox,3)}</td><td class="num">${r.error>=0?'+':''}${fmt(r.error,3)} %</td></tr>`).join('')
+  }<tr><td><b>Total</b></td><td class="num">${cel.toLocaleString('es-CL')}</td><td class="num">${fmt(ifc,3)}</td><td class="num">${fmt(vx,3)}</td><td class="num"><b>${(vx-ifc)>=0?'+':''}${fmt(100*(vx-ifc)/ifc,3)} %</b></td></tr></tbody></table>
+  <p class="nota">Error = (V vóxeles − V IFC) / V IFC. Una celda cuenta si su centro está dentro del sólido (ángulo sólido de los triángulos del IFC).</p>`;
+}
+function tablaBarrido(filas){
+  const act=leer().P.d.join(',');
+  $('t-barrido').innerHTML=`<h3 style="margin:8px 0 4px">Error según el tamaño de celda</h3><table><thead><tr><th>Δx = Δy</th><th>Δz</th><th>Celdas hormigón</th><th>Error</th><th>Tiempo</th></tr></thead><tbody>${
+    filas.map(f=>f.falla?`<tr><td>${fmt(f.d[0]*100,1)} cm</td><td>${fmt(f.d[2]*100,1)} cm</td><td colspan="3" style="text-align:left">${f.falla}</td></tr>`:
+    `<tr${f.d.join(',')===act?' style="font-weight:600"':''}><td>${fmt(f.d[0]*100,1)} cm</td><td>${fmt(f.d[2]*100,1)} cm</td><td class="num">${f.celdas.toLocaleString('es-CL')}</td><td class="num">${f.error>=0?'+':''}${fmt(f.error,3)} %</td><td class="num">${fmt(f.ms/1000,1)} s</td></tr>`).join('')
+  }</tbody></table><p class="nota">El error no baja siempre al refinar: unas celdas de más compensan otras de menos. Elige el tamaño en que el resultado que te importa deja de cambiar.</p>`;
+}
+$('btn-barrido').onclick=()=>{
+  if(estado.corriendo||trabajoBarrido)return;
+  const {P}=leer(),dz=P.d[2];
+  const pasos=[[.8,.8,dz],[.4,.4,dz],[.2,.2,dz],[.1,.1,dz],[.2,.2,.1],[.2,.2,.025]];
+  nuevoWorker();trabajoBarrido=true;pillEstado('Comparando tamaños…','run');
+  worker.postMessage({cmd:'barrido',mallas:GEO,pasos});
+};
+
+// ---------- Gráficos de líneas ----------
+function ticks(a,b,n){const paso=Math.pow(10,Math.floor(Math.log10((b-a)/n||1)));const m=[1,2,2.5,5,10].find(x=>(b-a)/(x*paso)<=n)*paso;const out=[];for(let v=Math.ceil(a/m)*m;v<=b+1e-9;v+=m)out.push(+v.toFixed(10));return out;}
+function grafico(cv,cfg){cv._cfg=cfg;pintar(cv);}
+function pintar(cv,hx){
+  const cfg=cv._cfg;if(!cfg)return;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const L=52,R=12,T=10,B=34,pw=W-L-R,ph=H-T-B;
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  cfg.series.forEach(s=>s.x.forEach((x,i)=>{const y=s.y[i];if(Number.isFinite(y)){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}}));
+  if(!Number.isFinite(x0)){c.fillStyle=css('--muted');c.font='13px '+css('--body');c.fillText('Sin datos',L,T+20);return;}
+  if(cfg.x0!==undefined)x0=cfg.x0;if(cfg.x1!==undefined)x1=cfg.x1;
+  if(cfg.y0!==undefined)y0=Math.min(y0,cfg.y0);
+  const padY=(y1-y0)*.06||1;y0-=padY;y1+=padY;if(x1===x0)x1=x0+1;
+  const X=x=>L+(x-x0)/(x1-x0)*pw,Y=y=>T+ph-(y-y0)/(y1-y0)*ph;
+  cv._map={X,Y,x0,x1,L,pw};
+  c.font='11px '+css('--mono');c.fillStyle=css('--muted');c.strokeStyle=css('--grid');c.lineWidth=1;
+  ticks(y0,y1,5).forEach(v=>{const y=Y(v);c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.textAlign='right';c.textBaseline='middle';c.fillText(v.toLocaleString('es-CL'),L-6,y);});
+  ticks(x0,x1,7).forEach(v=>{const x=X(v);c.textAlign='center';c.textBaseline='top';c.fillText(v.toLocaleString('es-CL'),x,T+ph+5);});
+  c.strokeStyle=css('--line');c.beginPath();c.moveTo(L,T);c.lineTo(L,T+ph);c.lineTo(L+pw,T+ph);c.stroke();
+  c.font='11px '+css('--body');c.textAlign='center';c.fillText(cfg.xlab,L+pw/2,H-13);
+  c.save();c.translate(12,T+ph/2);c.rotate(-Math.PI/2);c.textBaseline='middle';c.fillText(cfg.ylab,0,0);c.restore();
+  if(cfg.cursor!==undefined){c.strokeStyle=css('--muted');c.setLineDash([2,3]);c.beginPath();c.moveTo(X(cfg.cursor),T);c.lineTo(X(cfg.cursor),T+ph);c.stroke();c.setLineDash([]);}
+  c.save();c.beginPath();c.rect(L,T-2,pw,ph+4);c.clip();
+  cfg.series.forEach(s=>{c.strokeStyle=s.color;c.lineWidth=s.w||2;c.setLineDash(s.dash||[]);c.lineJoin='round';c.beginPath();let pen=false;
+    s.x.forEach((x,i)=>{const y=s.y[i];if(!Number.isFinite(y)){pen=false;return;}
+      if(s.step&&pen&&i>0){c.lineTo(X(x),Y(s.y[i-1]));}
+      pen?c.lineTo(X(x),Y(y)):c.moveTo(X(x),Y(y));pen=true;});c.stroke();});
+  c.restore();c.setLineDash([]);
+  if(hx!==undefined){
+    const xv=x0+(hx-L)/pw*(x1-x0);c.strokeStyle=css('--ink');c.globalAlpha=.4;c.beginPath();c.moveTo(hx,T);c.lineTo(hx,T+ph);c.stroke();c.globalAlpha=1;
+    const filas=[];cfg.series.filter(s=>!s.ocultoTip).forEach(s=>{let bi=0,bd=Infinity;s.x.forEach((x,i)=>{const dd=Math.abs(x-xv);if(dd<bd){bd=dd;bi=i;}});
+      filas.push([s.name,s.y[bi],s.color,s.x[bi]]);});
+    const lineas=[`t = ${fmt(filas[0]?.[3]??xv,1)} ${cfg.xunit||'h'}`,...filas.map(f=>`${f[0]}: ${Number.isFinite(f[1])?fmt(f[1],cfg.dec??2):'—'}`)];
+    c.font='11px '+css('--mono');const w=Math.max(...lineas.map(l=>c.measureText(l).width))+16,h=lineas.length*15+8;
+    let bx=hx+10;if(bx+w>L+pw)bx=hx-10-w;const by=T+4;
+    c.fillStyle=css('--panel');c.strokeStyle=css('--line');c.fillRect(bx,by,w,h);c.strokeRect(bx,by,w,h);
+    lineas.forEach((l,i)=>{c.fillStyle=i?filas[i-1][2]:css('--ink');if(i){c.fillRect(bx+6,by+10+i*15-4,6,6);}c.fillStyle=css('--ink');c.textAlign='left';c.textBaseline='middle';c.fillText(l,bx+(i?16:8),by+11+i*15);});
+  }
+}
+document.querySelectorAll('.graf canvas').forEach(cv=>{
+  if(cv.id==='g-corte')return;
+  cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();pintar(cv,e.clientX-r.left);});
+  cv.addEventListener('mouseleave',()=>pintar(cv));
+  cv.addEventListener('click',e=>{if(!cv._map||!estado.r||cv.id==='g-hid')return;const r=cv.getBoundingClientRect(),m=cv._map;
+    const t=m.x0+(e.clientX-r.left-m.L)/m.pw*(m.x1-m.x0);let bi=0,bd=Infinity;estado.r.frames.forEach((f,i)=>{if(Math.abs(f.t-t)<bd){bd=Math.abs(f.t-t);bi=i;}});ponerFrame(bi);});
+});
+function leyenda(el,items){$(el).innerHTML=items.map(([n,col,dash])=>`<span><i style="border-top-color:${col};border-top-style:${dash?'dashed':'solid'}"></i>${n}</span>`).join('');}
+
+function graficos(){
+  const r=estado.r,P=estado.P;if(!r)return;const s=r.serie,tc=r.frames[estado.frame]?.t;
+  const ser=[];GEO.forEach(g=>{const q=s.pv[g.id];ser.push({name:etiqueta(g.id)+' máx',x:s.t,y:q.max,color:color(g.id),w:2});ser.push({name:etiqueta(g.id)+' media',x:s.t,y:q.media,color:color(g.id),dash:[5,4],w:1.5,ocultoTip:true});});
+  grafico($('g-vertidas'),{series:ser,xlab:'Tiempo desde la primera vertida [h]',ylab:'T [°C]',cursor:tc});
+  leyenda('l-vertidas',GEO.map(g=>[etiqueta(g.id),color(g.id)]));
+  const sm=[{name:'Actual',x:s.t,y:s.gmax,color:css('--accent'),w:2.2}];
+  if(estado.ref)sm.unshift({name:'Referencia',x:estado.ref.t,y:estado.ref.gmax,color:css('--muted'),dash:[6,4],w:1.6});
+  grafico($('g-max'),{series:sm,xlab:'Tiempo [h]',ylab:'T máx [°C]',cursor:tc});
+  leyenda('l-max',sm.map(x=>[x.name,x.color,!!x.dash]));
+  $('n-max').textContent=estado.ref?`Referencia: ${fmt(estado.ref.maximo,3)} °C a las ${fmt(estado.ref.tmax,1)} h. Actual: ${fmt(r.maximo,3)} °C a las ${fmt(r.tmax,1)} h.`:'Guarda una referencia para comparar dos escenarios.';
+  const GJ=a=>a.map(v=>v/1e9),ce=['#287bb5','#d97922','#258b62',css('--ink')];
+  const se=[{name:'Colocación',x:s.t,y:GJ(s.Ecol),color:ce[0]},{name:'Hidratación',x:s.t,y:GJ(s.Ehid),color:ce[1]},{name:'Bordes (neto)',x:s.t,y:GJ(s.Ebor),color:ce[2]},{name:'Almacenada',x:s.t,y:GJ(s.E),color:ce[3],w:2.6}];
+  grafico($('g-energia'),{series:se,xlab:'Tiempo [h]',ylab:'Energía [GJ]',cursor:tc});
+  leyenda('l-energia',se.map(x=>[x.name,x.color]));
+  $('n-energia').textContent=`Almacenada = colocación + hidratación + bordes. Error relativo máximo del balance: ${r.relmax.toExponential(1).replace('.',',')}. Energía referida a 0 °C.`;
+  grafico($('g-vol'),{series:[{name:'Volumen activo',x:s.t,y:s.vol,color:css('--accent'),step:true}],xlab:'Tiempo [h]',ylab:'Volumen [m³]',cursor:tc,dec:1,y0:0});
+  const ed=Array.from({length:121},(_,i)=>i*Math.max(P.horizonte,5*P.tau)/120);
+  grafico($('g-hid'),{series:[{name:'θ(a)',x:ed,y:ed.map(a=>P.theta*(1-Math.exp(-a/P.tau))),color:css('--accent')}],xlab:'Edad de la vertida a [h]',ylab:'θ [°C]',y0:0});
+  const q0=P.rho*P.cp*P.theta/(P.tau*3600);
+  $('n-hid').textContent=`θ(a) = θ∞(1 − e^(−a/τ)). Fuente: Q̇ = ρcp·θ∞/τ·e^(−a/τ), parte en ${fmt(q0,0)} W/m³. La edad se cuenta desde la colocación de cada vertida.`;
+}
+
+// ---------- Corte térmico ----------
+function configurarCorte(){
+  const v=estado.vox;if(!v)return;const pl=$('plano').value,e=pl==='xz'?1:pl==='yz'?0:2,s=$('pos-corte');
+  s.max=v.n[e]-1;
+  if(e<2){let bi=0,bd=Infinity;v.centros[e].forEach((c,i)=>{if(Math.abs(c)<bd){bd=Math.abs(c);bi=i;}});s.value=bi;}
+  else{let bi=0,bd=Infinity;v.centros[2].forEach((c,i)=>{if(Math.abs(c-1.65)<bd){bd=Math.abs(c-1.65);bi=i;}});s.value=bi;}
+}
+function corte(hover){
+  const cv=$('g-corte'),v=estado.vox,r=estado.r;if(!v||!r)return;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const pl=$('plano').value,[nx,ny]=v.n,pos=+$('pos-corte').value,F=r.frames[estado.frame].T,loc=estado.loc;
+  const ejes=pl==='xz'?[0,2,1]:pl==='yz'?[1,2,0]:[0,1,2],[ea,eb,ec]=ejes,na=v.n[ea],nb=v.n[eb];
+  $('pos-label').textContent=`${'xyz'[ec]} = ${fmt(v.centros[ec][pos],2)} m`;
+  const L=44,B=30,T=8,Rr=10,aw=W-L-Rr,ah=H-T-B,La=na*v.d[ea],Lb=nb*v.d[eb],esc=Math.min(aw/La,ah/Lb);
+  const pw=La*esc,ph=Lb*esc,ox=L+(aw-pw)/2,oy=T+(ah-ph)/2,cw=pw/na,ch=ph/nb;
+  const idx=(a,b)=>{const ijk=[0,0,0];ijk[ea]=a;ijk[eb]=b;ijk[ec]=pos;return ijk[0]+nx*(ijk[1]+ny*ijk[2]);};
+  c.fillStyle=css('--grid');c.fillRect(ox,oy,pw,ph);
+  for(let a=0;a<na;a++)for(let b=0;b<nb;b++){const l=loc[idx(a,b)];if(l<0)continue;const T=F[l];if(T!==T)continue;
+    c.fillStyle=mapa(T);c.fillRect(ox+a*cw,oy+ph-(b+1)*ch,Math.ceil(cw)+.5,Math.ceil(ch)+.5);}
+  c.font='11px '+css('--mono');c.fillStyle=css('--muted');c.textAlign='center';c.textBaseline='top';
+  ticks(v.org[ea],v.org[ea]+La,6).forEach(t=>c.fillText(t.toLocaleString('es-CL'),ox+(t-v.org[ea])*esc,oy+ph+4));
+  c.textAlign='right';c.textBaseline='middle';
+  ticks(v.org[eb],v.org[eb]+Lb,4).forEach(t=>c.fillText(t.toLocaleString('es-CL'),ox-5,oy+ph-(t-v.org[eb])*esc));
+  c.font='11px '+css('--body');c.textAlign='center';c.textBaseline='bottom';c.fillText(`${'xyz'[ea]} [m]`,ox+pw/2,H-1);
+  c.save();c.translate(10,oy+ph/2);c.rotate(-Math.PI/2);c.textBaseline='middle';c.fillText(`${'xyz'[eb]} [m]`,0,0);c.restore();
+  cv._corte={ox,oy,pw,ph,cw,ch,na,nb,idx};
+  if(hover){const a=Math.floor((hover[0]-ox)/cw),b=Math.floor((oy+ph-hover[1])/ch);
+    if(a>=0&&a<na&&b>=0&&b<nb){const l=loc[idx(a,b)],T=l>=0?F[l]:NaN;const txt=l<0?'Exterior':T!==T?`${etiqueta(v.lab[idx(a,b)])}: aún sin colocar`:`${etiqueta(v.lab[idx(a,b)])}: ${fmt(T,2)} °C`;
+      c.font='11px '+css('--mono');const w=c.measureText(txt).width+14;let bx=hover[0]+10;if(bx+w>W)bx=hover[0]-w-10;
+      c.fillStyle=css('--panel');c.strokeStyle=css('--line');c.fillRect(bx,hover[1]-24,w,20);c.strokeRect(bx,hover[1]-24,w,20);
+      c.fillStyle=css('--ink');c.textAlign='left';c.textBaseline='middle';c.fillText(txt,bx+7,hover[1]-14);}}
+}
+$('g-corte').addEventListener('mousemove',e=>{const r=e.currentTarget.getBoundingClientRect();corte([e.clientX-r.left,e.clientY-r.top]);});
+$('g-corte').addEventListener('mouseleave',()=>corte());
+$('plano').onchange=()=>{configurarCorte();corte();};
+$('pos-corte').oninput=()=>corte();
+
+// ---------- Mapa de colores (inferno) ----------
+const INF=[[0,0,0,4],[.13,27,12,65],[.25,74,12,107],[.38,120,28,109],[.5,165,44,96],[.63,207,68,70],[.75,237,105,37],[.88,251,155,6],[1,252,255,164]];
+function rgb(T){const [a,b]=estado.rango||[10,60];let x=(T-a)/(b-a);x=Math.max(0,Math.min(1,x));
+  let i=1;while(i<INF.length-1&&INF[i][0]<x)i++;const p=INF[i-1],q=INF[i],f=(x-p[0])/(q[0]-p[0]||1);
+  return [p[1]+f*(q[1]-p[1]),p[2]+f*(q[2]-p[2]),p[3]+f*(q[3]-p[3])];}
+const mapa=T=>{const [r,g,b]=rgb(T);return `rgb(${r|0},${g|0},${b|0})`;};
+function escala(){
+  const el=$('escala');
+  if(modo==='vert'){el.innerHTML=`<div>Color por vertida</div><div class="leyenda" style="margin-top:4px">${GEO.map(g=>`<span><span class="chipc" style="background:${color(g.id)}"></span>${etiqueta(g.id)}</span>`).join('')}</div>`;return;}
+  const [a,b]=estado.rango||[10,60];
+  el.innerHTML=`<div>Temperatura [°C]</div><div class="grad" style="background:linear-gradient(90deg,${INF.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${s[0]*100}%`).join(',')})"></div><div class="ext"><span>${a}</span><span>${((a+b)/2).toFixed(1).replace('.',',')}</span><span>${b}</span></div>`;
+}
+
+// ---------- Vista 3D ----------
+let modo='temp',escena=null,camara=null,render3=null,malla=null,claveMalla='',caraCelda=null,orbita={th:-48*Math.PI/180,ph:24*Math.PI/180,r:25};
+function iniciar3D(){
+  if(typeof THREE==='undefined'){const s=$('sinvisor');s.hidden=false;s.textContent='No se pudo cargar la librería 3D (three.js necesita internet). El resto del laboratorio funciona igual.';return;}
+  const cv=$('lienzo3d');render3=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});render3.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  escena=new THREE.Scene();camara=new THREE.PerspectiveCamera(35,1,.1,500);camara.up.set(0,0,1);
+  escena.add(new THREE.AmbientLight(0xffffff,.62));const l1=new THREE.DirectionalLight(0xffffff,.55);l1.position.set(6,-10,14);escena.add(l1);
+  const l2=new THREE.DirectionalLight(0xffffff,.18);l2.position.set(-10,8,4);escena.add(l2);
+  const piso=new THREE.GridHelper(30,30,0x8a9296,0x8a9296);piso.rotation.x=Math.PI/2;piso.material.transparent=true;piso.material.opacity=.25;escena.add(piso);
+  new ResizeObserver(redim).observe($('visor'));redim();
+  let arr=null;
+  cv.addEventListener('pointerdown',e=>{arr=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
+  cv.addEventListener('pointermove',e=>{if(!arr)return;orbita.th-=(e.clientX-arr[0])*.008;orbita.ph=Math.max(-.15,Math.min(1.5,orbita.ph+(e.clientY-arr[1])*.008));arr=[e.clientX,e.clientY];dibujar3D();});
+  cv.addEventListener('pointerup',()=>{arr=null;cv.style.cursor='grab';});
+  cv.addEventListener('wheel',e=>{e.preventDefault();orbita.r=Math.max(8,Math.min(90,orbita.r*Math.exp(e.deltaY*.001)));dibujar3D();},{passive:false});
+  cv.addEventListener('dblclick',()=>{orbita={th:-48*Math.PI/180,ph:24*Math.PI/180,r:25};dibujar3D();});
+}
+function redim(){if(!render3)return;const el=$('visor'),w=el.clientWidth,h=el.clientHeight;render3.setSize(w,h,false);camara.aspect=w/h;camara.updateProjectionMatrix();dibujar3D();}
+function dibujar3D(){if(!render3)return;const tz=1.8;
+  camara.position.set(orbita.r*Math.cos(orbita.ph)*Math.cos(orbita.th),orbita.r*Math.cos(orbita.ph)*Math.sin(orbita.th),tz+orbita.r*Math.sin(orbita.ph));
+  camara.lookAt(0,0,tz);render3.render(escena,camara);}
+function visibles(){
+  const P=estado.P,r=estado.r,t=r?r.frames[estado.frame].t:0,ver={};
+  P.vertidas.forEach(v=>{ver[v.id]=$('ver-'+v.id).checked&&( $('todo').checked||(v.calc&&v.inicio<=t+1e-9))});return ver;}
+function construirMalla(){
+  const v=estado.vox;if(!v||!render3||!estado.P)return;
+  const ver=visibles(),cortar=$('corte').checked,clave=JSON.stringify([ver,cortar,v.n,v.d]);
+  if(clave===claveMalla){colorear();return;}claveMalla=clave;
+  const [nx,ny,nz]=v.n,lab=v.lab,N=lab.length,[dx,dy,dz]=v.d,o=v.org,yc=v.centros[1];
+  const show=new Uint8Array(N);for(let g=0;g<N;g++){const L=lab[g];if(L&&ver[L]){if(cortar&&yc[((g/nx)|0)%ny]<0)continue;show[g]=1;}}
+  const pos=[],nor=[],idx=[],celda=[];
+  const caras=[[-1,0,0,[[0,0,0],[0,1,0],[0,1,1],[0,0,1]]],[1,0,0,[[1,0,0],[1,0,1],[1,1,1],[1,1,0]]],[0,-1,0,[[0,0,0],[0,0,1],[1,0,1],[1,0,0]]],
+    [0,1,0,[[0,1,0],[1,1,0],[1,1,1],[0,1,1]]],[0,0,-1,[[0,0,0],[1,0,0],[1,1,0],[0,1,0]]],[0,0,1,[[0,0,1],[0,1,1],[1,1,1],[1,0,1]]]];
+  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const g=i+nx*(j+ny*k);if(!show[g])continue;
+    for(let f=0;f<6;f++){const [ax,ay,az,q]=caras[f],ii=i+ax,jj=j+ay,kk=k+az;
+      if(ii>=0&&ii<nx&&jj>=0&&jj<ny&&kk>=0&&kk<nz&&show[ii+nx*(jj+ny*kk)])continue;
+      const b=pos.length/3;q.forEach(([a,bb,cc])=>{pos.push(o[0]+(i+a)*dx,o[1]+(j+bb)*dy,o[2]+(k+cc)*dz);nor.push(ax,ay,az);});
+      idx.push(b,b+2,b+1,b,b+3,b+2);celda.push(g);}}
+  if(malla){escena.remove(malla);malla.geometry.dispose();}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(pos.length),3));geo.setIndex(pos.length/3>65535?new THREE.Uint32BufferAttribute(idx,1):new THREE.Uint16BufferAttribute(idx,1));
+  malla=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true}));escena.add(malla);caraCelda=Int32Array.from(celda);colorear();
+}
+function colorear(){
+  if(!malla)return;const col=malla.geometry.attributes.color.array,v=estado.vox,F=estado.r?estado.r.frames[estado.frame].T:null,loc=estado.loc;
+  const tmp=new THREE.Color(),gris=[.62,.64,.65];
+  for(let q=0;q<caraCelda.length;q++){const g=caraCelda[q];let c;
+    if(modo==='vert'||!F){tmp.set(color(v.lab[g]));c=[tmp.r,tmp.g,tmp.b];}
+    else{const l=loc?loc[g]:-1,T=l>=0?F[l]:NaN;if(T!==T)c=gris;else{const [r,gg,b]=rgb(T);c=[r/255,gg/255,b/255];}}
+    for(let s=0;s<4;s++){col[(q*4+s)*3]=c[0];col[(q*4+s)*3+1]=c[1];col[(q*4+s)*3+2]=c[2];}}
+  malla.geometry.attributes.color.needsUpdate=true;dibujar3D();
+}
+
+// ---------- Tiempo y animación ----------
+let anim=null;
+function ponerFrame(i){const r=estado.r;if(!r)return;estado.frame=Math.max(0,Math.min(r.frames.length-1,i));$('slider').value=estado.frame;
+  const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;
+  construirMalla();graficos();corte();}
+$('slider').oninput=e=>ponerFrame(+e.target.value);
+$('btn-play').onclick=()=>{
+  if(anim){clearInterval(anim);anim=null;$('btn-play').textContent='▶ Reproducir';return;}
+  if(!estado.r)return;if(estado.frame>=estado.r.frames.length-1)ponerFrame(0);
+  $('btn-play').textContent='❚❚ Pausa';
+  anim=setInterval(()=>{if(estado.frame>=estado.r.frames.length-1){clearInterval(anim);anim=null;$('btn-play').textContent='▶ Reproducir';return;}ponerFrame(estado.frame+1);},matchMedia('(prefers-reduced-motion: reduce)').matches?600:220);
+};
+function setModo(m){modo=m;$('modo-temp').setAttribute('aria-pressed',m==='temp');$('modo-vert').setAttribute('aria-pressed',m==='vert');escala();colorear();}
+$('modo-temp').onclick=()=>setModo('temp');$('modo-vert').onclick=()=>setModo('vert');
+$('corte').onchange=()=>construirMalla();$('todo').onchange=()=>construirMalla();
+
+// ---------- KPIs, referencia y conceptos ----------
+function kpis(){
+  const r=estado.r,v=estado.vox,P=estado.P;if(!r||!v)return;
+  const ifc=v.tabla.reduce((s,x)=>s+x.ifc,0),vx=v.tabla.reduce((s,x)=>s+x.vox,0),err=100*(vx-ifc)/ifc;
+  const ref=estado.ref,dif=ref?r.maximo-ref.maximo:null;
+  const k=[['Temperatura máxima',`${fmt(r.maximo,2)} °C`,`a las ${fmt(r.tmax,1)} h`+(ref?` · ${dif>=0?'+':''}${fmt(dif,2)} °C vs referencia`:'')],
+    ['Error de volumen',`${err>=0?'+':''}${fmt(err,3)} %`,`${fmt(vx,1)} de ${fmt(ifc,1)} m³`],
+    ['Celdas de hormigón',r.ncon.toLocaleString('es-CL'),`grilla ${v.n.join(' × ')}`],
+    ['Pasos de tiempo',r.pasos.toLocaleString('es-CL'),`Δt usado ${fmt(r.dtmax,0)} s`],
+    ['Δt crítico',`${fmt(r.dtcritFinal,0)} s`,`se usa como máximo 0,8 × crítico`],
+    ['Cálculo',`${fmt((estado.voxMs+r.ms)/1000,1)} s`,`vóxeles ${fmt(estado.voxMs/1000,1)} s`]];
+  $('kpis').innerHTML=k.map(([a,b,c])=>`<div class="kpi"><span>${a}</span><strong>${b}</strong><small>${c}</small></div>`).join('');
+}
+function serieRef(){const r=estado.r;return {t:r.serie.t.slice(),gmax:r.serie.gmax.slice(),maximo:r.maximo,tmax:r.tmax,pv:structuredClone(r.serie.pv),P:structuredClone(estado.P)};}
+$('btn-ref').onclick=()=>{if(!estado.r)return;estado.ref=serieRef();todo();pillEstado('Referencia guardada','ok');};
+function interp(t,x,y){
+  const ok=v=>typeof v==='number'&&Number.isFinite(v);
+  let ult=-1;for(let i=0;i<x.length;i++)if(Math.abs(x[i]-t)<1e-9)ult=i;
+  if(ult>=0)return ok(y[ult])?y[ult]:NaN;
+  if(t<x[0]||t>x[x.length-1])return NaN;
+  let i=0;while(i<x.length-2&&x[i+1]<t)i++;
+  if(!ok(y[i])||!ok(y[i+1]))return NaN;
+  return y[i]+(t-x[i])/(x[i+1]-x[i])*(y[i+1]-y[i]);
+}
+function tablaRef(){
+  const ref=estado.ref,r=estado.r,P=estado.P;if(!ref||!r)return;
+  const camb=[];P.vertidas.forEach(v=>{const a=ref.P.vertidas.find(x=>x.id===v.id);if(a.inicio!==v.inicio||a.temp!==v.temp||a.calc!==v.calc)camb.push(`${etiqueta(v.id)}: inicio ${fmt(a.inicio,1)} → ${fmt(v.inicio,1)} h, T ${fmt(a.temp,1)} → ${fmt(v.temp,1)} °C${a.calc!==v.calc?(v.calc?', vuelve al cálculo':', fuera del cálculo'):''}`);});
+  ['k','rho','cp','theta','tau','horizonte','maxdt'].forEach(c=>{if(ref.P[c]!==P[c])camb.push(`${c}: ${ref.P[c]} → ${P[c]}`);});
+  if(JSON.stringify(ref.P.arriba)!==JSON.stringify(P.arriba)||JSON.stringify(ref.P.lados)!==JSON.stringify(P.lados)||JSON.stringify(ref.P.base)!==JSON.stringify(P.base))camb.push('Condiciones de borde distintas');
+  if(ref.P.d.join()!==P.d.join())camb.push(`Malla ${ref.P.d.map(x=>x*100).join('×')} → ${P.d.map(x=>x*100).join('×')} cm`);
+  const horas=[12,24,48,P.horizonte].filter((h,i,a)=>h<=P.horizonte&&a.indexOf(h)===i);
+  const filas=GEO.map(g=>horas.map(h=>{const a=interp(h,ref.t,ref.pv[g.id].media),b=interp(h,r.serie.t,r.serie.pv[g.id].media);return [a,b];}));
+  const c=x=>Number.isFinite(x)?fmt(x,2):'<span style="color:var(--muted)">sin colocar</span>';
+  $('t-ref').innerHTML=`<p class="nota" style="margin:0 0 6px">${camb.length?'Cambios: '+camb.join(' · '):'Sin cambios respecto a la referencia.'}</p>
+   <p class="nota" style="margin:0 0 6px">T máxima global: referencia <b class="num">${fmt(ref.maximo,3)} °C</b>, actual <b class="num">${fmt(r.maximo,3)} °C</b>.</p>
+   <table><thead><tr><th>T media [°C]</th>${horas.map(h=>`<th colspan="2">${fmt(h,0)} h</th>`).join('')}</tr><tr><th></th>${horas.map(()=>'<th>ref.</th><th>actual</th>').join('')}</tr></thead>
+   <tbody>${GEO.map((g,i)=>`<tr><td><span class="chipc" style="background:${color(g.id)}"></span>${etiqueta(g.id)}</td>${filas[i].map(([a,b])=>`<td class="num">${c(a)}</td><td class="num"${Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)>.005?' style="font-weight:600"':''}>${c(b)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function conceptos(){
+  const dd=derivados(),P=dd.P,r=estado.r,hef=1/(1/P.arriba.h+P.arriba.R),tcol=Math.max(...P.vertidas.filter(v=>v.calc).map(v=>v.temp));
+  const items=[
+    ['α difusividad',`${(dd.alpha*1e7).toLocaleString('es-CL',{maximumFractionDigits:2})}·10⁻⁷ m²/s`,'k/(ρcp): qué tan rápido viaja el calor dentro del hormigón.'],
+    ['β en la cara superior',`${fmt(dd.ba,2)} m⁻¹`,'−h/k, con la normal hacia afuera. Negativo: el hormigón caliente pierde calor. β = 0 sería adiabático.'],
+    ['k/h',`${fmt(P.k/hef,2)} m`,'El aire frena el calor como esa capa de hormigón. La fundación mide metros: frena más el propio hormigón.'],
+    ['Fuente inicial Q̇h',`${fmt(dd.q0,0)} W/m³`,'ρcp·θ∞/τ, al colocar. Decae con e^(−a/τ) según la edad de cada vertida.'],
+    ['Límite sin pérdidas',`${fmt(tcol+P.theta,1)} °C`,'T de colocación + θ∞. Ninguna celda puede pasarlo con estas condiciones.'],
+    ['Δt estable (interior)',`${fmt(dd.dtlim,0)} s`,'1/(2α(1/Δx² + 1/Δy² + 1/Δz²)). Lo fija sobre todo Δz. Se usa 0,8 × crítico o Δt máx.'],
+    ['Temperatura inicial','Por vertida','Cada vertida parte con su T de colocación cuando entra. Antes no existe (gris).'],
+    ['Condiciones de borde',$('base').value==='adiabatica'?'Robin + base adiabática':'Robin + base modificada','Caras expuestas al aire: Robin. Base: flujo cero. Juntas entre vertidas activas: contacto perfecto.']];
+  $('conceptos').innerHTML=items.map(([a,b,c])=>`<div class="concepto"><span style="font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${a}</span><b>${b}</b><p>${c}</p></div>`).join('');
+}
+function todo(){kpis();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
+function ponerReloj(){const r=estado.r;if(!r)return;const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;}
+
+// ---------- Eventos de entrada ----------
+document.querySelector('aside').addEventListener('input',e=>{
+  const id=e.target.id||'';if(id.startsWith('ver-')){construirMalla();return;}if(id==='auto')return;programar();});
+document.querySelector('aside').addEventListener('change',e=>{const id=e.target.id||'';if(id==='base'||id.startsWith('calc-'))programar();});
+$('btn-calcular').onclick=calcular;
+$('btn-ifc').onclick=()=>{dibujarPrograma();programar();};
+$('btn-reset').onclick=()=>{Object.entries(BASE).forEach(([k,v])=>{$(k).value=v;});dibujarPrograma();programar();};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{graficos();corte();});
+new ResizeObserver(()=>{graficos();corte();}).observe(document.querySelector('.graficos'));
+
+iniciar3D();derivados();escala();calcular();
+</script>
+
+</body>
+</html>
