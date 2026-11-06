@@ -15,7 +15,7 @@
 :root{
   --bg:#f3f3f1;--panel:#ffffff;--ink:#1d2326;--muted:#5d666b;--line:#d9dcdb;--grid:#e8eae9;
   --accent:#b4531f;--accent-ink:#ffffff;--field:#fbfbfa;--warn-bg:#fff4e0;--warn-ink:#7a4a00;
-  --ok:#2c7a4b;--chip:#eef0ef;--viewer:#e6e8e7;
+  --ok:#2c7a4b;--chip:#eef0ef;--viewer:#e6e8e7;--ok-bg:#e3f1e8;--bad:#a3281e;--bad-bg:#fbe4e1;
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
@@ -23,11 +23,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#161a1c;--panel:#1f2427;--ink:#e7eaeb;--muted:#9aa3a7;--line:#343b3f;--grid:#2a3034;
   --accent:#e0874f;--accent-ink:#1a1a1a;--field:#252b2e;--warn-bg:#3a2c12;--warn-ink:#f2c879;
-  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;color-scheme:dark}}
+  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;--ok-bg:#1e3326;--bad:#f08a7e;--bad-bg:#3d1f1c;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#161a1c;--panel:#1f2427;--ink:#e7eaeb;--muted:#9aa3a7;--line:#343b3f;--grid:#2a3034;
   --accent:#e0874f;--accent-ink:#1a1a1a;--field:#252b2e;--warn-bg:#3a2c12;--warn-ink:#f2c879;
-  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;color-scheme:dark}
+  --ok:#6cc18e;--chip:#2a3034;--viewer:#121517;--ok-bg:#1e3326;--bad:#f08a7e;--bad-bg:#3d1f1c;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;
@@ -110,6 +110,19 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
 .concepto p{margin:2px 0 0;color:var(--muted)}
 .desvio{font-size:.78rem;color:var(--warn-ink);background:var(--warn-bg);border-radius:5px;padding:4px 8px}
 .pie{color:var(--muted);font-size:.8rem;max-width:90ch}
+
+.instante-cab{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px}
+.limites{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.limites label.f{width:118px}
+.instante{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.dato{border:1px solid var(--line);border-radius:7px;padding:8px 11px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dato>span{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.dato strong{font-family:var(--mono);font-size:1.2rem;font-weight:500}
+.dato small{color:var(--muted);font-size:.76rem}
+.marca{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.estado-c{align-self:flex-start;font-size:.75rem;padding:2px 8px;border-radius:999px;font-weight:600}
+.estado-c.ok{background:var(--ok-bg);color:var(--ok)}
+.estado-c.mal{background:var(--bad-bg);color:var(--bad)}
 @media (prefers-reduced-motion:reduce){.barra i{transition:none}}
 </style>
 
@@ -224,10 +237,26 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
       <input type="range" id="slider" min="0" max="0" value="0" aria-label="Tiempo">
       <span class="mono" id="t-label">—</span>
     </div>
+    <div class="instante-cab">
+      <h3>En el instante que estás viendo</h3>
+      <div class="limites">
+        <label class="f">Límite T máx [°C]<input type="number" id="lim-tmax" value="70" step="1"></label>
+        <label class="f">Límite ΔT [°C]<input type="number" id="lim-dt" value="20" step="1"></label>
+        <label class="toggle"><input type="checkbox" id="marcas" checked> Marcar en 3D</label>
+      </div>
+    </div>
+    <div class="instante" id="instante"></div>
+    <p class="nota" id="n-instante" style="margin:0;color:var(--muted);font-size:.8rem"></p>
     <p class="nota" style="margin:0;color:var(--muted);font-size:.8rem">Arrastra para girar, rueda para acercar, doble clic para volver a la vista inicial. Cada cubo es una celda; el color es su temperatura en ese instante.</p>
   </section>
 
   <div class="graficos">
+    <section class="card graf" style="grid-column:1/-1">
+      <h2>Diferencial de temperatura en el tiempo</h2>
+      <canvas id="g-dt"></canvas>
+      <div class="leyenda" id="l-dt"></div>
+      <p class="nota" id="n-dt"></p>
+    </section>
     <section class="card graf">
       <h2>Temperatura por vertida</h2>
       <canvas id="g-vertidas"></canvas>
@@ -379,21 +408,21 @@ function simular(vox,P,avisar){
   const ids=Object.keys(prog).map(Number).sort((a,b)=>a-b);
   const tau=P.tau*3600,theta=P.theta,H=P.horizonte*3600,maxdt=P.maxdt,inter=P.intervalo*3600;
   const T=new Float64Array(ncon).fill(NaN),act=new Uint8Array(ncon),pourAct={};
-  let lista=new Int32Array(0),nb=new Int32Array(0),Gext=new Float64Array(0),GextT=new Float64Array(0),dtcrit=Infinity;
+  let lista=new Int32Array(0),nb=new Int32Array(0),Gext=new Float64Array(0),GextT=new Float64Array(0),sup=new Uint8Array(0),dtcrit=Infinity;
   const off=[-1,1,-nx,nx,-nx*ny,nx*ny];
   function construir(){
     let na=0;for(let l=0;l<ncon;l++)if(act[l])na++;
-    lista=new Int32Array(na);nb=new Int32Array(na*6);Gext=new Float64Array(na);GextT=new Float64Array(na);dtcrit=Infinity;
+    lista=new Int32Array(na);nb=new Int32Array(na*6);Gext=new Float64Array(na);GextT=new Float64Array(na);sup=new Uint8Array(na);dtcrit=Infinity;
     let a=0;
     for(let l=0;l<ncon;l++){if(!act[l])continue;
-      const g=cid[l],i=g%nx,j=((g/nx)|0)%ny,kk=(g/(nx*ny))|0;let S=0,ge=0,gt=0;
+      const g=cid[l],i=g%nx,j=((g/nx)|0)%ny,kk=(g/(nx*ny))|0;let S=0,ge=0,gt=0,es=0;
       const dentro=[i>0,i<nx-1,j>0,j<ny-1,kk>0,kk<nz-1];
       for(let f=0;f<6;f++){
         const ln=dentro[f]?loc[g+off[f]]:-1;
         if(ln>=0&&act[ln]){nb[a*6+f]=ln;S+=G[f>>1];}
-        else{nb[a*6+f]=-1;ge+=Gb[f];gt+=Gb[f]*Tref[f]+Qb[f];}
+        else{nb[a*6+f]=-1;ge+=Gb[f];gt+=Gb[f]*Tref[f]+Qb[f];if(Gb[f]>0||Qb[f]!==0)es=1;}
       }
-      S+=ge;lista[a]=l;Gext[a]=ge;GextT[a]=gt;if(S>0)dtcrit=Math.min(dtcrit,C/S);a++;
+      S+=ge;sup[a]=es;lista[a]=l;Gext[a]=ge;GextT[a]=gt;if(S>0)dtcrit=Math.min(dtcrit,C/S);a++;
     }
   }
   let Ecol=0,Ehid=0,Ebor=0,maximo=-Infinity,tmax=0,pasos=0,dtmin=Infinity,dtmaxu=0;
@@ -409,18 +438,23 @@ function simular(vox,P,avisar){
   const maxFrames=Math.max(8,Math.min(160,Math.floor(110e6/(4*Math.max(ncon,1)))));
   const cada=Math.max(1,Math.ceil(salidas.length/maxFrames));
   const esFrame=new Set(salidas.filter((_,i)=>i%cada===0));esFrame.add(H);eventos.forEach(e=>esFrame.add(e));
-  const serie={t:[],gmax:[],gmin:[],vol:[],E:[],Ecol:[],Ehid:[],Ebor:[],res:[],dtcrit:[],pv:{}};
+  const serie={t:[],gmax:[],gmin:[],gsup:[],vol:[],E:[],Ecol:[],Ehid:[],Ebor:[],res:[],dtcrit:[],pv:{}};
   ids.forEach(id=>serie.pv[id]={max:[],media:[],min:[]});
   const frames=[];
   function guardar(t){
-    let E=0,gmx=-Infinity,gmn=Infinity;const s={},c={},mx={},mn={};
-    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];E+=C*v;if(v>gmx)gmx=v;if(v<gmn)gmn=v;
+    // Extremos del instante. Superficie: celda con al menos una cara expuesta que no es adiabática.
+    let E=0,gmx=-Infinity,gmn=Infinity,gsu=Infinity,imx=-1,imn=-1,isu=-1;const s={},c={},mx={},mn={};
+    for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l],p=pv[l];E+=C*v;if(v>gmx){gmx=v;imx=l;}if(v<gmn){gmn=v;imn=l;}if(sup[a]&&v<gsu){gsu=v;isu=l;}
       s[p]=(s[p]||0)+v;c[p]=(c[p]||0)+1;mx[p]=Math.max(mx[p]??-Infinity,v);mn[p]=Math.min(mn[p]??Infinity,v);}
-    serie.t.push(t/3600);serie.gmax.push(lista.length?gmx:NaN);serie.gmin.push(lista.length?gmn:NaN);
+    // La fundación es simétrica: entre celdas empatadas se marca la de y ≥ 0, que el corte 3D deja a la vista.
+    const yc=l=>vox.org[1]+((((cid[l]/nx)|0)%ny)+.5)*d[1];
+    if(imx>=0||isu>=0)for(let a=0;a<lista.length;a++){const l=lista[a],v=T[l];if(yc(l)<0)continue;
+      if(imx>=0&&yc(imx)<0&&v>=gmx-1e-9)imx=l;if(imn>=0&&yc(imn)<0&&v<=gmn+1e-9)imn=l;if(isu>=0&&sup[a]&&yc(isu)<0&&v<=gsu+1e-9)isu=l;}
+    serie.t.push(t/3600);serie.gmax.push(lista.length?gmx:NaN);serie.gmin.push(lista.length?gmn:NaN);serie.gsup.push(isu>=0?gsu:NaN);
     serie.vol.push(lista.length*V);serie.E.push(E);serie.Ecol.push(Ecol);serie.Ehid.push(Ehid);serie.Ebor.push(Ebor);
     serie.res.push(E-Ecol-Ehid-Ebor);serie.dtcrit.push(isFinite(dtcrit)?dtcrit:null);
     ids.forEach(id=>{const q=serie.pv[id];if(c[id]){q.max.push(mx[id]);q.min.push(mn[id]);q.media.push(s[id]/c[id]);}else{q.max.push(NaN);q.min.push(NaN);q.media.push(NaN);}});
-    if(esFrame.has(t)){const F=new Float32Array(ncon);for(let l=0;l<ncon;l++)F[l]=T[l];frames.push({t:t/3600,T:F});}
+    if(esFrame.has(t)){const F=new Float32Array(ncon);for(let l=0;l<ncon;l++)F[l]=T[l];frames.push({t:t/3600,T:F,imax:imx,imin:imn,isup:isu});}
   }
   incorporar(0);medir(0);guardar(0);
   const P2=new Float64Array(ncon);let t=0,ultimo=Date.now();
@@ -692,7 +726,7 @@ document.querySelectorAll('.graf canvas').forEach(cv=>{
 function leyenda(el,items){$(el).innerHTML=items.map(([n,col,dash])=>`<span><i style="border-top-color:${col};border-top-style:${dash?'dashed':'solid'}"></i>${n}</span>`).join('');}
 
 function graficos(){
-  const r=estado.r,P=estado.P;if(!r)return;const s=r.serie,tc=r.frames[estado.frame]?.t;
+  const r=estado.r,P=estado.P;if(!r)return;graficoDT();const s=r.serie,tc=r.frames[estado.frame]?.t;
   const ser=[];GEO.forEach(g=>{const q=s.pv[g.id];ser.push({name:etiqueta(g.id)+' máx',x:s.t,y:q.max,color:color(g.id),w:2});ser.push({name:etiqueta(g.id)+' media',x:s.t,y:q.media,color:color(g.id),dash:[5,4],w:1.5,ocultoTip:true});});
   grafico($('g-vertidas'),{series:ser,xlab:'Tiempo desde la primera vertida [h]',ylab:'T [°C]',cursor:tc});
   leyenda('l-vertidas',GEO.map(g=>[etiqueta(g.id),color(g.id)]));
@@ -765,7 +799,7 @@ function escala(){
 }
 
 // ---------- Vista 3D ----------
-let modo='temp',escena=null,camara=null,render3=null,malla=null,claveMalla='',caraCelda=null,orbita={th:-48*Math.PI/180,ph:24*Math.PI/180,r:25};
+let marcaMax=null,marcaSup=null,modo='temp',escena=null,camara=null,render3=null,malla=null,claveMalla='',caraCelda=null,orbita={th:-48*Math.PI/180,ph:24*Math.PI/180,r:25};
 function iniciar3D(){
   if(typeof THREE==='undefined'){const s=$('sinvisor');s.hidden=false;s.textContent='No se pudo cargar la librería 3D (three.js necesita internet). El resto del laboratorio funciona igual.';return;}
   const cv=$('lienzo3d');render3=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});render3.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
@@ -773,6 +807,8 @@ function iniciar3D(){
   escena.add(new THREE.AmbientLight(0xffffff,.62));const l1=new THREE.DirectionalLight(0xffffff,.55);l1.position.set(6,-10,14);escena.add(l1);
   const l2=new THREE.DirectionalLight(0xffffff,.18);l2.position.set(-10,8,4);escena.add(l2);
   const piso=new THREE.GridHelper(30,30,0x8a9296,0x8a9296);piso.rotation.x=Math.PI/2;piso.material.transparent=true;piso.material.opacity=.25;escena.add(piso);
+  const esfera=col=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,14),new THREE.MeshBasicMaterial({color:col,depthTest:false}));m.renderOrder=10;m.visible=false;escena.add(m);return m;};
+  marcaMax=esfera(COL_MAX);marcaSup=esfera(COL_SUP);
   new ResizeObserver(redim).observe($('visor'));redim();
   let arr=null;
   cv.addEventListener('pointerdown',e=>{arr=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
@@ -814,14 +850,14 @@ function colorear(){
     if(modo==='vert'||!F){tmp.set(color(v.lab[g]));c=[tmp.r,tmp.g,tmp.b];}
     else{const l=loc?loc[g]:-1,T=l>=0?F[l]:NaN;if(T!==T)c=gris;else{const [r,gg,b]=rgb(T);c=[r/255,gg/255,b/255];}}
     for(let s=0;s<4;s++){col[(q*4+s)*3]=c[0];col[(q*4+s)*3+1]=c[1];col[(q*4+s)*3+2]=c[2];}}
-  malla.geometry.attributes.color.needsUpdate=true;dibujar3D();
+  malla.geometry.attributes.color.needsUpdate=true;marcadores();dibujar3D();
 }
 
 // ---------- Tiempo y animación ----------
 let anim=null;
 function ponerFrame(i){const r=estado.r;if(!r)return;estado.frame=Math.max(0,Math.min(r.frames.length-1,i));$('slider').value=estado.frame;
   const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;
-  construirMalla();graficos();corte();}
+  construirMalla();graficos();corte();instante();}
 $('slider').oninput=e=>ponerFrame(+e.target.value);
 $('btn-play').onclick=()=>{
   if(anim){clearInterval(anim);anim=null;$('btn-play').textContent='▶ Reproducir';return;}
@@ -837,8 +873,9 @@ $('corte').onchange=()=>construirMalla();$('todo').onchange=()=>construirMalla()
 function kpis(){
   const r=estado.r,v=estado.vox,P=estado.P;if(!r||!v)return;
   const ifc=v.tabla.reduce((s,x)=>s+x.ifc,0),vx=v.tabla.reduce((s,x)=>s+x.vox,0),err=100*(vx-ifc)/ifc;
-  const ref=estado.ref,dif=ref?r.maximo-ref.maximo:null;
+  const ref=estado.ref,dif=ref?r.maximo-ref.maximo:null,dmax=diferenciales().max;
   const k=[['Temperatura máxima',`${fmt(r.maximo,2)} °C`,`a las ${fmt(r.tmax,1)} h`+(ref?` · ${dif>=0?'+':''}${fmt(dif,2)} °C vs referencia`:'')],
+    ['Diferencial máx. (aprox.)',dmax?`${fmt(dmax.v,1)} °C`:'—',dmax?`a las ${fmt(dmax.t,1)} h · límite ${fmt(num('lim-dt'),0)} °C`:'sin caras expuestas'],
     ['Error de volumen',`${err>=0?'+':''}${fmt(err,3)} %`,`${fmt(vx,1)} de ${fmt(ifc,1)} m³`],
     ['Celdas de hormigón',r.ncon.toLocaleString('es-CL'),`grilla ${v.n.join(' × ')}`],
     ['Pasos de tiempo',r.pasos.toLocaleString('es-CL'),`Δt usado ${fmt(r.dtmax,0)} s`],
@@ -885,7 +922,53 @@ function conceptos(){
     ['Condiciones de borde',CARAS_UI.map(([c])=>NOMBRE_TIPO[P[c].tipo]).join(' · '),`Arriba: ${textoBorde(P.arriba)}. Lados: ${textoBorde(P.lados)}. Base: ${textoBorde(P.base)}. Se aplican a toda cara expuesta según su orientación, también la cara superior de una vertida aún sin cubrir. Juntas entre vertidas activas: contacto perfecto.`]];
   $('conceptos').innerHTML=items.map(([a,b,c])=>`<div class="concepto"><span style="font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${a}</span><b>${b}</b><p>${c}</p></div>`).join('');
 }
-function todo(){kpis();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
+
+// ---------- Instante seleccionado: máxima, mínima y diferencial ----------
+const COL_MAX='#18b5d6',COL_SUP='#7cc242';
+function celda(l){
+  const v=estado.vox,g=estado.r.cid[l],[nx,ny]=v.n,i=g%nx,j=((g/nx)|0)%ny,k=(g/(nx*ny))|0;
+  return {g,id:v.lab[g],x:v.centros[0][i],y:v.centros[1][j],z:v.centros[2][k]};
+}
+const donde=l=>{const c=celda(l);return `${etiqueta(c.id)} · x = ${fmt(c.x,1)}, y = ${fmt(c.y,1)}, z = ${fmt(c.z,2)} m`;};
+const estadoC=(ok,lim)=>`<span class="estado-c ${ok?'ok':'mal'}">${ok?'Cumple':'No cumple'} ≤ ${fmt(lim,0)} °C</span>`;
+function instante(){
+  const r=estado.r;if(!r)return;const f=r.frames[estado.frame],lt=num('lim-tmax'),ld=num('lim-dt');
+  if(f.imax<0){$('instante').innerHTML='<p class="nota">En este instante aún no hay hormigón colocado.</p>';$('n-instante').textContent='';return;}
+  const F=f.T,tmx=F[f.imax],tmn=F[f.imin],tsu=f.isup>=0?F[f.isup]:NaN,dns=tmx-tsu,dtot=tmx-tmn;
+  const datos=[
+    ['T máxima',`${fmt(tmx,2)} °C`,`<span class="marca" style="background:${COL_MAX}"></span>${donde(f.imax)}`,estadoC(tmx<=lt,lt)],
+    ['T mínima',`${fmt(tmn,2)} °C`,donde(f.imin),''],
+    ['Núcleo − superficie (aprox.)',Number.isFinite(dns)?`${fmt(dns,2)} °C`:'—',f.isup>=0?`<span class="marca" style="background:${COL_SUP}"></span>superficie más fría: ${donde(f.isup)} · ${fmt(tsu,2)} °C`:'No hay caras expuestas no adiabáticas',Number.isFinite(dns)?estadoC(dns<=ld,ld):''],
+    ['T máxima − T mínima',`${fmt(dtot,2)} °C`,'todo el hormigón colocado, incluida una vertida recién colocada',estadoC(dtot<=ld,ld)]];
+  $('instante').innerHTML=datos.map(([a,b,c,d])=>`<div class="dato"><span>${a}</span><strong>${b}</strong><small>${c}</small>${d}</div>`).join('');
+  const [dx,,dz]=estado.vox.d;
+  $('n-instante').textContent=`La superficie es cada celda con una cara al aire o con temperatura o flujo impuesto. Su centro queda a ${fmt(dz*500,1)} mm de la cara superior y a ${fmt(dx*500,0)} mm de los lados; el curso mide a 25 mm. Es una aproximación: el repo todavía no evalúa el diferencial normativo por sección.`;
+}
+function marcadores(){
+  if(!escena)return;const r=estado.r,f=r?r.frames[estado.frame]:null,ver=$('marcas').checked&&f;
+  [[marcaMax,f?.imax],[marcaSup,f?.isup]].forEach(([m,l])=>{
+    if(!m)return;m.visible=!!ver&&l>=0;if(m.visible){const c=celda(l);m.position.set(c.x,c.y,c.z);}});
+}
+function diferenciales(){
+  const s=estado.r.serie,ns=s.gmax.map((m,i)=>m-s.gsup[i]),tot=s.gmax.map((m,i)=>m-s.gmin[i]);
+  let im=-1;ns.forEach((v,i)=>{if(Number.isFinite(v)&&(im<0||v>ns[im]))im=i;});
+  return {ns,tot,max:im<0?null:{v:ns[im],t:s.t[im]}};
+}
+function graficoDT(){
+  const r=estado.r;if(!r)return;const s=r.serie,ld=num('lim-dt'),tc=r.frames[estado.frame]?.t,{ns,tot,max}=diferenciales();
+  const ser=[{name:'Núcleo − superficie (aprox.)',x:s.t,y:ns,color:css('--accent'),w:2.4},
+    {name:'T máx − T mín',x:s.t,y:tot,color:css('--ink'),w:1.4,dash:[5,4]},
+    {name:'Límite',x:s.t,y:s.t.map(()=>ld),color:css('--bad'),w:1.4,dash:[2,3]}];
+  grafico($('g-dt'),{series:ser,xlab:'Tiempo desde la primera vertida [h]',ylab:'ΔT [°C]',cursor:tc,y0:0});
+  leyenda('l-dt',ser.map(x=>[x.name,x.color,!!x.dash]));
+  const primero=ns.findIndex(v=>v>ld);
+  $('n-dt').textContent=!max?'No hay caras expuestas no adiabáticas: no se puede estimar el diferencial.':
+    `Máximo núcleo − superficie: ${fmt(max.v,2)} °C a las ${fmt(max.t,1)} h. `+(primero<0?`Nunca supera ${fmt(ld,0)} °C en el horizonte.`:`Supera ${fmt(ld,0)} °C por primera vez a las ${fmt(s.t[primero],1)} h.`)+' Los saltos de la línea discontinua ocurren cuando entra una vertida fría.';
+}
+['lim-tmax','lim-dt'].forEach(id=>$(id).addEventListener('input',()=>{instante();graficoDT();kpis();}));
+$('marcas').onchange=()=>{marcadores();dibujar3D();};
+
+function todo(){kpis();instante();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
 function ponerReloj(){const r=estado.r;if(!r)return;const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;}
 
 // ---------- Eventos de entrada ----------
