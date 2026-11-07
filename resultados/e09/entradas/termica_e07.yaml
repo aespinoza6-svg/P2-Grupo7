@@ -1,0 +1,12 @@
+# DEMOSTRACION DEL ACOPLAMIENTO; NO ES EL PLAN DE CONTROL FINAL.
+# Sin clima real, suelo explicito, moldaje ni retiro de protecciones.
+horizonte_h: 72.0
+max_dt_s: 600.0
+intervalo_salida_h: 1.0
+ambiente:
+  temperatura_C: 15.0   # Supuesto ilustrativo constante, no dato meteorologico de Renaico.
+  h_W_m2K: 10.0        # Supuesto ilustrativo, pendiente de justificar con clima/protecciones.
+base:
+  condicion: adiabatica # Simplificacion provisional; falta intercambio real con suelo.
+interfaces:
+  contacto: perfecto   # Sin resistencia termica de junta.

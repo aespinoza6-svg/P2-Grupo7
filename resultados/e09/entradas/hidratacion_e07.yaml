@@ -1,0 +1,12 @@
+# DISEÑO PEDAGÓGICO: no es una calibración del hormigón real del proyecto.
+# Fuente: Antecedentes/guias/DIFUSION_DE_CALOR_1D_2D_3D.md, secciones 23-25.
+# Los parámetros 45 °C y 30 h proceden del ejemplo de la sección 24.
+estado: pedagogico_no_calibrado
+fuente: "Guía DIFUSION_DE_CALOR_1D_2D_3D.md, sección 24"
+referencia_edad: desde_colocacion
+dependencia_de_temperatura: no_implementada
+mezclas:
+  M1:
+    modelo: adiabatico_exponencial
+    elevacion_final_C: 45.0
+    tau_h: 30.0

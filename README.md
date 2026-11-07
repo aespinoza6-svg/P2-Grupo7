@@ -253,3 +253,15 @@ El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triá
 ```powershell
 python -X utf8 scripts/12_actualizar_visor_laboratorio.py
 ```
+
+## E09 — Baseline 3D con hidratación
+
+[Informe E09](docs/informe_E09.md), de menos de 1200 palabras, con modelo BIM, voxelización, error de volumen, vertidas, hidratación, historias puntuales, cortes térmicos y comparación crítica con Ju y Lei. La entrega queda identificada por la etiqueta `E09`.
+
+Para reproducir el baseline y sus figuras:
+
+```powershell
+python -X utf8 scripts/12_baseline_e09.py
+```
+
+Los resultados y las copias de entradas se guardan en `resultados/e09/`.

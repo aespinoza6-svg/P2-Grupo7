@@ -1,0 +1,51 @@
+# Caso base del Grupo 7: DÓNDE (sitio), QUÉ (geometría) y CON QUÉ (hormigón).
+#
+# Cada valor indica su ORIGEN:
+#   [CURSO]       dato entregado por el curso (enunciado o sitios.yaml)
+#   [DOCENTE]     geometría de la guía del curso (GUIA_BONSAI_FUNDACION.md),
+#                 adoptada por el grupo como geometría del caso base
+#   [PROVISIONAL] supuesto nuestro que se calibrará más adelante
+#   Registro completo: docs/3_supuestos.md
+
+# ---------------------------------------------------------------------------
+# SITIO — fuente: 03_SITIOS_POR_GRUPO.md / sitios.yaml del curso.
+# REGLA DEL CURSO: todos los scripts de clima usan EXACTAMENTE esta latitud y
+# longitud. Es el punto meteorológico oficial del caso docente, NO la
+# coordenada exacta de una fundación real.
+# ---------------------------------------------------------------------------
+sitio:
+  grupo: G7
+  localidad: Renaico
+  region: La Araucanía
+  parque_eolico: Parque Eólico Vergara
+  estado_proyecto: aprobado
+  referencia_sea: https://www.sea.gob.cl/tce/tabla-de-comision-evaluacion-1818
+  latitud: -37.692100      # [CURSO] grados decimales (negativo = sur)
+  longitud: -72.624000     # [CURSO] grados decimales (negativo = oeste)
+  zona_horaria: America/Santiago
+
+# ---------------------------------------------------------------------------
+# GEOMETRÍA DEL CASO BASE — fundación octagonal indicada en
+# Antecedentes/GUIA_BONSAI_FUNDACION.md (la del modelo en Bonsai).
+# No incluye pernos, armaduras ni ductos.
+# ---------------------------------------------------------------------------
+geometria:
+  lados_planta: 8
+  distancia_caras_exteriores_m: 18.0 # [DOCENTE] octágono exterior, cara a cara
+  espesor_borde_m: 1.10              # [DOCENTE]
+  espesor_centro_m: 3.30             # [DOCENTE] hasta la parte superior de la transición
+  plataforma_distancia_caras_m: 7.0  # [DOCENTE] octágono interior al pie del pedestal
+  pedestal_diametro_m: 7.0           # [DOCENTE] cilindro superior
+  altura_pedestal_m: 1.0              # [DOCENTE] simplificación del ejercicio
+  altura_total_m: 4.30                # espesor central + altura del pedestal
+  lados_cilindro: 48
+
+# ---------------------------------------------------------------------------
+# HORMIGÓN — [PROVISIONAL] valores típicos (los del código de ejemplo del
+# curso). Se calibran en la semana 3 con Ju y Lei (2019) e ICH.
+# ---------------------------------------------------------------------------
+hormigon:
+  nombre: Hormigon M1
+  conductividad_W_mK: 2.0         # k
+  densidad_kg_m3: 2400.0          # rho
+  calor_especifico_J_kgK: 900.0   # cp
