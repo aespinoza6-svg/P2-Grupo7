@@ -5,6 +5,10 @@ Una cara activa-inactiva es EXTERIOR; al colocar su vecina pasa a interfaz.
 Los bordes se asignan por orientacion de la cara voxelizada, no por la caja.
 Contacto entre hormigones perfecto, sin resistencia de junta adicional.
 Hidratacion prescrita por edad; energia integrada exactamente por intervalo.
+Un borde puede ser Dirichlet/Neumann/Robin constante, o un objeto con
+coeficientes(t, cara, mascara, sistema) -> (G, T_ref, Q) que varia en el tiempo y
+por celda (clima, moldaje, suelo: ver mcplan.bordes). Debe ofrecer tambien
+G_maximo(cara, mascara, sistema) para el paso estable.
 """
 from dataclasses import dataclass
 from typing import Callable
@@ -12,6 +16,10 @@ import numpy as np
 from mcplan.construccion import ProgramaVertidas,EstadoConstruccion
 from mcplan.solver1d import Material,Dirichlet,Neumann,Robin,_conductancia_borde,_evaluar
 from mcplan.solver3d import CARAS
+
+
+def _es_campo(borde):
+    return hasattr(borde,'coeficientes') and hasattr(borde,'G_maximo')
 
 
 def _lados(eje,n):
@@ -46,6 +54,8 @@ class SistemaActivo:
             self.Gbase.append(self.areas[e]/(self.d[e]/(2*self.k[a])+self.d[e]/(2*self.k[b])))
         for cara,(e,_) in CARAS.items():
             borde=self.bordes[cara]
+            if _es_campo(borde):
+                self.Gb[cara]=None;continue
             if isinstance(borde,Robin) and (not np.isfinite([borde.h,borde.R_extra]).all() or borde.h<=0 or borde.R_extra<0):
                 raise ValueError('Robin requiere h>0 y resistencia adicional >=0.')
             self.Gb[cara]=np.broadcast_to(_conductancia_borde(borde,self.k,self.d[e])*self.areas[e],self.forma)
@@ -63,7 +73,8 @@ class SistemaActivo:
             else:vecina[a]=activa[b]
             mask=activa&~vecina
             self.expuestas[cara]=mask
-            S[mask]+=self.Gb[cara][mask]
+            if self.Gb[cara] is None:S[mask]+=self.bordes[cara].G_maximo(cara,mask,self)
+            else:S[mask]+=self.Gb[cara][mask]
         seleccion=activa&(S>0)
         self.dt_critico=float(np.min(self.C[seleccion]/S[seleccion])) if seleccion.any() else np.inf
         return self.dt_critico
@@ -78,7 +89,12 @@ class SistemaActivo:
             balance[a]+=F;balance[b]-=F
         for cara,(e,_) in CARAS.items():
             mask=self.expuestas[cara];borde=self.bordes[cara]
-            if isinstance(borde,Neumann):
+            if _es_campo(borde):
+                if mask.any():
+                    G,Tref,Q=borde.coeficientes(t,cara,mask,self)
+                    q=G*(Tref-T[mask])+Q
+                    balance[mask]+=q;exterior+=float(q.sum())
+            elif isinstance(borde,Neumann):
                 q=_evaluar(borde.q,t)*self.areas[e]
                 if q:
                     balance[mask]+=q;exterior+=q*np.count_nonzero(mask)
@@ -105,13 +121,15 @@ class ResultadoVertidas:
 
 
 def resolver_vertidas(programa,materiales,bordes,t_final_s,*,dt_s=None,max_dt_s=600.,
-                      tiempos_guardado_s=None,guardar_campos=False,progreso:Callable|None=None):
+                      tiempos_guardado_s=None,guardar_campos=False,progreso:Callable|None=None,
+                      al_guardar:Callable|None=None):
     """Euler explicito con eventos, fuentes por edad y balance de energia.
 
     dt_s explicito se verifica; None usa min(max_dt_s,0.8*C/S).
     Siempre se divide el paso en colocaciones, tiempos de salida y final.
     Las salidas en un evento incluyen el nuevo hormigon ya incorporado.
     Ledger: E = E_colocacion + E_hidratacion + E_bordes, referido a 0 C.
+    al_guardar(t, T, activa, sistema) se llama en cada salida (p. ej. diferencial).
     No se calcula aun un diferencial nucleo-superficie normativo.
     """
     if not np.isfinite(t_final_s) or t_final_s<=0:raise ValueError('Tiempo final positivo y finito.')
@@ -161,6 +179,7 @@ def resolver_vertidas(programa,materiales,bordes,t_final_s,*,dt_s=None,max_dt_s=
                                   T_max_C=float(T[mask].max()) if mask.any() else None,
                                   T_media_C=float(T[mask].mean()) if mask.any() else None))
         ts.append(t);cortes.append(T[:,iy,:].T.astype(np.float32))
+        if al_guardar:al_guardar(t,T,activa,sistema)
         if guardar_campos:campos.append(T.copy())
     incorporar(0.);medir_maximo(0.);guardar(0.)
     t=0.

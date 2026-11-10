@@ -1,0 +1,38 @@
+# E10: ambiente real. Entradas declarativas: el plan se cambia aquí, no en el código.
+# Origen de cada valor: [CURSO] dato del curso; [TÍPICO] valor de literatura sin ensayo;
+# [PROVISIONAL] decisión nuestra pendiente.
+
+inicio_primera_vertida: "2026-11-27T08:00:00-03:00"  # [PROVISIONAL] la fecha final la fija el curso (TBD)
+horizonte_h: 336            # 14 días después de la primera vertida
+max_dt_s: 600
+intervalo_salida_h: 1
+
+clima:
+  carpeta: data/weather      # snapshots inmutables, uno por descarga
+  snapshot: ultimo           # "ultimo" o el nombre de una carpeta, p. ej. 2026-11-10T1500
+  dias_pronostico: 16        # máximo que entrega Open-Meteo
+  metodo_cola: historico_promedio   # o historico_frio (escenario conservador)
+  historico_anos: [2021, 2022, 2023, 2024, 2025]
+
+superficie:
+  absortividad_solar: 0.65   # [TÍPICO] hormigón gris, 0,5–0,7
+  emisividad: 0.9            # [TÍPICO] hormigón
+  h_fijo_W_m2K: null         # null: h = h_conv(V) + h_rad. Un número reproduce el h constante de E07.
+
+moldaje:                     # caras laterales de cada vertida
+  R_m2K_W: 0.14              # [TÍPICO] madera contrachapada 18 mm: 0,018 m / 0,13 W/(m K)
+  retiro_desde_ifc: true     # usa RetiroMoldaje_h de cada vertida del IFC (horas desde su inicio)
+
+aislacion_superior:          # caras superiores
+  R_m2K_W: 0.0               # 0 = sin manta. [TÍPICO] poliestireno 5 cm: 0,05 / 0,035 = 1,43
+  retiro_h: null             # horas desde el inicio de cada vertida; null = no se retira
+
+suelo:
+  incluir: true
+  espesor_m: 2.0             # [PROVISIONAL] bloque bajo la base
+  margen_m: 2.0              # [PROVISIONAL] franja alrededor de la fundación
+  k_W_mK: 1.5                # [TÍPICO] suelo limoso húmedo
+  densidad_kg_m3: 1900       # [TÍPICO]
+  calor_especifico_J_kgK: 1000   # [TÍPICO]
+  T_inicial_C: 12.0          # [PROVISIONAL] cercano a la media anual del aire en Renaico
+  T_fondo_C: 12.0            # [PROVISIONAL] fondo del bloque a temperatura fija
