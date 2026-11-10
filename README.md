@@ -248,10 +248,10 @@ Los dos se abren con doble clic desde la carpeta del repositorio.
 | `visor_e07.html` | Muestra resultados ya calculados por los scripts: 14 días, cortes, balance y lab. Funciona sin conexión. | Para presentar resultados guardados |
 | `visor_laboratorio.html` | Recalcula en el navegador al cambiar malla, horarios, temperaturas, material, hidratación o bordes. Incluye vista 3D animada, corte térmico, comparación con una referencia y barrido de tamaños de celda. La vista 3D necesita internet. | Para cambios en vivo |
 
-El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triángulos del IFC. El test `tests/test_visor_laboratorio.py` revisa que esa copia coincida con el IFC y, si Node está instalado, que su cálculo dé lo mismo que el solver Python. Si el IFC cambia:
+El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triángulos del IFC y del último snapshot de clima. El test `tests/test_visor_laboratorio.py` revisa que esas copias estén al día y, si Node está instalado, que su cálculo dé lo mismo que el solver Python, también con clima, moldaje y suelo. Si el IFC cambia o se descarga un snapshot nuevo:
 
 ```powershell
-python -X utf8 scripts/12_actualizar_visor_laboratorio.py
+python -X utf8 scripts/actualizar_visor_laboratorio.py
 ```
 
 ## E09 — Baseline 3D con hidratación
@@ -265,3 +265,25 @@ python -X utf8 scripts/12_baseline_e09.py
 ```
 
 Los resultados y las copias de entradas se guardan en `resultados/e09/`.
+
+## E10 — Ambiente real en la física
+
+El clima del sitio entra a la ecuación del calor: aire, viento y sol desde snapshots de Open-Meteo, moldaje y aislación con hora de retiro, y suelo bajo la fundación. Las respuestas a las preguntas de la actividad están en [docs/E10_ambiente.md](docs/E10_ambiente.md).
+
+```powershell
+python -X utf8 scripts/13_descargar_pronostico.py
+python -X utf8 scripts/14_simular_ambiente.py --constante --salida resultados/e10/constante
+python -X utf8 scripts/14_simular_ambiente.py --comparar-con resultados/e10/constante
+python -X utf8 -m pytest tests/test_ambiente.py -v
+```
+
+| Pieza | Dónde |
+|---|---|
+| Condiciones de borde con clima | `mcplan/bordes.py` |
+| Suelo | `mcplan/suelo.py` |
+| Cliente y loader meteorológico | `mcplan/clima.py` |
+| Snapshots inmutables | `data/weather/<fecha de descarga>/` |
+| Entradas del caso | `config/ambiente_e10.yaml` |
+
+En `visor_laboratorio.html`, el botón «Usar clima real, moldaje y suelo» hace lo mismo en el navegador.
+
