@@ -894,8 +894,11 @@ function recibir(e){
     pillEstado(`Listo en ${fmt((performance.now()-estado.t0)/1000,1)} s`,'ok');
     const loc=new Int32Array(estado.vox.lab.length).fill(-1);m.r.cid.forEach((g,l)=>loc[g]=l);estado.loc=loc;
     let mn=Infinity,mx=-Infinity;m.r.frames.forEach(f=>{for(const v of f.T)if(v===v){if(v<mn)mn=v;if(v>mx)mx=v;}});
-    const Ts=['arriba','lados','base'].map(c=>estado.P[c]).filter(b=>b.tipo!=='neumann').map(b=>b.T);
-    estado.rango=[Math.floor(Math.min(mn,...Ts)),Math.ceil(mx)];
+    // Escala de color: de la temperatura más baja (celdas o bordes con T fija) a la más alta del cálculo.
+    // Las caras Ambiente y Neumann no tienen una T fija; por eso solo cuentan Robin y Dirichlet.
+    const Ts=['arriba','lados','base'].map(c=>estado.P[c]).filter(b=>(b.tipo==='robin'||b.tipo==='dirichlet')&&Number.isFinite(b.T)).map(b=>b.T);
+    const lo=Math.floor(Math.min(mn,...Ts)),hi=Math.ceil(mx);
+    estado.rango=Number.isFinite(lo)&&Number.isFinite(hi)&&hi>lo?[lo,hi]:[10,60];
     const s=$('slider');s.max=m.r.frames.length-1;s.value=s.max;estado.frame=+s.max;
     todo();
   }
