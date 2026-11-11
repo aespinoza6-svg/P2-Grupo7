@@ -197,3 +197,58 @@ def test_el_motor_del_visor_con_clima_moldaje_y_suelo_da_lo_mismo_que_python(tmp
     for vid, media in media_py.items():
         if media is not None:
             assert js['media'][str(vid)] == pytest.approx(media, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Geometría paramétrica: el navegador construye las mismas vertidas que el IFC
+# ---------------------------------------------------------------------------
+import copy
+
+ARNES_GEO = r"""
+const fs=require('fs');global.self={};global.postMessage=()=>{};
+const main=fs.readFileSync(process.argv[2],'utf8');
+const ini=main.indexOf('// --- Geometría paramétrica'),fin=main.indexOf('// --- fin geometría paramétrica');
+eval(main.slice(ini,fin)+';global.generarGeometria=generarGeometria;global.validarGeometria=validarGeometria;');
+eval(fs.readFileSync(process.argv[3],'utf8')+';global.voxelizar=voxelizar;');
+const base=JSON.parse(fs.readFileSync(process.argv[4],'utf8')),casos=JSON.parse(fs.readFileSync(process.argv[5],'utf8'));
+console.log(JSON.stringify(casos.map(g=>{const m=generarGeometria(g,base),v=voxelizar(m,[.4,.4,.05]);
+  return {errores:validarGeometria(g),vol:m.map(x=>x.vol),celdas:v.tabla.map(x=>x.celdas),n:v.n};})));
+"""
+
+
+def _caso_y_plan(g):
+    caso = bim.cargar_yaml(RAIZ / 'config' / 'caso_base.yaml')
+    plan = bim.cargar_yaml(RAIZ / 'config' / 'plan_v02.yaml')
+    caso = copy.deepcopy(caso)
+    caso['geometria'].update(lados_planta=g['lados'], distancia_caras_exteriores_m=g['caras'], espesor_borde_m=g['borde'],
+                             espesor_centro_m=g['centro'], plataforma_distancia_caras_m=g['plataforma'],
+                             pedestal_diametro_m=g['pedestal'], altura_pedestal_m=g['alto'],
+                             altura_total_m=g['centro'] + g['alto'], lados_cilindro=g['ladoscil'])
+    cotas = [(0, g['corte1']), (g['corte1'], g['borde']), (g['borde'], g['corte2']), (g['corte2'], g['centro']),
+             (g['centro'], g['centro'] + g['alto'])]
+    for v, (z0, z1) in zip(plan['vertidas'], cotas):
+        v['z_inferior_m'], v['z_superior_m'] = z0, z1
+    return caso, plan
+
+
+@pytest.mark.skipif(shutil.which('node') is None, reason='Node no esta instalado')
+def test_la_geometria_parametrica_del_visor_es_la_del_ifc(tmp_path):
+    base = dict(lados=8, caras=18, borde=1.1, centro=3.3, plataforma=7, pedestal=7, alto=1, ladoscil=48, corte1=0.55, corte2=2.2)
+    otra = dict(lados=6, caras=16, borde=1.2, centro=3.0, plataforma=6, pedestal=5.5, alto=1.4, ladoscil=32, corte1=0.6, corte2=2.0)
+    casos = [base, otra]
+    (tmp_path / 'main.js').write_text(re.findall(r'<script>(.*?)</script>', TEXTO, re.S)[-1], encoding='utf-8')
+    (tmp_path / 'worker.js').write_text(re.search(r'id="worker-src">(.*?)</script>', TEXTO, re.S).group(1), encoding='utf-8')
+    (tmp_path / 'base.json').write_text(json.dumps(visor12.geometria_del_visor(TEXTO)), encoding='utf-8')
+    (tmp_path / 'casos.json').write_text(json.dumps(casos), encoding='utf-8')
+    js = _node(tmp_path, ARNES_GEO, tmp_path / 'main.js', tmp_path / 'worker.js', tmp_path / 'base.json', tmp_path / 'casos.json')
+    for g, j in zip(casos, js):
+        caso, plan = _caso_y_plan(g)
+        bim.validar_plan(caso['geometria'], plan)
+        ruta = tmp_path / f"f{g['lados']}.ifc"
+        bim.crear_modelo_fundacion(caso, plan).write(str(ruta))
+        mallas = extraer_mallas(ruta)
+        grilla = voxelizar_mallas(mallas, (.4, .4, .05), max_celdas=4_000_000)
+        assert j['errores'] == []
+        assert j['vol'] == pytest.approx([m.volumen_ifc_m3 for m in mallas], rel=1e-9)
+        assert j['celdas'] == [f['celdas'] for f in grilla.resumen_volumenes()]
+        assert j['n'] == list(grilla.vertida_id.shape)
