@@ -71,7 +71,7 @@ button.prim{background:var(--accent);color:var(--accent-ink);border-color:var(--
 button:disabled{opacity:.5;cursor:default}
 .toggle{display:flex;align-items:center;gap:6px;font-size:.82rem}
 main{display:flex;flex-direction:column;gap:14px;min-width:0}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:0}
 .kpi span{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .kpi strong{display:block;font-family:var(--mono);font-size:1.25rem;font-weight:500;margin-top:2px}
@@ -123,6 +123,12 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
 .estado-c{align-self:flex-start;font-size:.75rem;padding:2px 8px;border-radius:999px;font-weight:600}
 .estado-c.ok{background:var(--ok-bg);color:var(--ok)}
 .estado-c.mal{background:var(--bad-bg);color:var(--bad)}
+.pestanas{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.pestanas button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 12px;color:var(--muted);font-weight:500}
+.pestanas button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.pestanas button:hover{color:var(--ink)}
+.panel-p,.panel-m{display:flex;flex-direction:column;gap:12px}
+.panel-m{gap:14px}
 @media (prefers-reduced-motion:reduce){.barra i{transition:none}}
 </style>
 
@@ -139,6 +145,39 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
 
 <div class="layout">
 <aside>
+  <div class="pestanas" role="tablist" aria-label="Parámetros">
+    <button type="button" role="tab" id="pa-fund" aria-controls="pp-fund" aria-selected="true">Fundación</button>
+    <button type="button" role="tab" id="pa-mat" aria-controls="pp-mat" aria-selected="false">Hormigón</button>
+    <button type="button" role="tab" id="pa-amb" aria-controls="pp-amb" aria-selected="false">Ambiente</button>
+  </div>
+  <div class="panel-p" id="pp-fund" role="tabpanel" aria-labelledby="pa-fund">
+  <section class="card">
+    <fieldset>
+      <legend><h2>Geometría de la fundación</h2></legend>
+      <label class="f">Origen<select id="geo-origen">
+        <option value="ifc" selected>IFC del repo (fundacion.ifc)</option>
+        <option value="param">Paramétrica (editable aquí)</option></select></label>
+      <div class="campos dos" id="geo-campos">
+        <label class="f">Lados de la planta<input type="number" id="geo-lados" value="8" min="3" max="64" step="1"></label>
+        <label class="f">Ancho entre caras [m]<input type="number" id="geo-caras" value="18" min="2" step="0.5"></label>
+        <label class="f">Espesor del borde [m]<input type="number" id="geo-borde" value="1.1" min="0.1" step="0.05"></label>
+        <label class="f">Espesor del centro [m]<input type="number" id="geo-centro" value="3.3" min="0.2" step="0.05"></label>
+        <label class="f">Plataforma entre caras [m]<input type="number" id="geo-plataforma" value="7" min="0.5" step="0.5"></label>
+        <label class="f">Diámetro del pedestal [m]<input type="number" id="geo-pedestal" value="7" min="0.5" step="0.5"></label>
+        <label class="f">Altura del pedestal [m]<input type="number" id="geo-alto" value="1" min="0.1" step="0.1"></label>
+        <label class="f">Lados del cilindro<input type="number" id="geo-ladoscil" value="48" min="8" max="128" step="4"></label>
+        <label class="f">Junta V01/V02, z [m]<input type="number" id="geo-corte1" value="0.55" min="0.05" step="0.05"></label>
+        <label class="f">Junta V03/V04, z [m]<input type="number" id="geo-corte2" value="2.2" min="0.1" step="0.05"></label>
+      </div>
+      <div class="deriv" id="deriv-geo"></div>
+      <details id="geo-yaml-caja"><summary style="font-size:.82rem;cursor:pointer">Llevar esta geometría al IFC</summary>
+        <p class="deriv" style="display:block;margin:6px 0">Copia esto en <b>config/caso_base.yaml</b>, ajusta las cotas z en <b>config/plan_v02.yaml</b> y corre <b>scripts/01_crear_modelo_ifc.py</b>. Así el IFC queda igual a lo que simulaste aquí.</p>
+        <pre id="geo-yaml" class="mono" style="font-size:.76rem;white-space:pre-wrap;margin:0;background:var(--field);border:1px solid var(--line);border-radius:5px;padding:8px"></pre>
+        <div class="botones" style="margin-top:6px"><button type="button" id="btn-geo-copiar">Copiar</button></div>
+      </details>
+    </fieldset>
+  </section>
+
   <section class="card">
     <fieldset>
       <legend><h2>Malla de vóxeles</h2></legend>
@@ -163,7 +202,8 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
       <div class="botones"><button type="button" id="btn-ifc">Volver al programa del IFC</button></div>
     </fieldset>
   </section>
-
+  </div>
+  <div class="panel-p" id="pp-mat" role="tabpanel" aria-labelledby="pa-mat" hidden>
   <section class="card">
     <fieldset>
       <legend><h2>Hormigón e hidratación</h2></legend>
@@ -179,7 +219,8 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
       <div class="deriv" id="deriv-mat"></div>
     </fieldset>
   </section>
-
+  </div>
+  <div class="panel-p" id="pp-amb" role="tabpanel" aria-labelledby="pa-amb" hidden>
   <section class="card">
     <fieldset>
       <legend><h2>Clima y ambiente</h2></legend>
@@ -226,7 +267,7 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
       <div class="deriv" id="deriv-borde"></div>
     </fieldset>
   </section>
-
+  </div>
   <section class="card">
     <fieldset>
       <legend><h2>Simulación</h2></legend>
@@ -250,6 +291,15 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
   <div class="kpis" id="kpis"></div>
   <div class="avisos" id="avisos"></div>
 
+  <div class="pestanas" role="tablist" aria-label="Resultados">
+    <button type="button" role="tab" id="pm-3d-t" aria-controls="pm-3d" aria-selected="true">Vista 3D</button>
+    <button type="button" role="tab" id="pm-graf-t" aria-controls="pm-graf" aria-selected="false">Gráficos</button>
+    <button type="button" role="tab" id="pm-estr-t" aria-controls="pm-estr" aria-selected="false">Estrategias y referencia</button>
+    <button type="button" role="tab" id="pm-vol-t" aria-controls="pm-vol" aria-selected="false">Volumen y malla</button>
+    <button type="button" role="tab" id="pm-conc-t" aria-controls="pm-conc" aria-selected="false">Conceptos</button>
+  </div>
+
+  <div class="panel-m" id="pm-3d" role="tabpanel" aria-labelledby="pm-3d-t">
   <section class="card" style="display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <h2>Fundación en 3D</h2>
@@ -287,7 +337,9 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
     <p class="nota" id="n-instante" style="margin:0;color:var(--muted);font-size:.8rem"></p>
     <p class="nota" style="margin:0;color:var(--muted);font-size:.8rem">Arrastra para girar, rueda para acercar, doble clic para volver a la vista inicial. Cada cubo es una celda; el color es su temperatura en ese instante.</p>
   </section>
+  </div>
 
+  <div class="panel-m" id="pm-graf" role="tabpanel" aria-labelledby="pm-graf-t" hidden>
   <div class="graficos">
     <section class="card graf" style="grid-column:1/-1">
       <h2>Diferencial de temperatura en el tiempo</h2>
@@ -348,7 +400,9 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
       <p class="nota">Cada escalón es una vertida que entra según su Inicio_h.</p>
     </section>
   </div>
+  </div>
 
+  <div class="panel-m" id="pm-estr" role="tabpanel" aria-labelledby="pm-estr-t" hidden>
   <section class="card graf" id="sec-estrategias">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <h2>Cómo bajar el diferencial</h2>
@@ -360,24 +414,28 @@ main{display:flex;flex-direction:column;gap:14px;min-width:0}
     <div class="leyenda" id="l-estrategias"></div>
   </section>
 
-  <div class="dos-col">
-    <section class="card graf">
-      <h2>Volumen: IFC contra vóxeles</h2>
-      <div class="tabla" id="t-volumen"></div>
-      <div class="tabla" id="t-barrido"></div>
-    </section>
     <section class="card graf">
       <h2>Comparación con la referencia</h2>
       <div class="tabla" id="t-ref"><p class="nota">Aún no hay referencia. Calcula el caso base, pulsa «Guardar como referencia», cambia algo y vuelve aquí.</p></div>
     </section>
   </div>
 
+  <div class="panel-m" id="pm-vol" role="tabpanel" aria-labelledby="pm-vol-t" hidden>
+    <section class="card graf">
+      <h2>Volumen: geometría contra vóxeles</h2>
+      <div class="tabla" id="t-volumen"></div>
+      <div class="tabla" id="t-barrido"></div>
+    </section>
+  </div>
+
+  <div class="panel-m" id="pm-conc" role="tabpanel" aria-labelledby="pm-conc-t" hidden>
   <section class="card">
     <h2 style="margin-bottom:10px">Valores clave del caso actual</h2>
     <div class="conceptos" id="conceptos"></div>
   </section>
 
-  <p class="pie">Supuestos del repo: hidratación pedagógica sin calibrar (θ∞ = 45 °C, τ = 30 h) que no depende de la temperatura y contacto perfecto entre vertidas. Con clima real: cielo a la temperatura del aire, caras verticales sin sol, h según una correlación aproximada y suelo con valores típicos. Un máximo bajo 70 °C no aprueba un plan. Geometría: los triángulos del archivo fundaciones/fundacion.ifc; la geometría no se edita aquí. Si el IFC cambia, actualízala con scripts/actualizar_visor_laboratorio.py.</p>
+  <p class="pie">Supuestos del repo: hidratación pedagógica sin calibrar (θ∞ = 45 °C, τ = 30 h) que no depende de la temperatura y contacto perfecto entre vertidas. Con clima real: cielo a la temperatura del aire, caras verticales sin sol, h según una correlación aproximada y suelo con valores típicos. Un máximo bajo 70 °C no aprueba un plan. Geometría: por defecto, los triángulos de fundaciones/fundacion.ifc; si el IFC cambia, actualízalos con scripts/actualizar_visor_laboratorio.py. La geometría paramétrica sigue las mismas reglas que scripts/01_crear_modelo_ifc.py.</p>
+  </div>
 </main>
 </div>
 
@@ -603,7 +661,7 @@ self.onmessage=e=>{
   const m=e.data;
   try{
     if(m.cmd==='estrategias'){
-      const clave=m.d.join(',');let vox=cache[clave];
+      const clave=m.d.join(',')+'|'+(m.clave||'ifc');let vox=cache[clave];
       if(!vox){vox=voxelizar(m.mallas,m.d);for(const c in cache)delete cache[c];cache[clave]=vox;}
       const filas=m.casos.map((c,i)=>{
         const r=simular(c.P.suelo?agregarSuelo(vox,c.P.suelo):vox,{...c.P,sinCampos:true},f=>postMessage({tipo:'progreso',etapa:`Estrategia ${i+1} de ${m.casos.length}`,frac:(i+f)/m.casos.length}));
@@ -620,7 +678,7 @@ self.onmessage=e=>{
         postMessage({tipo:'progreso',etapa:'Comparando tamaños',frac:(i+1)/m.pasos.length});});
       postMessage({tipo:'barrido',filas});return;
     }
-    const clave=m.d.join(',');let vox=cache[clave];const t0=performance.now();
+    const clave=m.d.join(',')+'|'+(m.clave||'ifc');let vox=cache[clave];const t0=performance.now();
     if(!vox){vox=voxelizar(m.mallas,m.d,f=>postMessage({tipo:'progreso',etapa:'Voxelizando',frac:f}));for(const c in cache)delete cache[c];cache[clave]=vox;}
     const tv=performance.now(),vs=m.P.suelo?agregarSuelo(vox,m.P.suelo):vox;
     postMessage({tipo:'vox',vox:{lab:vs.lab.slice(),n:vs.n,org:vs.org,d:vs.d,compartidos:vox.compartidos,tabla:vox.tabla,suelo:!!m.P.suelo},ms:tv-t0});
@@ -672,6 +730,43 @@ function dibujarBordes(){
 }
 dibujarBordes();
 const num=id=>parseFloat($(id).value);
+// --- Geometría paramétrica: igual que mcplan.bim._crear_representacion_vertida ---
+const GEO_BASE={lados:8,caras:18,borde:1.1,centro:3.3,plataforma:7,pedestal:7,alto:1,ladoscil:48,corte1:0.55,corte2:2.2};
+function generarGeometria(g,base){
+  const n=g.lados,rExt=g.caras/2/Math.cos(Math.PI/n),rInt=g.plataforma/2/Math.cos(Math.PI/n);
+  const radio=z=>z<=g.borde?rExt:rExt+(z-g.borde)/(g.centro-g.borde)*(rInt-rExt);
+  const piezas=[[1,0,g.corte1,0],[2,g.corte1,g.borde,0],[3,g.borde,g.corte2,0],[4,g.corte2,g.centro,0],[5,g.centro,g.centro+g.alto,1]];
+  return piezas.map(([id,z0,z1,cil])=>{
+    const m=cil?g.ladoscil:n,r0=cil?g.pedestal/2:radio(z0),r1=cil?g.pedestal/2:radio(z1),off=cil?0:Math.PI/m,v=[],tr=[];
+    [[r0,z0],[r1,z1]].forEach(([r,z])=>{for(let i=0;i<m;i++)v.push(r*Math.cos(2*Math.PI*i/m+off),r*Math.sin(2*Math.PI*i/m+off),z);});
+    for(let k=1;k<m-1;k++){tr.push(0,k+1,k);tr.push(m,m+k,m+k+1);}
+    for(let i=0;i<m;i++){const j=(i+1)%m;tr.push(i,j,j+m,i,j+m,i+m);}
+    let vol=0;for(let q=0;q<tr.length;q+=3){const a=tr[q]*3,b=tr[q+1]*3,c=tr[q+2]*3;
+      vol+=(v[a]*(v[b+1]*v[c+2]-v[b+2]*v[c+1])-v[a+1]*(v[b]*v[c+2]-v[b+2]*v[c])+v[a+2]*(v[b]*v[c+1]-v[b+1]*v[c]))/6;}
+    const b=base.find(x=>x.id===id)||{};
+    return {...b,id,nombre:b.nombre||'Vertida_0'+id,v,t:tr,vol};});
+}
+function validarGeometria(g){
+  const e=[];
+  if(!(Number.isInteger(g.lados)&&g.lados>=3))e.push('La planta necesita al menos 3 lados enteros.');
+  if(!(Number.isInteger(g.ladoscil)&&g.ladoscil>=8))e.push('El cilindro necesita al menos 8 lados enteros.');
+  ['caras','borde','centro','plataforma','pedestal','alto'].forEach(c=>{if(!(g[c]>0))e.push(`Geometría: ${c} debe ser positivo.`);});
+  if(!(g.centro>g.borde))e.push('El espesor del centro debe ser mayor que el del borde.');
+  if(!(g.plataforma<g.caras))e.push('La plataforma debe ser más angosta que la planta.');
+  if(!(g.corte1>0&&g.corte1<g.borde))e.push('La junta V01/V02 debe quedar entre 0 y el espesor del borde.');
+  if(!(g.corte2>g.borde&&g.corte2<g.centro))e.push('La junta V03/V04 debe quedar entre el borde y el centro.');
+  return e;
+}
+// --- fin geometría paramétrica ---
+function leerGeo(){const g={};Object.keys(GEO_BASE).forEach(c=>g[c]=num('geo-'+c));return g;}
+const paramGeo=()=>$('geo-origen').value==='param';
+function mallasActuales(){return paramGeo()?generarGeometria(leerGeo(),GEO):GEO;}
+const claveGeo=()=>paramGeo()?'param:'+JSON.stringify(leerGeo()):'ifc';
+function yamlGeo(g){
+  return `geometria:\n  lados_planta: ${g.lados}\n  distancia_caras_exteriores_m: ${g.caras}\n  espesor_borde_m: ${g.borde}\n  espesor_centro_m: ${g.centro}\n  plataforma_distancia_caras_m: ${g.plataforma}\n  pedestal_diametro_m: ${g.pedestal}\n  altura_pedestal_m: ${g.alto}\n  altura_total_m: ${+(g.centro+g.alto).toFixed(4)}\n  lados_cilindro: ${g.ladoscil}\n\n# config/plan_v02.yaml, cotas z de cada vertida:\n# V01: 0 – ${g.corte1}   V02: ${g.corte1} – ${g.borde}\n# V03: ${g.borde} – ${g.corte2}   V04: ${g.corte2} – ${g.centro}\n# V05: ${g.centro} – ${+(g.centro+g.alto).toFixed(4)}`;
+}
+$('btn-geo-copiar').onclick=()=>{const txt=$('geo-yaml').textContent;
+  navigator.clipboard.writeText(txt).then(()=>pillEstado('Geometría copiada','ok'),()=>{const r=document.createRange();r.selectNodeContents($('geo-yaml'));const s=getSelection();s.removeAllRanges();s.addRange(r);pillEstado('Seleccionada: copia con Ctrl+C','');});};
 function leerBorde(c){
   const tipo=$('tipo-'+c).value;
   if(tipo==='robin')return {tipo,h:num('h-'+c),R:num('r-'+c),T:num('t-'+c)};
@@ -720,8 +815,9 @@ function leer(){
     arriba:leerBorde('arriba'),lados:leerBorde('lados'),base:leerBorde('base'),
     amb:{alfa:num('amb-alfa'),emis:num('amb-emis'),hFijo:num('amb-hfijo')||0},
     suelo:$('suelo-on').checked?{espesor:num('suelo-espesor'),margen:num('suelo-margen'),k:num('suelo-k'),rho:num('suelo-rho'),cp:num('suelo-cp'),T0:num('suelo-t0'),Tfondo:num('suelo-tfondo')}:null,
-    vertidas:GEO.map(g=>({id:g.id,inicio:num('ini-'+g.id),temp:num('tc-'+g.id),calc:$('calc-'+g.id).checked}))};
-  const malos=[];
+    vertidas:GEO.map(g=>({id:g.id,inicio:num('ini-'+g.id),temp:num('tc-'+g.id),calc:$('calc-'+g.id).checked})),
+    geo:paramGeo()?leerGeo():'ifc'};
+  const malos=paramGeo()?validarGeometria(P.geo):[];
   if(P.d.some(x=>!(x>0)))malos.push('Δx, Δy y Δz deben ser positivos.');
   [['k',P.k],['ρ',P.rho],['cp',P.cp],['τ',P.tau],['horizonte',P.horizonte],['Δt máx',P.maxdt],['salida',P.intervalo]].forEach(([n,v])=>{if(!(v>0))malos.push(`${n} debe ser positivo.`)});
   if(!(P.theta>=0))malos.push('θ∞ no puede ser negativa.');
@@ -745,7 +841,15 @@ function leer(){
 // ---------- Valores derivados y desvíos del caso base ----------
 function derivados(){
   const {P}=leer(),alpha=P.k/(P.rho*P.cp),q0=P.rho*P.cp*P.theta/(P.tau*3600);
-  const [dx,dy,dz]=P.d,n=[18/dx,18/dy,4.3/dz].map(Math.ceil),celdas=n[0]*n[1]*n[2];
+  const g=paramGeo()?leerGeo():GEO_BASE,alto=g.centro+g.alto,lim=[[Infinity,-Infinity],[Infinity,-Infinity],[Infinity,-Infinity]];
+  (paramGeo()&&!validarGeometria(g).length?generarGeometria(g,GEO):GEO).forEach(m=>{for(let i=0;i<m.v.length;i++){const e=i%3;lim[e][0]=Math.min(lim[e][0],m.v[i]);lim[e][1]=Math.max(lim[e][1],m.v[i]);}});
+  const [dx,dy,dz]=P.d,n=[0,1,2].map(e=>Math.max(1,Math.ceil((lim[e][1]-lim[e][0])/P.d[e]-1e-10))),celdas=n[0]*n[1]*n[2];
+  $('geo-campos').querySelectorAll('input').forEach(i=>i.disabled=!paramGeo());$('geo-yaml-caja').hidden=!paramGeo();
+  if(paramGeo()&&validarGeometria(g).length){$('deriv-geo').innerHTML='<span style="color:var(--warn-ink)">'+validarGeometria(g).join(' ')+'</span>';}
+  else if(paramGeo()){const m=generarGeometria(g,GEO),vt=m.reduce((s,x)=>s+x.vol,0);
+    $('deriv-geo').innerHTML=`<span>Volumen <b>${fmt(vt,1)} m³</b></span><span>Altura total <b>${fmt(alto,2)} m</b></span>`+m.map(x=>`<span>${etiqueta(x.id)} <b>${fmt(x.vol,1)}</b></span>`).join('');
+    $('geo-yaml').textContent=yamlGeo(g);}
+  else $('deriv-geo').innerHTML=`<span>Volumen del IFC <b>${fmt(GEO.reduce((s,x)=>s+x.vol,0),1)} m³</b></span><span>Para editarla, elige «Paramétrica».</span>`;
   $('deriv-malla').innerHTML=`<span>Grilla <b>${n.join(' × ')}</b></span><span>Celdas <b>${celdas.toLocaleString('es-CL')}</b></span>`+(celdas>4e6?'<span style="color:var(--warn-ink)">Supera 4.000.000</span>':'');
   const dtlim=1/(2*alpha*(1/dx**2+1/dy**2+1/dz**2));
   $('deriv-mat').innerHTML=`<span>α = k/ρcp <b>${(alpha*1e7).toLocaleString('es-CL',{maximumFractionDigits:2})}·10⁻⁷ m²/s</b></span><span>Q̇ inicial <b>${fmt(q0,0)} W/m³</b></span>`;
@@ -777,7 +881,7 @@ function calcular(){
   if(malos.length){pillEstado('Revisa los valores','err');$('avisos').innerHTML=malos.map(m=>`<div class="aviso">${m}</div>`).join('');return;}
   nuevoWorker();estado.corriendo=true;estado.P=P;estado.t0=performance.now();
   pillEstado('Calculando…','run');$('progreso').style.width='0%';
-  worker.postMessage({cmd:'run',mallas:GEO,d:P.d,P});
+  worker.postMessage({cmd:'run',mallas:mallasActuales(),clave:claveGeo(),d:P.d,P});
 }
 function recibir(e){
   const m=e.data;
@@ -843,7 +947,7 @@ $('btn-barrido').onclick=()=>{
   const {P}=leer(),dz=P.d[2];
   const pasos=[[.8,.8,dz],[.4,.4,dz],[.2,.2,dz],[.1,.1,dz],[.2,.2,.1],[.2,.2,.025]];
   nuevoWorker();trabajoBarrido=true;pillEstado('Comparando tamaños…','run');
-  worker.postMessage({cmd:'barrido',mallas:GEO,pasos});
+  worker.postMessage({cmd:'barrido',mallas:mallasActuales(),pasos});
 };
 
 // ---------- Gráficos de líneas ----------
@@ -1090,6 +1194,7 @@ function tablaRef(){
   const camb=[];P.vertidas.forEach(v=>{const a=ref.P.vertidas.find(x=>x.id===v.id);if(a.inicio!==v.inicio||a.temp!==v.temp||a.calc!==v.calc)camb.push(`${etiqueta(v.id)}: inicio ${fmt(a.inicio,1)} → ${fmt(v.inicio,1)} h, T ${fmt(a.temp,1)} → ${fmt(v.temp,1)} °C${a.calc!==v.calc?(v.calc?', vuelve al cálculo':', fuera del cálculo'):''}`);});
   ['k','rho','cp','theta','tau','horizonte','maxdt'].forEach(c=>{if(ref.P[c]!==P[c])camb.push(`${c}: ${ref.P[c]} → ${P[c]}`);});
   if(JSON.stringify(ref.P.arriba)!==JSON.stringify(P.arriba)||JSON.stringify(ref.P.lados)!==JSON.stringify(P.lados)||JSON.stringify(ref.P.base)!==JSON.stringify(P.base))camb.push('Condiciones de borde distintas');
+  if(JSON.stringify(ref.P.geo)!==JSON.stringify(P.geo))camb.push('Geometría distinta');
   if(ref.P.d.join()!==P.d.join())camb.push(`Malla ${ref.P.d.map(x=>x*100).join('×')} → ${P.d.map(x=>x*100).join('×')} cm`);
   const horas=[12,24,48,P.horizonte].filter((h,i,a)=>h<=P.horizonte&&a.indexOf(h)===i);
   const filas=GEO.map(g=>horas.map(h=>{const a=interp(h,ref.t,ref.pv[g.id].media),b=interp(h,r.serie.t,r.serie.pv[g.id].media);return [a,b];}));
@@ -1191,7 +1296,7 @@ $('btn-estrategias').onclick=()=>{
     if(m.tipo==='progreso'){pillEstado(`${m.etapa} · ${(100*m.frac).toFixed(0)} %`,'run');$('progreso').style.width=(100*m.frac).toFixed(0)+'%';}
     else if(m.tipo==='estrategias'){estrategias.filas=m.filas;finEstrategias('Comparación de estrategias lista','ok');tablaEstrategias();}
     else if(m.tipo==='error'){finEstrategias('Error','err');$('t-estrategias').innerHTML=`<div class="aviso">${m.msg}</div>`;}};
-  workerEst.postMessage({cmd:'estrategias',mallas:GEO,d:casos[0].P.d,casos:casos.map(({nombre,detalle,P})=>({nombre,detalle,P}))});
+  workerEst.postMessage({cmd:'estrategias',mallas:mallasActuales(),clave:claveGeo(),d:casos[0].P.d,casos:casos.map(({nombre,detalle,P})=>({nombre,detalle,P}))});
 };
 function tablaEstrategias(){
   if(!estrategias||!estrategias.filas)return;
@@ -1220,6 +1325,14 @@ function tablaEstrategias(){
 }
 ['lim-tmax','lim-dt'].forEach(id=>$(id).addEventListener('input',tablaEstrategias));
 
+// ---------- Pestañas ----------
+document.querySelectorAll('[role=tablist]').forEach(lista=>{
+  const tabs=[...lista.querySelectorAll('[role=tab]')];
+  const elegir=b=>{tabs.forEach(x=>{const sel=x===b;x.setAttribute('aria-selected',sel);x.tabIndex=sel?0:-1;$(x.getAttribute('aria-controls')).hidden=!sel;});
+    requestAnimationFrame(()=>{redim();graficos();corte();tablaEstrategias();});};
+  tabs.forEach((b,i)=>{b.tabIndex=b.getAttribute('aria-selected')==='true'?0:-1;b.onclick=()=>elegir(b);
+    b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const k=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];k.focus();elegir(k);}};});
+});
 function todo(){kpis();instante();avisos();construirMalla();escala();graficos();corte();tablaRef();conceptos();ponerReloj();}
 function ponerReloj(){const r=estado.r;if(!r)return;const t=r.frames[estado.frame].t;$('reloj').textContent=`t = ${fmt(t,t%1?1:0)} h`;$('t-label').textContent=`${estado.frame+1}/${r.frames.length}`;}
 
@@ -1229,7 +1342,7 @@ document.querySelector('aside').addEventListener('input',e=>{
 document.querySelector('aside').addEventListener('change',e=>{const id=e.target.id||'';if(id.startsWith('tipo-')||id.startsWith('calc-'))programar();});
 $('btn-calcular').onclick=calcular;
 $('btn-ifc').onclick=()=>{dibujarPrograma();programar();};
-$('btn-reset').onclick=()=>{Object.entries(BASE).forEach(([k,v])=>{$(k).value=v;});dibujarPrograma();dibujarBordes();programar();};
+$('btn-reset').onclick=()=>{Object.entries(BASE).forEach(([k,v])=>{$(k).value=v;});$('geo-origen').value='ifc';Object.entries(GEO_BASE).forEach(([k,v])=>{$('geo-'+k).value=v;});dibujarPrograma();dibujarBordes();programar();};
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{graficos();corte();});
 new ResizeObserver(()=>{graficos();corte();}).observe(document.querySelector('.graficos'));
 
