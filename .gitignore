@@ -27,3 +27,6 @@ desktop.ini
 # Salidas temporales (lo que sí queremos versionar va en resultados/figuras)
 resultados/tmp/
 resultados/lab/
+
+# Campos 3D de la simulacion (15 MB cada uno): se generan con scripts/14 --vtk
+resultados/e11/**/*.vtk

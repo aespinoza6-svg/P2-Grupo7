@@ -3,6 +3,7 @@
 python -X utf8 scripts/14_simular_ambiente.py
 python -X utf8 scripts/14_simular_ambiente.py --constante --salida resultados/e10/constante
 python -X utf8 scripts/14_simular_ambiente.py --comparar-con resultados/e10/constante
+python -X utf8 scripts/14_simular_ambiente.py --horizonte-h 24 --vtk 12,24 --salida resultados/e11/clima_real_24h
 
 Entradas: grilla del script 07, config/ambiente_e10.yaml y un snapshot de data/weather/.
 Todo lo que cambia el resultado queda en resumen.json (snapshot, fecha de descarga,
@@ -29,6 +30,7 @@ from mcplan.solver_vertidas import resolver_vertidas
 from mcplan.clima import cargar_snapshot, ultimo_snapshot, serie_clima, serie_constante
 from mcplan.bordes import caras_ambientales
 from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, diferencial_por_vertida
+from mcplan.exportar import campo_vtk
 
 RAIZ = Path(__file__).resolve().parents[1]
 COLORES = ['#287bb5', '#d97922', '#258b62', '#985bad', '#cd4c44']
@@ -55,6 +57,7 @@ def main():
     p.add_argument('--constante', action='store_true', help='Ambiente de E07 para comparar')
     p.add_argument('--sin-suelo', action='store_true')
     p.add_argument('--comparar-con', type=Path, help='Otra salida de este script para superponer curvas')
+    p.add_argument('--vtk', help='Horas a exportar como campo 3D, p. ej. 24,72 (ParaView o scripts/15_ver_vtk.py)')
     p.add_argument('--salida', type=Path, default=RAIZ / 'resultados' / 'e10' / 'clima_real')
     args = p.parse_args()
     if not args.grilla.is_file():
@@ -108,7 +111,14 @@ def main():
     # --- Simulacion
     salidas = np.unique(np.r_[np.arange(0, horizonte, amb['intervalo_salida_h']), horizonte]) * 3600
     dif, tmax_h = [], []
+    horas_vtk = sorted({float(x) for x in args.vtk.split(',')}) if args.vtk else []
+    if any(not 0 <= x <= horizonte for x in horas_vtk):
+        p.error('--vtk: las horas deben estar dentro del horizonte.')
+    campos = {}
     def al_guardar(t, T, activa, sistema):
+        for hv in horas_vtk:
+            if abs(t / 3600 - hv) < 1e-6:
+                campos[hv] = (T.copy(), activa.copy())
         d, vid = diferencial_por_vertida(T, activa, sistema)
         hormigon_activo = activa & (g.vertida_id != SUELO_ID)
         dif.append((t / 3600, d, vid))
@@ -165,6 +175,15 @@ def main():
             otra = list(csv.DictReader(f))
         otra_res = json.loads((args.comparar_con / 'resumen.json').read_text(encoding='utf-8'))
     graficar(out, horas, filas, clima, r, g, otra, otra_res['ambiente'] if otra else None)
+    faltan = [hv for hv in horas_vtk if hv not in campos]
+    if faltan:
+        print(f'AVISO: no hay salida exacta en {faltan} h; use horas multiplo del intervalo de salida.')
+    for hv, (T, activa) in campos.items():
+        ruta = campo_vtk(out / f'campo_{hv:g}h.vtk', g, T, activa, hv, f'snapshot {clima.snapshot}')
+        print(f'Campo 3D a las {hv:g} h: {ruta}')
+    if campos:
+        resumen['vtk'] = {f'{hv:g}': f'campo_{hv:g}h.vtk' for hv in campos}
+        (out / 'resumen.json').write_text(json.dumps(resumen, ensure_ascii=False, indent=2), encoding='utf-8')
     print(f'T max hormigon {tm[i_tm]:.2f} C a las {horas[i_tm]:.1f} h; nucleo - superficie max {dT[i_dt]:.2f} C a las '
           f'{horas[i_dt]:.1f} h (V{filas[i_dt]["vertida_peor"]:02d}). Residuo {relativo:.1e}. {time.monotonic() - reloj:.0f} s.')
     print(f'Resultados: {out}')

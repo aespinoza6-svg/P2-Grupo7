@@ -1,0 +1,6 @@
+# Visualización 3D opcional (E11): abre los VTK con PyVista.
+# Se instala aparte porque pesa unos 100 MB y el resto del proyecto no lo necesita.
+#     pip install -r requirements-visual.txt
+# Sin PyVista, los mismos archivos .vtk se abren en ParaView.
+
+pyvista==0.49.2
