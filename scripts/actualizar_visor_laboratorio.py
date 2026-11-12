@@ -39,7 +39,8 @@ def geometria_desde_ifc(ruta_ifc):
 def clima_desde_snapshot(carpeta):
     """Solo lo que usa el visor: metadata, horas y las tres variables."""
     s = cargar_snapshot(carpeta)
-    corto = lambda d: dict(utc_offset_seconds=d.get('utc_offset_seconds', 0), hourly=d['hourly'])
+    corto = lambda d: dict(utc_offset_seconds=d.get('utc_offset_seconds', 0), hourly=d['hourly'],
+                           **{k: d[k] for k in ('latitude', 'longitude', 'elevation', 'timezone', 'hourly_units') if k in d})
     return dict(nombre=s['nombre'], metadata=s['metadata'], pronostico=corto(s['pronostico']),
                 historico={a: corto(d) for a, d in s['historico'].items()})
 

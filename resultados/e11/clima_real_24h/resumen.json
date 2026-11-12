@@ -1,0 +1,84 @@
+{
+  "alcance": "Demostracion del ambiente real en la fisica; hidratacion pedagogica sin calibrar.",
+  "inicio_primera_vertida": "2026-11-27T08:00:00-03:00",
+  "horizonte_h": 24.0,
+  "ambiente": "clima_real",
+  "clima": {
+    "snapshot": "2026-11-10T1532",
+    "retrieved_at": "2026-11-10T15:32:03+00:00",
+    "source": "Open-Meteo",
+    "model": "best_match (pronostico); ERA5 reanalysis via archive-api (historico)",
+    "metodo_cola": "historico_promedio:2021,2022,2023,2024,2025",
+    "horas_pronostico": 0,
+    "horas_relleno": 25,
+    "sha256_forecast": "21886706828431ae2f09eca17565c48715264ce3ea2447209ff95863ed275d41"
+  },
+  "suelo": {
+    "incluir": true,
+    "espesor_m": 2.0,
+    "margen_m": 2.0,
+    "k_W_mK": 1.5,
+    "densidad_kg_m3": 1900,
+    "calor_especifico_J_kgK": 1000,
+    "T_inicial_C": 12.0,
+    "T_fondo_C": 12.0
+  },
+  "moldaje": {
+    "1": [
+      0.14,
+      72.0
+    ],
+    "2": [
+      0.14,
+      72.0
+    ],
+    "3": [
+      0.14,
+      72.0
+    ],
+    "4": [
+      0.14,
+      72.0
+    ],
+    "5": [
+      0.14,
+      72.0
+    ]
+  },
+  "aislacion_superior": {},
+  "superficie": {
+    "absortividad_solar": 0.65,
+    "emisividad": 0.9,
+    "h_fijo_W_m2K": null
+  },
+  "T_max_hormigon_C": 42.20497709736943,
+  "tiempo_T_max_h": 24.0,
+  "dT_nucleo_superficie_max_C": 19.090031857023636,
+  "tiempo_dT_max_h": 24.0,
+  "vertida_dT_max": 2,
+  "criterios": {
+    "T_max_C": 70,
+    "dT_C": 20
+  },
+  "residuo_balance_relativo_max": 2.1556671483401718e-16,
+  "pasos": 144,
+  "energia_bordes_J": 1548182944.1355956,
+  "energia_hidratacion_J": 22781541898.48342,
+  "trazabilidad": {
+    "commit": "d442ed3d06624d270a0f5b9b4a8fb9410fef8a95",
+    "sha256_config": "f74ecee04bf0eb5b78c070c3d866e11b5185e0a6f6d82ed71516dd7e808f7cdd",
+    "sha256_grilla": "e2ef901d7b92efdb3805230835a76f84ea7fe5815f8176fafe9940b579fbf792"
+  },
+  "limitaciones": [
+    "Cielo a la temperatura del aire en la radiacion de onda larga",
+    "Caras verticales sin sol",
+    "h(V) por correlacion aproximada",
+    "Suelo con valores tipicos, sin ensayos",
+    "Diferencial nucleo-superficie aproximado por celdas, no a 25 mm",
+    "Hidratacion sin dependencia de la temperatura"
+  ],
+  "vtk": {
+    "12": "campo_12h.vtk",
+    "24": "campo_24h.vtk"
+  }
+}

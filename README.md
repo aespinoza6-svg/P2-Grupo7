@@ -287,3 +287,15 @@ python -X utf8 -m pytest tests/test_ambiente.py -v
 
 En `visor_laboratorio.html`, el botón «Usar clima real, moldaje y suelo» hace lo mismo en el navegador.
 
+## E11 — Clima y visualización 3D
+
+Guion de los 8 pedidos del lab: [docs/E11_lab.md](docs/E11_lab.md).
+
+```powershell
+python -X utf8 scripts/14_simular_ambiente.py --horizonte-h 24 --vtk 12,24 --salida resultados/e11/clima_real_24h
+pip install -r requirements-visual.txt
+python -X utf8 scripts/15_ver_vtk.py resultados/e11/clima_real_24h/campo_24h.vtk
+```
+
+El script 14 exporta la temperatura, la vertida, las celdas activas y la superficie a VTK con `mcplan/exportar.py`. El script 15 los abre con PyVista: muestra un clip, un slice con isotermas y marca el núcleo y la superficie. El mismo VTK se abre en ParaView. En `visor_laboratorio.html`, **Ambiente → Clima y ambiente → «Ver archivo y metadata del snapshot»** muestra el archivo meteorológico sin salir del navegador.
+
