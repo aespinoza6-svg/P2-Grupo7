@@ -42,8 +42,10 @@ def modelo_suelo(rho_kg_m3, cp_J_kgK):
     return HidratacionExponencial(elevacion_final_C=0.0, tau_s=1.0, rho_kg_m3=rho_kg_m3, cp_J_kgK=cp_J_kgK)
 
 
-def diferencial_por_vertida(T, activa, sistema, excluir=(SUELO_ID,)):
-    """Nucleo - superficie dentro de cada vertida activa; devuelve (peor ΔT, vertida).
+def nucleo_superficie_por_vertida(T, activa, sistema, excluir=(SUELO_ID,)):
+    """Para cada vertida activa: su nucleo (celda mas caliente) y su superficie (celda
+    expuesta mas fria). Devuelve {vertida: (T_nucleo, T_superficie, i_nucleo, i_superficie)},
+    con i = indice plano de la celda en la grilla (np.unravel_index lo vuelve (i, j, k)).
 
     Superficie: celda activa con al menos una cara al aire (x±, y±, z+) en ese instante.
     Es una aproximacion por celdas: el criterio del curso mide a 25 mm de la cara.
@@ -52,14 +54,23 @@ def diferencial_por_vertida(T, activa, sistema, excluir=(SUELO_ID,)):
     superficie = np.zeros(ids.shape, dtype=bool)
     for cara in ('x-', 'x+', 'y-', 'y+', 'z+'):
         superficie |= sistema.expuestas[cara]
-    peor, cual = np.nan, None
+    plano = np.ravel(T)
+    salida = {}
     for vid in sistema.programa.vertidas:
         if vid in excluir:
             continue
-        m = activa & (ids == vid)
-        s = m & superficie
-        if m.any() and s.any():
-            d = float(T[m].max() - T[s].min())
-            if not d <= peor:
-                peor, cual = d, vid
+        m = np.flatnonzero(activa & (ids == vid))
+        s = np.flatnonzero(activa & (ids == vid) & superficie)
+        if m.size and s.size:
+            i_n, i_s = m[np.argmax(plano[m])], s[np.argmin(plano[s])]
+            salida[vid] = (float(plano[i_n]), float(plano[i_s]), int(i_n), int(i_s))
+    return salida
+
+
+def diferencial_por_vertida(T, activa, sistema, excluir=(SUELO_ID,)):
+    """Nucleo - superficie dentro de cada vertida activa; devuelve (peor ΔT, vertida)."""
+    peor, cual = np.nan, None
+    for vid, (tn, ts, _, _) in nucleo_superficie_por_vertida(T, activa, sistema, excluir).items():
+        if not tn - ts <= peor:
+            peor, cual = tn - ts, vid
     return peor, cual

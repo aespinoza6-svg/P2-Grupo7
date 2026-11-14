@@ -30,3 +30,6 @@ resultados/lab/
 
 # Campos 3D de la simulacion (15 MB cada uno): se generan con scripts/14 --vtk
 resultados/e11/**/*.vtk
+
+# E12: campos 3D en los instantes de T max y ΔT max (15 MB cada uno): scripts/14 --vtk-maximos
+resultados/e12/**/*.vtk

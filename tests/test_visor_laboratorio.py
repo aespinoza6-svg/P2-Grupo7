@@ -101,7 +101,7 @@ def test_el_motor_del_visor_da_lo_mismo_que_python(tmp_path, caras):
 # ---------------------------------------------------------------------------
 # E10: clima del snapshot, moldaje con retiro y suelo
 # ---------------------------------------------------------------------------
-from datetime import datetime
+from datetime import datetime, timedelta
 from mcplan.clima import cargar_snapshot, serie_clima
 from mcplan.bordes import caras_ambientales
 from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo
@@ -124,6 +124,12 @@ console.log(JSON.stringify({forma:v.n,celdas:r.ncon,pasos:r.pasos,bordes:s.Ebor[
 """
 
 
+def _inicio_con_pronostico(snap):
+    """Las 08:00 del dia siguiente al primero del pronostico: una fecha que el snapshot cubre."""
+    dia = datetime.fromisoformat(snap['pronostico']['hourly']['time'][0]).date()
+    return f'{(dia + timedelta(days=1)).isoformat()}T08:00:00-03:00'
+
+
 def _node(tmp_path, arnes, *archivos):
     (tmp_path / 'arnes.js').write_text(arnes, encoding='utf-8')
     salida = subprocess.run(['node', tmp_path / 'arnes.js', *archivos], capture_output=True, text=True, check=True)
@@ -140,7 +146,7 @@ def test_el_visor_lleva_el_ultimo_snapshot_de_clima():
 def test_el_clima_del_visor_es_el_de_python(tmp_path):
     snap_visor = visor12.clima_del_visor(TEXTO)
     snap = cargar_snapshot(RAIZ / 'data' / 'weather' / snap_visor['nombre'])
-    consultas = [('2026-11-11T08:00:00-03:00', 72, 'historico_promedio'), ('2026-11-27T08:00:00-03:00', 336, 'historico_promedio'),
+    consultas = [(_inicio_con_pronostico(snap), 72, 'historico_promedio'), ('2026-11-27T08:00:00-03:00', 336, 'historico_promedio'),
                  ('2026-11-27T08:00:00-03:00', 336, 'historico_frio')]
     (tmp_path / 'main.js').write_text(re.findall(r'<script>(.*?)</script>', TEXTO, re.S)[-1], encoding='utf-8')
     (tmp_path / 'snap.json').write_text(json.dumps(snap_visor), encoding='utf-8')
@@ -161,7 +167,7 @@ def test_el_motor_del_visor_con_clima_moldaje_y_suelo_da_lo_mismo_que_python(tmp
     hc = bim.cargar_yaml(RAIZ / 'config' / 'hidratacion_e07.yaml')
     h = caso['hormigon']
     snap = cargar_snapshot(RAIZ / 'data' / 'weather' / visor12.clima_del_visor(TEXTO)['nombre'])
-    clima = serie_clima(snap, '2026-11-11T08:00:00-03:00', horas)
+    clima = serie_clima(snap, _inicio_con_pronostico(snap), horas)
     suelo = dict(espesor=0.6, margen=0.8, k=1.5, rho=1900., cp=1000., T0=12., Tfondo=11.)
     g = agregar_suelo(voxelizar_mallas(extraer_mallas(IFC), paso, max_celdas=4_000_000),
                       espesor_m=suelo['espesor'], margen_m=suelo['margen'], T_inicial_C=suelo['T0'])
