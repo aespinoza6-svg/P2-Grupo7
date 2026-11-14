@@ -299,3 +299,14 @@ python -X utf8 scripts/15_ver_vtk.py resultados/e11/clima_real_24h/campo_24h.vtk
 
 El script 14 exporta la temperatura, la vertida, las celdas activas y la superficie a VTK con `mcplan/exportar.py`. El script 15 los abre con PyVista: muestra un clip, un slice con isotermas y marca el núcleo y la superficie. El mismo VTK se abre en ParaView. En `visor_laboratorio.html`, **Ambiente → Clima y ambiente → «Ver archivo y metadata del snapshot»** muestra el archivo meteorológico sin salir del navegador.
 
+
+## E12 — Simulación determinista de 14 días
+
+Informe para entregar (máximo 1400 palabras): [docs/E12_simulacion_14dias.md](docs/E12_simulacion_14dias.md).
+
+```powershell
+python -X utf8 scripts/14_simular_ambiente.py --snapshot 2026-11-14T0205 --vtk-maximos --salida resultados/e12/caso_14dias
+python -X utf8 scripts/15_ver_vtk.py resultados/e12/caso_14dias/campo_dTmax_143h.vtk --plano y --pos -3.7
+```
+
+Integra el IFC, las vertidas, una curva de hidratación (45 °C, 30 h), el suelo, el moldaje y el clima del snapshot del 13-nov. `resumen.json` dice cuándo y dónde ocurren la T máx (62,2 °C) y el ΔT máx (49,5 °C). `nucleo_superficie.png` muestra las curvas de núcleo y superficie de cada vertida. Con `--vtk-maximos` se exportan los campos 3D de esos dos instantes.

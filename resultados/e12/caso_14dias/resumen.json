@@ -1,0 +1,130 @@
+{
+  "alcance": "Simulacion determinista con clima real, suelo y moldaje; hidratacion pedagogica (45 C, 30 h) sin calibrar.",
+  "inicio_primera_vertida": "2026-11-27T08:00:00-03:00",
+  "horizonte_h": 336.0,
+  "ambiente": "clima_real",
+  "clima": {
+    "snapshot": "2026-11-14T0205",
+    "retrieved_at": "2026-11-14T02:05:42+00:00",
+    "source": "Open-Meteo",
+    "model": "best_match (pronostico); ERA5 reanalysis via archive-api (historico)",
+    "metodo_cola": "historico_promedio:2021,2022,2023,2024,2025",
+    "horas_pronostico": 40,
+    "horas_relleno": 297,
+    "sha256_forecast": "d692bc1119015598503157049b9984105f2209d65b5ba81c174851e03b9a4c9b"
+  },
+  "suelo": {
+    "incluir": true,
+    "espesor_m": 2.0,
+    "margen_m": 2.0,
+    "k_W_mK": 1.5,
+    "densidad_kg_m3": 1900,
+    "calor_especifico_J_kgK": 1000,
+    "T_inicial_C": 12.0,
+    "T_fondo_C": 12.0
+  },
+  "moldaje": {
+    "1": [
+      0.14,
+      72.0
+    ],
+    "2": [
+      0.14,
+      72.0
+    ],
+    "3": [
+      0.14,
+      72.0
+    ],
+    "4": [
+      0.14,
+      72.0
+    ],
+    "5": [
+      0.14,
+      72.0
+    ]
+  },
+  "aislacion_superior": {},
+  "superficie": {
+    "absortividad_solar": 0.65,
+    "emisividad": 0.9,
+    "h_fijo_W_m2K": null
+  },
+  "T_max_hormigon_C": 62.194895998762426,
+  "tiempo_T_max_h": 150.0,
+  "dT_nucleo_superficie_max_C": 49.522539600272516,
+  "tiempo_dT_max_h": 143.0,
+  "vertida_dT_max": 3,
+  "ubicacion_T_max": {
+    "t_h": 150.0,
+    "celda": {
+      "x_m": -0.1,
+      "y_m": -0.1,
+      "z_m": 2.075,
+      "indice": [
+        54,
+        54,
+        81
+      ],
+      "vertida": 3
+    }
+  },
+  "ubicacion_dT_max": {
+    "t_h": 143.0,
+    "vertida": 3,
+    "T_nucleo_C": 62.174,
+    "T_superficie_C": 12.651,
+    "nucleo": {
+      "x_m": -0.1,
+      "y_m": -0.1,
+      "z_m": 2.025,
+      "indice": [
+        54,
+        54,
+        80
+      ],
+      "vertida": 3
+    },
+    "superficie": {
+      "x_m": -8.9,
+      "y_m": -3.7,
+      "z_m": 1.125,
+      "indice": [
+        10,
+        36,
+        62
+      ],
+      "vertida": 3
+    }
+  },
+  "cumple": {
+    "T_max": true,
+    "dT": false
+  },
+  "criterios": {
+    "T_max_C": 70,
+    "dT_C": 20
+  },
+  "residuo_balance_relativo_max": 1.2846258369271165e-15,
+  "pasos": 2016,
+  "energia_bordes_J": -21790183935.349743,
+  "energia_hidratacion_J": 61812568952.78338,
+  "trazabilidad": {
+    "commit": "c2787e848c6a49ece2aa3b9d830b53000cc5a671",
+    "sha256_config": "f74ecee04bf0eb5b78c070c3d866e11b5185e0a6f6d82ed71516dd7e808f7cdd",
+    "sha256_grilla": "e2ef901d7b92efdb3805230835a76f84ea7fe5815f8176fafe9940b579fbf792"
+  },
+  "limitaciones": [
+    "Cielo a la temperatura del aire en la radiacion de onda larga",
+    "Caras verticales sin sol",
+    "h(V) por correlacion aproximada",
+    "Suelo con valores tipicos, sin ensayos",
+    "Diferencial nucleo-superficie aproximado por celdas, no a 25 mm",
+    "Hidratacion sin dependencia de la temperatura"
+  ],
+  "vtk": {
+    "Tmax": "campo_Tmax_150h.vtk",
+    "dTmax": "campo_dTmax_143h.vtk"
+  }
+}
