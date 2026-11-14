@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from mcplan.clima import descargar_snapshot, cargar_snapshot, ultimo_snapshot, serie_clima, serie_constante
 from mcplan.bordes import BordeAmbiental, h_conveccion, h_radiacion, caras_ambientales
-from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, diferencial_por_vertida
+from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, diferencial_por_vertida, nucleo_superficie_por_vertida
 from mcplan.voxelizacion import GrillaVoxeles
 from mcplan.hidratacion import HidratacionExponencial
 from mcplan.construccion import ProgramaVertidas
@@ -136,6 +136,22 @@ def test_suelo_se_agrega_bajo_la_fundacion_y_cierra_el_balance():
     suelo = g.vertida_id == SUELO_ID
     assert r.T_final[suelo].max() > 12.2          # el hormigon caliente calienta el suelo
     assert len(vistos) == 3 and vistos[-1][1] == 1 and vistos[-1][0] > 0
+
+
+def test_nucleo_y_superficie_se_ubican_en_la_celda_correcta():
+    """E12: el nucleo es la celda mas caliente; la superficie, la expuesta mas fria (no el suelo)."""
+    p, mat = programa(np.ones((4, 4, 2)), {}, d=(.2, .2, .2), suelo=dict(espesor_m=.4, margen_m=.2, T_inicial_C=12.))
+    g = p.grilla
+    s = SistemaActivo(p, mat, caras_ambientales(serie_constante(12., 2), suelo=dict(id=SUELO_ID, T_fondo_C=12.), h_fijo=10.))
+    activa = g.vertida_id > 0
+    s.actualizar(activa)
+    T = np.where(g.vertida_id == SUELO_ID, 5.0, 30.0)   # el suelo, mas frio, no debe contar como superficie
+    nucleo, sup = (2, 2, 2), (1, 3, 3)                   # interior de la capa baja; esquina de arriba
+    T[nucleo], T[sup] = 50.0, 18.0
+    (tn, ts, i_n, i_s), = nucleo_superficie_por_vertida(T, activa, s).values()
+    assert (tn, ts) == (50.0, 18.0)
+    assert np.unravel_index(i_n, T.shape) == nucleo and np.unravel_index(i_s, T.shape) == sup
+    assert diferencial_por_vertida(T, activa, s) == (32.0, 1)
 
 
 def test_costados_del_suelo_son_adiabaticos_y_el_fondo_a_temperatura_fija():

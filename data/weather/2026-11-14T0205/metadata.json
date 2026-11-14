@@ -1,0 +1,51 @@
+{
+  "source": "Open-Meteo",
+  "model": "best_match (pronostico); ERA5 reanalysis via archive-api (historico)",
+  "retrieved_at": "2026-11-14T02:05:42+00:00",
+  "latitude": -37.6921,
+  "longitude": -72.624,
+  "timezone": "America/Santiago",
+  "variables": [
+    "temperature_2m",
+    "wind_speed_10m",
+    "shortwave_radiation"
+  ],
+  "units": {
+    "temperature_2m": "degC",
+    "wind_speed_10m": "m/s",
+    "shortwave_radiation": "W/m2"
+  },
+  "forecast_days": 16,
+  "requests": [
+    {
+      "tipo": "pronostico",
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&forecast_days=16&models=best_match"
+    },
+    {
+      "tipo": "historico",
+      "ano": 2021,
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2021-11-26&end_date=2021-12-12"
+    },
+    {
+      "tipo": "historico",
+      "ano": 2022,
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2022-11-26&end_date=2022-12-12"
+    },
+    {
+      "tipo": "historico",
+      "ano": 2023,
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2023-11-26&end_date=2023-12-12"
+    },
+    {
+      "tipo": "historico",
+      "ano": 2024,
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2024-11-26&end_date=2024-12-12"
+    },
+    {
+      "tipo": "historico",
+      "ano": 2025,
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2025-11-26&end_date=2025-12-12"
+    }
+  ],
+  "nota": "Snapshot inmutable. Un pronostico descargado otro dia es otro dato."
+}
