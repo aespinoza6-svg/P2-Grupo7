@@ -1,0 +1,20 @@
+{
+  "source": "Open-Meteo archive-api",
+  "model": "ERA5 reanalysis (soil temperature)",
+  "retrieved_at": "2026-11-16T13:41:28+00:00",
+  "latitude": -37.6921,
+  "longitude": -72.624,
+  "timezone": "America/Santiago",
+  "units": "degC",
+  "periodo": [
+    "2026-11-01",
+    "2026-11-12"
+  ],
+  "medias_C": {
+    "soil_temperature_0_to_7cm": 16.71,
+    "soil_temperature_7_to_28cm": 16.52,
+    "soil_temperature_28_to_100cm": 16.14,
+    "soil_temperature_100_to_255cm": 13.14
+  },
+  "request": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=soil_temperature_0_to_7cm%2Csoil_temperature_7_to_28cm%2Csoil_temperature_28_to_100cm%2Csoil_temperature_100_to_255cm&timezone=America%2FSantiago&start_date=2026-11-01&end_date=2026-11-12"
+}

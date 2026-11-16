@@ -1,0 +1,90 @@
+# E13: modelo de incertidumbre y familia de planes. Todo lo que cambia la decisión está aquí.
+# Origen de cada valor: [CURSO] dato del curso; [ENSAYO] archivo del profesor; [TÍPICO]
+# literatura sin ensayo; [DECISIÓN] elección del grupo, declarada y discutible.
+
+t0: "2026-11-19T08:00:00-03:00"   # [CURSO] jueves 19-nov; hora [DECISIÓN], común a todos los planes
+horizonte_h: 336                  # [CURSO] 14 días desde t0: se reporta siempre
+horizonte_extendido_h: 504        # [DECISIÓN] 21 días: con manta el ΔT sigue subiendo a los 14 días (no esconder el pico)
+extension_tras_ultima_h: 192      # [DECISIÓN] y al menos 8 días después de la última vertida
+intervalo_salida_h: 1             # MΔ se evalúa cada hora; MT en cada paso del solver
+max_dt_s: 600
+
+colocacion:
+  capacidad_m3_h: 40.0            # [DECISIÓN] una bomba, sin simultaneidad: d_j = V_j / r
+  temperatura_C: 18.0             # [DECISIÓN] igual en todos los planes
+  activacion: punto_medio         # cada vertida aparece entera en la mitad de su colocación
+
+hormigon:
+  conductividad_W_mK: 2.0         # [TÍPICO] el archivo no la informa
+  # rho = 2476 kg/m3 y cp = 1023 J/(kg K) salen del encabezado del archivo de curvas [ENSAYO]
+
+curvas:
+  archivo: data/hidratacion/source_terms.txt   # original del profesor, sin modificar
+  # Pesos p_m [DECISIÓN]: 8 probetas de una misma dosificación (350,77 kg/m3), tratadas como
+  # escenarios equiprobables del material. Es una hipótesis, no una consecuencia de tener 8 archivos.
+  pesos:
+    base: {M1_SS: 0.125, M2_SS: 0.125, M3_SS: 0.125, M4_SS: 0.125, M1_22A: 0.125, M2_22A: 0.125, M3_22A: 0.125, M4_22A: 0.125}
+  sensibilidad:                   # el propio archivo dice que 22A es de menor confianza
+    solo_SS: {M1_SS: 0.25, M2_SS: 0.25, M3_SS: 0.25, M4_SS: 0.25}
+    22A_a_la_mitad: {M1_SS: 0.1667, M2_SS: 0.1667, M3_SS: 0.1667, M4_SS: 0.1666, M1_22A: 0.0833, M2_22A: 0.0833, M3_22A: 0.0834, M4_22A: 0.0833}
+
+clima:
+  carpeta: data/weather_ensemble
+  snapshot: ultimo
+  modelo: ecmwf_ifs025            # 51 miembros, 15 días
+  dias: 15
+  historico_anos: [2021, 2022, 2023, 2024, 2025]   # cola después del último día del ensemble
+  metodo_cola: historico_promedio
+  trayectorias: 3                 # frío, central y cálido; peso = fracción de miembros representada
+
+superficie:
+  absortividad_solar: 0.65        # [TÍPICO]
+  emisividad: 0.9                 # [TÍPICO]
+
+suelo:                            # geometría y propiedades igual que E10/E12 [TÍPICO]
+  espesor_m: 2.0
+  margen_m: 2.0
+  k_W_mK: 1.5
+  densidad_kg_m3: 1900
+  calor_especifico_J_kgK: 1000
+  # Estado inicial [ERA5]: data/suelo/2026-11-16T1341/, media del 1 al 12-nov-2026 en el sitio.
+  # E10/E12 usaban 12 °C uniforme [PROVISIONAL]; queda como sensibilidad (--suelo-T 12,12).
+  T_inicial_C: 16.1               # capa 28-100 cm, la que toca la base de la fundación
+  T_fondo_C: 13.1                 # capa 100-255 cm, fija en el fondo del bloque (z = -2 m)
+
+# Protecciones: [R lados m2K/W, retiro lados h], [R arriba, retiro arriba]; null = no se retira en el horizonte.
+protecciones:
+  moldaje:   {lados: [0.14, 72], arriba: [0.0, null]}      # madera 18 mm, sin manta (caso E12)
+  manta5:    {lados: [1.57, null], arriba: [1.43, null]}   # moldaje + 5 cm de poliestireno (0,05/0,035)
+  manta10:   {lados: [3.0, null], arriba: [2.86, null]}    # moldaje + 10 cm de poliestireno
+  manta15:   {lados: [4.43, null], arriba: [4.29, null]}   # moldaje + 15 cm de poliestireno
+  # + manta de 10 cm sobre el terreno en la franja de 2 m alrededor de la fundación
+  manta10_terreno: {lados: [3.0, null], arriba: [2.86, null], terreno: [2.86, null]}
+
+# Familia de planes: misma geometría, volumen y bomba. La partición en 5 vertidas es la del IFC.
+planes:
+  - {nombre: unica_moldaje,  particion: unica, espera_h: 0,  proteccion: moldaje}
+  - {nombre: unica_manta5,   particion: unica, espera_h: 0,  proteccion: manta5}
+  - {nombre: unica_manta10,  particion: unica, espera_h: 0,  proteccion: manta10}
+  - {nombre: cinco_e0_manta10,  particion: cinco, espera_h: 0,  proteccion: manta10}
+  - {nombre: cinco_e6_manta10,  particion: cinco, espera_h: 6,  proteccion: manta10}
+  - {nombre: cinco_e12_manta10, particion: cinco, espera_h: 12, proteccion: manta10}
+  - {nombre: cinco_e24_manta10, particion: cinco, espera_h: 24, proteccion: manta10}
+  - {nombre: cinco_e6_manta5,   particion: cinco, espera_h: 6,  proteccion: manta5}
+  - {nombre: cinco_e24_manta5,  particion: cinco, espera_h: 24, proteccion: manta5}
+  - {nombre: unica_manta10_T12,     particion: unica, espera_h: 0,  proteccion: manta10, temperatura_C: 12}
+  - {nombre: cinco_e6_manta10_T12,  particion: cinco, espera_h: 6,  proteccion: manta10, temperatura_C: 12}
+  - {nombre: cinco_e24_manta10_T12, particion: cinco, espera_h: 24, proteccion: manta10, temperatura_C: 12}
+  - {nombre: unica_manta10_T10,     particion: unica, espera_h: 0,  proteccion: manta10, temperatura_C: 10}
+  - {nombre: cinco_e6_manta10_T10,  particion: cinco, espera_h: 6,  proteccion: manta10, temperatura_C: 10}
+  - {nombre: unica_manta15_T10,     particion: unica, espera_h: 0,  proteccion: manta15, temperatura_C: 10}
+  - {nombre: unica_manta15_T12,     particion: unica, espera_h: 0,  proteccion: manta15, temperatura_C: 12}
+  - {nombre: unica_manta10_T8,      particion: unica, espera_h: 0,  proteccion: manta10, temperatura_C: 8}
+  - {nombre: cinco_e0_manta10_T10,  particion: cinco, espera_h: 0,  proteccion: manta10, temperatura_C: 10}
+  - {nombre: unica_terreno,         particion: unica, espera_h: 0,  proteccion: manta10_terreno}
+  - {nombre: unica_terreno_T12,     particion: unica, espera_h: 0,  proteccion: manta10_terreno, temperatura_C: 12}
+  - {nombre: cinco_e6_terreno_T12,  particion: cinco, espera_h: 6,  proteccion: manta10_terreno, temperatura_C: 12}
+
+mallas:
+  exploracion: {dx: 0.4, dy: 0.4, dz: 0.1}
+  final: {dx: 0.2, dy: 0.2, dz: 0.05}

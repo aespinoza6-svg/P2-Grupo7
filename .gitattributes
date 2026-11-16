@@ -1,0 +1,2 @@
+# Datos originales (curvas del profesor, clima, suelo): se guardan byte a byte, sin convertir finales de linea
+data/** -text
