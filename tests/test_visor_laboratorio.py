@@ -258,3 +258,46 @@ def test_la_geometria_parametrica_del_visor_es_la_del_ifc(tmp_path):
         assert j['vol'] == pytest.approx([m.volumen_ifc_m3 for m in mallas], rel=1e-9)
         assert j['celdas'] == [f['celdas'] for f in grilla.resumen_volumenes()]
         assert j['n'] == list(grilla.vertida_id.shape)
+
+
+# ---------------------------------------------------------------------------
+# E13: curvas del ensayo y resultados de riesgo dentro del visor
+# ---------------------------------------------------------------------------
+from mcplan.hidratacion import leer_curvas_tabuladas
+
+
+def test_el_visor_lleva_las_curvas_del_ensayo_y_los_resultados_de_E13():
+    assert visor12.curvas_del_visor(TEXTO) == json.loads(json.dumps(visor12.curvas_desde_archivo()))
+    assert visor12.riesgo_del_visor(TEXTO) == json.loads(json.dumps(visor12.riesgo_desde_resultados()))
+
+
+@pytest.mark.skipif(shutil.which('node') is None, reason='Node no esta instalado')
+def test_el_motor_del_visor_con_una_curva_del_ensayo_da_lo_mismo_que_python(tmp_path):
+    """Misma corrida con la curva M2_SS: el navegador integra Q(a) igual que HidratacionTabulada."""
+    horas, paso, nombre = 12.0, (.4, .4, .05), 'M2_SS'
+    curva = leer_curvas_tabuladas(RAIZ / 'data' / 'hidratacion' / 'source_terms.txt')[nombre]
+    grilla = voxelizar_mallas(extraer_mallas(IFC), paso, max_celdas=4_000_000)
+    programa = ProgramaVertidas(grilla, {'M1': curva})
+    materiales = {'M1': Material('M1', 2.0, curva.rho_kg_m3, curva.cp_J_kgK)}
+    grupo = {'x-': 'lados', 'x+': 'lados', 'y-': 'lados', 'y+': 'lados', 'z-': 'base', 'z+': 'arriba'}
+    bordes = {c: borde_python(REPO[grupo[c]]) for c in CARAS}
+    r = resolver_vertidas(programa, materiales, bordes, horas * 3600, max_dt_s=600.0,
+                          tiempos_guardado_s=np.arange(0, horas + 1) * 3600)
+    media_py = {f['vertida_id']: f['T_media_C'] for f in r.por_vertida if f['tiempo_h'] == horas}
+
+    worker = re.search(r'id="worker-src">(.*?)</script>', TEXTO, re.S).group(1)
+    (tmp_path / 'worker.js').write_text(worker, encoding='utf-8')
+    (tmp_path / 'geo.json').write_text(json.dumps(visor12.geometria_del_visor(TEXTO)), encoding='utf-8')
+    copia = next(c for c in visor12.curvas_del_visor(TEXTO)['curvas'] if c['nombre'] == nombre)
+    P = dict(d=list(paso), k=2.0, rho=curva.rho_kg_m3, cp=curva.cp_J_kgK, theta=0, tau=30, curva=copia,
+             horizonte=horas, maxdt=600, intervalo=1, **REPO,
+             vertidas=[dict(id=v, inicio=p['Inicio_h'], temp=p['TemperaturaColocacion_C'], calc=True) for v, p in grilla.vertidas.items()])
+    (tmp_path / 'p.json').write_text(json.dumps(P), encoding='utf-8')
+    js = _node(tmp_path, ARNES, tmp_path / 'worker.js', tmp_path / 'geo.json', tmp_path / 'p.json')
+
+    assert js['pasos'] == r.n_pasos
+    assert js['maximo'] == pytest.approx(r.maximo_C, abs=1e-6)
+    assert js['bordes'] == pytest.approx(r.balance[-1]['energia_bordes_J'], rel=1e-9)
+    for vid, media in media_py.items():
+        if media is not None:
+            assert js['media'][str(vid)] == pytest.approx(media, abs=1e-6)
