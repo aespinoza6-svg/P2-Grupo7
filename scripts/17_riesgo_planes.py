@@ -178,22 +178,28 @@ def resumir(cfg, out, filas, climas_peso):
 
     # Figura 1: matriz de escenarios por plan (MD en cada celda; rojo = falla)
     curvas = list(pesos['base']); climas = list(climas_peso)
-    fig, axs = plt.subplots(1, len(planes), figsize=(2.3 * len(planes) + 1, 4.2), layout='constrained', squeeze=False)
-    for ax, nombre in zip(axs[0], planes):
+    nc = min(6, len(planes)); nf = int(np.ceil(len(planes) / nc))      # hasta 6 planes por fila
+    fig, axs = plt.subplots(nf, nc, figsize=(2.4 * nc + 1, 4.0 * nf), layout='constrained', squeeze=False)
+    for ax in axs.flat[len(planes):]:
+        ax.axis('off')
+    for ax, nombre in zip(axs.flat, planes):
         M = np.full((len(curvas), len(climas)), np.nan); falla = np.zeros_like(M, bool)
         for f in filas:
             if f['plan'] == nombre and f['clima'] in climas:
                 i, j = curvas.index(f['curva']), climas.index(f['clima'])
                 M[i, j] = f['MD']; falla[i, j] = f['MD'] > 20 or f['MT'] > 70
-        ax.imshow(falla, cmap='RdYlGn_r', vmin=-.6, vmax=1.6, aspect='auto')
+        # verde: cumple; naranjo: falla; gris: escenario no corrido en esta malla
+        color = np.where(np.isnan(M)[..., None], [.88, .89, .9], np.where(falla[..., None], [.96, .6, .35], [.58, .81, .42]))
+        ax.imshow(color, aspect='auto')
         for i in range(len(curvas)):
             for j in range(len(climas)):
                 if np.isfinite(M[i, j]):
-                    ax.text(j, i, f'{M[i, j]:.1f}', ha='center', va='center', fontsize=7)
+                    ax.text(j, i, f'{M[i, j]:.2f}', ha='center', va='center', fontsize=7)
         t = next(x for x in tabla if x['plan'] == nombre)
-        ax.set_title(f"{nombre}\nD = {t['D_h']:.1f} h · P_f = {100 * t.get('Pf_base', np.nan):.1f} %", fontsize=8)
-        ax.set_xticks(range(len(climas)), climas, fontsize=7); ax.set_yticks(range(len(curvas)), curvas if ax is axs[0][0] else [], fontsize=7)
-    fig.suptitle('MΔ [°C] por escenario (filas: curva; columnas: clima). Rojo: falla (MΔ > 20 °C o MT > 70 °C)')
+        pf = f"P_f = {100 * t['Pf_base']:.1f} %" if 'Pf_base' in t else f"incompleto ({int(np.isfinite(M).sum())}/{M.size})"
+        ax.set_title(f"{nombre}\nD = {t['D_h']:.1f} h · {pf}", fontsize=8)
+        ax.set_xticks(range(len(climas)), climas, fontsize=7); ax.set_yticks(range(len(curvas)), curvas if ax in axs[:, 0] else [], fontsize=7)
+    fig.suptitle('MΔ [°C] por escenario (filas: curva; columnas: clima). Naranjo: falla (MΔ > 20 °C o MT > 70 °C); gris: no corrido')
     fig.savefig(out / 'matriz_escenarios.png', dpi=140); plt.close(fig)
 
     # Figura 2: D contra P_f

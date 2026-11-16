@@ -1,0 +1,22 @@
+{
+  "malla": "hibrida_z",
+  "criterio": "P_f conjunta <= 0,05 con los pesos base",
+  "planes": [
+    {
+      "plan": "unica_manta15_T10",
+      "D_h": 15.919,
+      "escenarios": 2,
+      "MT_max": 49.348,
+      "MD_max": 20.016,
+      "MD_celda_max": 19.784,
+      "pico_al_final": false,
+      "cumple": false
+    }
+  ],
+  "recomendado": null,
+  "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
+  "commit": "2e96d05b05ff19d79365edc2c15d4c659dd6255b",
+  "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
+  "sha256_config": "ff0b21783ad394b7e4ee092f33fa2bef32afa47ad6def167badecbdf9b7ead0b",
+  "clima": "2026-11-16T1337"
+}

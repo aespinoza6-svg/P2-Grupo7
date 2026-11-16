@@ -1,0 +1,22 @@
+{
+  "malla": "final_suelo12_12",
+  "criterio": "P_f conjunta <= 0,05 con los pesos base",
+  "planes": [
+    {
+      "plan": "unica_manta15_T8",
+      "D_h": 15.919,
+      "escenarios": 3,
+      "MT_max": 47.365,
+      "MD_max": 20.645,
+      "MD_celda_max": 20.563,
+      "pico_al_final": false,
+      "cumple": false
+    }
+  ],
+  "recomendado": null,
+  "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
+  "commit": "d475a91aaee40a2f387dcd357a5776b7c6d4e7b1",
+  "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
+  "sha256_config": "2ac4794a11ea38c87e4d9656608c74e7b88848faf9755d94326dd87ea6eac185",
+  "clima": "2026-11-16T1337"
+}
