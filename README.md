@@ -246,9 +246,9 @@ Los dos se abren con doble clic desde la carpeta del repositorio.
 | Archivo | Qué hace | Cuándo usarlo |
 |---|---|---|
 | `visor_e07.html` | Muestra resultados ya calculados por los scripts: 14 días, cortes, balance y lab. Funciona sin conexión. | Para presentar resultados guardados |
-| `visor_laboratorio.html` | Recalcula en el navegador al cambiar la geometría, la malla, los horarios, las temperaturas, el material, la hidratación, el clima, el suelo o los bordes. Organizado en pestañas: vista 3D animada, gráficos, estrategias para bajar el diferencial, volumen y conceptos. La vista 3D necesita internet. | Para cambios en vivo |
+| `visor_laboratorio.html` | Recalcula en el navegador al cambiar la geometría, la malla, los horarios, las temperaturas, el material, la hidratación, el clima, el suelo o los bordes. Organizado en pestañas: vista 3D animada, gráficos, estrategias para bajar el diferencial, volumen, riesgo E13 y conceptos. La vista 3D necesita internet. | Para cambios en vivo |
 
-El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triángulos del IFC y del último snapshot de clima. El test `tests/test_visor_laboratorio.py` revisa que esas copias estén al día y, si Node está instalado, que su cálculo dé lo mismo que el solver Python, también con clima, moldaje y suelo. Si el IFC cambia o se descarga un snapshot nuevo:
+El laboratorio usa las mismas reglas que `mcplan` y lleva una copia de los triángulos del IFC, del último snapshot de clima, de las 8 curvas del ensayo y de los resultados de E13. El test `tests/test_visor_laboratorio.py` revisa que esas copias estén al día y, si Node está instalado, que su cálculo dé lo mismo que el solver Python, también con clima, moldaje, suelo y una curva del ensayo. Si cambia alguno de esos archivos:
 
 ```powershell
 python -X utf8 scripts/actualizar_visor_laboratorio.py
@@ -328,3 +328,7 @@ python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_
 - **Configuración:** `config/riesgo_e13.yaml`.
 
 Con la malla de 0,2 m, la vertida única a 8 °C con manta de 15 cm da P_f = 4,2 %. Pero MΔ no converge con la malla en la esquina inferior junto al suelo, así que la decisión queda indeterminada (sección 8 del informe).
+
+En `visor_laboratorio.html`:
+- **Hormigón → Curva de hidratación** simula en vivo con cualquiera de las 8 curvas.
+- **La pestaña «Riesgo E13»** muestra los planes, la matriz curva × clima, la prueba de malla y el suelo a 12 °C. Son resultados de Python copiados al HTML; el navegador no los recalcula.
