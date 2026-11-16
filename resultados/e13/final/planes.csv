@@ -1,0 +1,4 @@
+﻿plan,D_h,escenarios,MT_max,MD_max,MD_celda_max,pico_al_final,cumple,Pf_base,PT,PdT,fallas,Pf_solo_SS,Pf_22A_a_la_mitad
+unica_manta15_T10,15.919,12,49.358,21.439,21.347,False,False,,,,,,
+unica_manta10_T8,15.919,3,47.353,20.501,20.37,False,False,,,,,,
+unica_manta15_T8,15.919,28,47.401,20.387,20.299,False,True,0.0417,0.0,0.0417,1,0.0833,0.0555

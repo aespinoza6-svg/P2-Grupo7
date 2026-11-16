@@ -33,3 +33,6 @@ resultados/e11/**/*.vtk
 
 # E12: campos 3D en los instantes de T max y ΔT max (15 MB cada uno): scripts/14 --vtk-maximos
 resultados/e12/**/*.vtk
+
+# E13: grillas regeneradas por scripts/17 (se rehacen en segundos)
+resultados/e13/grillas/

@@ -210,6 +210,61 @@ def _mover_ano(epoch, anos):
         return (d + timedelta(days=365 * anos)).timestamp()
 
 
+# ---------------------------------------------------------------------------
+# E13: ensemble (varios futuros posibles del mismo modelo, con la misma fisica)
+# ---------------------------------------------------------------------------
+URL_ENSEMBLE = 'https://ensemble-api.open-meteo.com/v1/ensemble'
+
+
+def descargar_ensemble(carpeta_base, latitud, longitud, *, zona='America/Santiago', modelo='ecmwf_ifs025',
+                       dias=15, historico=None, ahora=None, pedir=_pedir):
+    """Como descargar_snapshot, pero con todos los miembros del ensemble.
+
+    Cada miembro es una trayectoria completa y coherente (aire, viento y sol juntos),
+    por eso se elige un miembro entero y nunca se mezclan horas de miembros distintos.
+    """
+    ahora = ahora or datetime.now(timezone.utc)
+    carpeta = Path(carpeta_base) / ahora.strftime('%Y-%m-%dT%H%M')
+    if carpeta.exists():
+        raise FileExistsError(f'Ya existe {carpeta}; no se sobrescribe.')
+    comun = dict(latitude=latitud, longitude=longitud, hourly=','.join(VARIABLES), wind_speed_unit='ms', timezone=zona)
+    url, ens = pedir(URL_ENSEMBLE, {**comun, 'models': modelo, 'forecast_days': dias})
+    pedidos = [dict(tipo='ensemble', url=url)]
+    historicos = {}
+    for ano in (historico or {}).get('anos', []):
+        inicio = datetime.strptime(f"{ano}-{historico['desde']}", '%Y-%m-%d')
+        fin = inicio + timedelta(days=int(historico['dias']))
+        u, datos = pedir(URL_HISTORICO, {**comun, 'start_date': inicio.strftime('%Y-%m-%d'), 'end_date': fin.strftime('%Y-%m-%d')})
+        historicos[str(ano)] = datos
+        pedidos.append(dict(tipo='historico', ano=ano, url=u))
+    metadata = dict(source='Open-Meteo', model=f'{modelo} ensemble ({len(miembros_de(ens))} miembros); ERA5 via archive-api (historico)',
+                    retrieved_at=ahora.isoformat(timespec='seconds'), latitude=latitud, longitude=longitud,
+                    timezone=zona, variables=list(VARIABLES), units=dict(UNIDADES), forecast_days=dias,
+                    grid_latitude=ens.get('latitude'), grid_longitude=ens.get('longitude'), elevation=ens.get('elevation'),
+                    requests=pedidos, nota='Snapshot inmutable del ensemble. member00 = control.')
+    carpeta.mkdir(parents=True)
+    (carpeta / 'metadata.json').write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding='utf-8')
+    (carpeta / 'forecast.json').write_text(json.dumps(ens, ensure_ascii=False), encoding='utf-8')
+    if historicos:
+        (carpeta / 'historico.json').write_text(json.dumps(historicos, ensure_ascii=False), encoding='utf-8')
+    return carpeta
+
+
+def miembros_de(ensemble):
+    """Nombres de los miembros: member00 (control, sin sufijo) y member01..."""
+    h = ensemble['hourly']
+    sufijos = sorted({k.split('_member')[1] for k in h if '_member' in k})
+    return ['member00'] + [f'member{s}' for s in sufijos]
+
+
+def snapshot_de_miembro(snapshot, miembro):
+    """Un snapshot normal (como el de descargar_snapshot) con el pronostico de UN miembro."""
+    h = snapshot['pronostico']['hourly']
+    sufijo = '' if miembro == 'member00' else '_' + miembro
+    horario = {'time': h['time'], **{v: h[v + sufijo] for v in VARIABLES}}
+    return {**snapshot, 'nombre': f"{snapshot['nombre']}:{miembro}", 'pronostico': {**snapshot['pronostico'], 'hourly': horario}}
+
+
 def serie_constante(T_aire_C, horizonte_h, viento_m_s=0.0, ghi_W_m2=0.0):
     """Clima constante (el caso de E07) con la misma interfaz que un snapshot."""
     t = 3600.0 * np.arange(0, int(np.ceil(horizonte_h)) + 1)

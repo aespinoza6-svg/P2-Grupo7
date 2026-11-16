@@ -1,0 +1,3 @@
+﻿plan,curva,clima,malla,D_h,horizonte_h,MT,t_MT_h,xyz_MT,MD,t_MD_h,xyz_nucleo_MD,xyz_S25_MD,cara_S25,T_nucleo_MD,T_S25_MD,MD_celda,MT_336,MD_336,pico_al_final,residuo,pasos,segundos
+unica_manta15_T10,M4_SS,frio,hibrida_z,15.919,504.0,49.348,219.0,"[0.0, 0.0, 2.625]",20.016,361.0,"[0.0, 0.0, 2.875]","[-8.8, -3.6, 0.025]",x-,48.62,28.604,19.784,49.348,19.935,False,8.688190625681076e-16,3025,241.1
+unica_manta15_T10,M1_SS,frio,hibrida_z,15.919,504.0,44.648,217.0,"[0.0, 0.0, 2.625]",16.836,361.0,"[0.0, 0.0, 2.875]","[-8.8, -3.6, 0.025]",x-,44.056,27.22,16.63,44.648,16.775,False,8.685120278015552e-16,3025,243.5

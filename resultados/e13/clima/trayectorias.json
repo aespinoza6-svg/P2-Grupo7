@@ -1,0 +1,208 @@
+{
+  "snapshot": "2026-11-16T1337",
+  "carpeta": "data/weather_ensemble/2026-11-16T1337",
+  "metadata": {
+    "source": "Open-Meteo",
+    "model": "ecmwf_ifs025 ensemble (51 miembros); ERA5 via archive-api (historico)",
+    "retrieved_at": "2026-11-16T13:37:24+00:00",
+    "latitude": -37.6921,
+    "longitude": -72.624,
+    "timezone": "America/Santiago",
+    "variables": [
+      "temperature_2m",
+      "wind_speed_10m",
+      "shortwave_radiation"
+    ],
+    "units": {
+      "temperature_2m": "degC",
+      "wind_speed_10m": "m/s",
+      "shortwave_radiation": "W/m2"
+    },
+    "forecast_days": 15,
+    "grid_latitude": -37.75,
+    "grid_longitude": -72.5,
+    "elevation": 77.0,
+    "requests": [
+      {
+        "tipo": "ensemble",
+        "url": "https://ensemble-api.open-meteo.com/v1/ensemble?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&models=ecmwf_ifs025&forecast_days=15"
+      },
+      {
+        "tipo": "historico",
+        "ano": 2021,
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2021-11-18&end_date=2021-12-13"
+      },
+      {
+        "tipo": "historico",
+        "ano": 2022,
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2022-11-18&end_date=2022-12-13"
+      },
+      {
+        "tipo": "historico",
+        "ano": 2023,
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2023-11-18&end_date=2023-12-13"
+      },
+      {
+        "tipo": "historico",
+        "ano": 2024,
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2024-11-18&end_date=2024-12-13"
+      },
+      {
+        "tipo": "historico",
+        "ano": 2025,
+        "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-37.6921&longitude=-72.624&hourly=temperature_2m%2Cwind_speed_10m%2Cshortwave_radiation&wind_speed_unit=ms&timezone=America%2FSantiago&start_date=2025-11-18&end_date=2025-12-13"
+      }
+    ],
+    "nota": "Snapshot inmutable del ensemble. member00 = control."
+  },
+  "t0": "2026-11-19T08:00:00-03:00",
+  "horizonte_h": 528.0,
+  "horas_pronostico": 280,
+  "horas_relleno": 249,
+  "metodo_cola": "historico_promedio:2021,2022,2023,2024,2025",
+  "criterio": "temperatura media del aire en las horas con pronostico; 3 grupos de igual tamano; representante = miembro mas cercano a la mediana del grupo",
+  "trayectorias": [
+    {
+      "nombre": "frio",
+      "miembro": "member19",
+      "peso": 0.3333333333333333,
+      "indice_C": 16.070714285714285,
+      "grupo": [
+        "member12",
+        "member14",
+        "member23",
+        "member31",
+        "member47",
+        "member08",
+        "member36",
+        "member49",
+        "member19",
+        "member16",
+        "member37",
+        "member13",
+        "member28",
+        "member15",
+        "member46",
+        "member10",
+        "member45"
+      ],
+      "rango_C": [
+        15.5375,
+        16.689285714285713
+      ]
+    },
+    {
+      "nombre": "central",
+      "miembro": "member34",
+      "peso": 0.3333333333333333,
+      "indice_C": 16.961785714285714,
+      "grupo": [
+        "member30",
+        "member42",
+        "member09",
+        "member11",
+        "member20",
+        "member32",
+        "member44",
+        "member29",
+        "member34",
+        "member21",
+        "member33",
+        "member25",
+        "member24",
+        "member22",
+        "member17",
+        "member07",
+        "member01"
+      ],
+      "rango_C": [
+        16.692857142857143,
+        17.323928571428574
+      ]
+    },
+    {
+      "nombre": "calido",
+      "miembro": "member50",
+      "peso": 0.3333333333333333,
+      "indice_C": 17.72607142857143,
+      "grupo": [
+        "member40",
+        "member02",
+        "member35",
+        "member00",
+        "member04",
+        "member27",
+        "member06",
+        "member43",
+        "member50",
+        "member48",
+        "member03",
+        "member41",
+        "member05",
+        "member39",
+        "member26",
+        "member38",
+        "member18"
+      ],
+      "rango_C": [
+        17.325357142857143,
+        18.2325
+      ]
+    }
+  ],
+  "frio_extremo": "member12",
+  "calido_extremo": "member18",
+  "indice_por_miembro_C": {
+    "member00": 17.491071428571427,
+    "member01": 17.323928571428574,
+    "member02": 17.456428571428567,
+    "member03": 17.82785714285714,
+    "member04": 17.49535714285714,
+    "member05": 17.882142857142856,
+    "member06": 17.615714285714283,
+    "member07": 17.271071428571428,
+    "member08": 15.849285714285715,
+    "member09": 16.822499999999998,
+    "member10": 16.647142857142857,
+    "member11": 16.846071428571427,
+    "member12": 15.5375,
+    "member13": 16.385714285714286,
+    "member14": 15.576785714285714,
+    "member15": 16.564999999999998,
+    "member16": 16.136071428571427,
+    "member17": 17.25107142857143,
+    "member18": 18.2325,
+    "member19": 16.070714285714285,
+    "member20": 16.87392857142857,
+    "member21": 16.98071428571429,
+    "member22": 17.225,
+    "member23": 15.612857142857141,
+    "member24": 17.187142857142856,
+    "member25": 17.12607142857143,
+    "member26": 17.939285714285713,
+    "member27": 17.607857142857142,
+    "member28": 16.54857142857143,
+    "member29": 16.950714285714287,
+    "member30": 16.692857142857143,
+    "member31": 15.61357142857143,
+    "member32": 16.918928571428577,
+    "member33": 17.089285714285715,
+    "member34": 16.961785714285714,
+    "member35": 17.461785714285714,
+    "member36": 15.989642857142858,
+    "member37": 16.330714285714286,
+    "member38": 18.22607142857143,
+    "member39": 17.903214285714284,
+    "member40": 17.325357142857143,
+    "member41": 17.875357142857144,
+    "member42": 16.800357142857145,
+    "member43": 17.67142857142857,
+    "member44": 16.945,
+    "member45": 16.689285714285713,
+    "member46": 16.633214285714285,
+    "member47": 15.624285714285712,
+    "member48": 17.779285714285713,
+    "member49": 16.00607142857143,
+    "member50": 17.72607142857143
+  }
+}

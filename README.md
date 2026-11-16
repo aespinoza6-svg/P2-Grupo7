@@ -310,3 +310,21 @@ python -X utf8 scripts/15_ver_vtk.py resultados/e12/caso_14dias/campo_dTmax_143h
 ```
 
 Integra el IFC, las vertidas, una curva de hidratación (45 °C, 30 h), el suelo, el moldaje y el clima del snapshot del 13-nov. `resumen.json` dice cuándo y dónde ocurren la T máx (62,2 °C) y el ΔT máx (49,5 °C). `nucleo_superficie.png` muestra las curvas de núcleo y superficie de cada vertida. Con `--vtk-maximos` se exportan los campos 3D de esos dos instantes.
+
+## E13 — Incertidumbre y plan más rápido
+
+Informe y guía para el taller: [docs/E13_incertidumbre_y_plan.md](docs/E13_incertidumbre_y_plan.md).
+
+```powershell
+python -X utf8 scripts/16_clima_ensemble.py
+python -X utf8 scripts/17_riesgo_planes.py --procesos 15
+python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T8 --climas frio,central,calido
+```
+
+- **Curvas:** usa las 8 curvas del profesor (`data/hidratacion/source_terms.txt`).
+- **Clima:** 3 trayectorias del ensemble ECMWF del 16-nov.
+- **Métrica:** MΔ con la temperatura a 25 mm bajo las caras exteriores (S25).
+- **Probabilidad:** P_f por enumeración ponderada de 8 × 3 escenarios por plan.
+- **Configuración:** `config/riesgo_e13.yaml`.
+
+Con la malla de 0,2 m, la vertida única a 8 °C con manta de 15 cm da P_f = 4,2 %. Pero MΔ no converge con la malla en la esquina inferior junto al suelo, así que la decisión queda indeterminada (sección 8 del informe).

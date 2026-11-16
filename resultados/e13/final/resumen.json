@@ -1,0 +1,48 @@
+{
+  "malla": "final",
+  "criterio": "P_f conjunta <= 0,05 con los pesos base",
+  "planes": [
+    {
+      "plan": "unica_manta15_T10",
+      "D_h": 15.919,
+      "escenarios": 12,
+      "MT_max": 49.358,
+      "MD_max": 21.439,
+      "MD_celda_max": 21.347,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta10_T8",
+      "D_h": 15.919,
+      "escenarios": 3,
+      "MT_max": 47.353,
+      "MD_max": 20.501,
+      "MD_celda_max": 20.37,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T8",
+      "D_h": 15.919,
+      "escenarios": 28,
+      "MT_max": 47.401,
+      "MD_max": 20.387,
+      "MD_celda_max": 20.299,
+      "pico_al_final": false,
+      "Pf_base": 0.0417,
+      "PT": 0.0,
+      "PdT": 0.0417,
+      "fallas": 1,
+      "Pf_solo_SS": 0.0833,
+      "Pf_22A_a_la_mitad": 0.0555,
+      "cumple": true
+    }
+  ],
+  "recomendado": "unica_manta15_T8",
+  "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
+  "commit": "d475a91aaee40a2f387dcd357a5776b7c6d4e7b1",
+  "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
+  "sha256_config": "148f5b00001efd3ab4132dcfb3ce5be89c9f40a44bb27482b00e2dc54561d046",
+  "clima": "2026-11-16T1337"
+}
