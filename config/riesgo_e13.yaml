@@ -81,6 +81,7 @@ planes:
   - {nombre: unica_manta15_T12,     particion: unica, espera_h: 0,  proteccion: manta15, temperatura_C: 12}
   - {nombre: unica_manta10_T8,      particion: unica, espera_h: 0,  proteccion: manta10, temperatura_C: 8}
   - {nombre: cinco_e0_manta10_T10,  particion: cinco, espera_h: 0,  proteccion: manta10, temperatura_C: 10}
+  - {nombre: cinco_e6_manta15_T10,  particion: cinco, espera_h: 6,  proteccion: manta15, temperatura_C: 10}
   - {nombre: unica_terreno,         particion: unica, espera_h: 0,  proteccion: manta10_terreno}
   - {nombre: unica_terreno_T12,     particion: unica, espera_h: 0,  proteccion: manta10_terreno, temperatura_C: 12}
   - {nombre: cinco_e6_terreno_T12,  particion: cinco, espera_h: 6,  proteccion: manta10_terreno, temperatura_C: 12}
