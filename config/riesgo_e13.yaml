@@ -93,4 +93,5 @@ mallas:
   # sensibilidad: separa el efecto de dz (esquina contra el suelo) del de dx (reconstrucción lateral)
   hibrida_z: {dx: 0.4, dy: 0.4, dz: 0.05}
   hibrida_xy: {dx: 0.2, dy: 0.2, dz: 0.1}
-  lateral08: {dx: 0.8, dy: 0.8, dz: 0.05}   # tercer nivel lateral (0,8 / 0,4 / 0,2) para Richardson
+  lateral08: {dx: 0.8, dy: 0.8, dz: 0.05}
+  lateral01: {dx: 0.1, dy: 0.1, dz: 0.05}   # cuarto nivel: ¿converge MΔ en la esquina contra el suelo?   # tercer nivel lateral (0,8 / 0,4 / 0,2) para Richardson

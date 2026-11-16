@@ -124,7 +124,7 @@ def preparar_grilla(cfg, malla):
     from mcplan.voxelizacion import extraer_mallas, voxelizar_mallas
     m = cfg['mallas'][malla]
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    voxelizar_mallas(extraer_mallas(RAIZ / 'fundaciones' / 'fundacion.ifc'), (m['dx'], m['dy'], m['dz'])).guardar(ruta)
+    voxelizar_mallas(extraer_mallas(RAIZ / 'fundaciones' / 'fundacion.ifc'), (m['dx'], m['dy'], m['dz']), max_celdas=12_000_000).guardar(ruta)
     return ruta
 
 
