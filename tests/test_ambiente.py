@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from mcplan.clima import descargar_snapshot, cargar_snapshot, ultimo_snapshot, serie_clima, serie_constante
 from mcplan.bordes import BordeAmbiental, h_conveccion, h_radiacion, caras_ambientales
-from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, diferencial_por_vertida, nucleo_superficie_por_vertida
+from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, diferencial_por_vertida, nucleo_superficie_por_vertida, franja_junto_a_la_base
 from mcplan.voxelizacion import GrillaVoxeles
 from mcplan.hidratacion import HidratacionExponencial
 from mcplan.construccion import ProgramaVertidas
@@ -163,3 +163,27 @@ def test_costados_del_suelo_son_adiabaticos_y_el_fondo_a_temperatura_fija():
     assert np.all(G[ids == SUELO_ID] == 0) and np.all(G[ids == 1] > 0)
     Gf, Tf, _ = s.bordes['z-'].coeficientes(0., 'z-', s.expuestas['z-'], s)
     assert np.all(Gf > 0) and np.all(Tf == 12.)
+
+
+def test_faldon_aisla_solo_la_franja_de_suelo_junto_a_la_base():
+    """E13: el faldon agrega R solo en el suelo a <= ancho de la base, y se retira a su hora."""
+    p, mat = programa(np.ones((2, 2, 1)), {}, d=(.2, .2, .2), suelo=dict(espesor_m=.4, margen_m=.6, T_inicial_C=12.))
+    g = p.grilla
+    assert g.vertida_id.shape == (8, 8, 3)
+    f = franja_junto_a_la_base(g, .2)                   # solo vecinos de lado (la diagonal esta a 0,28 m)
+    assert np.count_nonzero(f) == 8 and np.all(f[:, :, :1] == False) and np.all(g.vertida_id[f] == SUELO_ID)
+    assert f[2, 3, 1] and f[3, 5, 1] and not f[2, 2, 1] and not f[3, 3, 1]
+    assert np.count_nonzero(franja_junto_a_la_base(g, .3)) == 12  # ahora entran las 4 diagonales
+    s = SistemaActivo(p, mat, {}); s.actualizar(g.vertida_id > 0)
+    b = BordeAmbiental(serie_constante(10., 20), sol=True, h_fijo=10., franja=(f, 4.29, 2.0))
+    m = s.expuestas['z+']
+    G, _, _ = b.coeficientes(0., 'z+', m, s)
+    A, base = s.areas[2], s.d[2] / (2 * s.k[m]) + 1 / 10.
+    con = f[m]
+    assert con.sum() == 8
+    np.testing.assert_allclose(G[con], A / (base[con] + 4.29))
+    np.testing.assert_allclose(G[~con], A / base[~con])   # el hormigon y el suelo lejano no cambian
+    retirado, _, _ = b.coeficientes(3 * 3600., 'z+', m, s)
+    np.testing.assert_allclose(retirado, A / base)
+    with pytest.raises(ValueError):
+        BordeAmbiental(serie_constante(10., 2), franja=(f, -1., None))

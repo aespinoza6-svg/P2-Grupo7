@@ -16,6 +16,8 @@ Todas terminan en la misma forma por cara expuesta de una celda:
 - Moldaje o aislacion: resistencia R [m2K/W] en serie con la pelicula de aire:
   G = A / (dx/2k + R + 1/h). Al desmoldar, R pasa a 0 en la hora de retiro de
   CADA vertida: la superficie queda de golpe expuesta al aire.
+- Faldon: la misma R en serie, pero solo en las celdas marcadas de una franja
+  (p. ej. el suelo junto a la base); su retiro se mide desde t = 0.
 
 El conductor G se evalua al inicio de cada paso (Euler explicito); el paso estable
 se calcula con la mayor conductancia posible del horizonte (R = 0 y viento maximo).
@@ -48,6 +50,8 @@ class BordeAmbiental:
         el inicio de ESA vertida. None = no se retira en el horizonte.
     h_fijo: si se da, reemplaza h_conv(V) + h_rad (sirve para reproducir E07).
     excluir: vertida_id que no intercambian por esta cara (p. ej. costados del suelo).
+    franja: (mascara de la grilla, R, retiro_h o None): resistencia extra solo en esas
+        celdas, con retiro medido desde t = 0 (faldon aislante sobre el suelo).
     """
     clima: object
     sol: bool = False
@@ -56,6 +60,7 @@ class BordeAmbiental:
     resistencias: dict = field(default_factory=dict)
     h_fijo: float | None = None
     excluir: tuple = ()
+    franja: tuple | None = None
 
     def __post_init__(self):
         if not 0 <= self.absortividad <= 1 or not 0 <= self.emisividad <= 1:
@@ -63,6 +68,10 @@ class BordeAmbiental:
         for vid, (R, retiro) in self.resistencias.items():
             if not np.isfinite(R) or R < 0 or (retiro is not None and retiro < 0):
                 raise ValueError(f'Vertida {vid}: R >= 0 y retiro >= 0.')
+        if self.franja is not None:
+            _, R, retiro = self.franja
+            if not np.isfinite(R) or R < 0 or (retiro is not None and retiro < 0):
+                raise ValueError('Franja: R >= 0 y retiro >= 0.')
         if self.h_fijo is not None and not self.h_fijo > 0:
             raise ValueError('h_fijo debe ser positivo.')
 
@@ -81,12 +90,19 @@ class BordeAmbiental:
                 R[ids == vid] = R0
         return R
 
+    def R_franja(self, t_s, mascara):
+        if self.franja is None:
+            return 0.0
+        celdas, R, retiro = self.franja
+        return np.where(celdas[mascara], R, 0.0) if retiro is None or t_s < 3600.0 * retiro else 0.0
+
     def coeficientes(self, t_s, cara, mascara, sistema):
         e = CARAS[cara][0]
         ids = sistema.programa.grilla.vertida_id[mascara]
         T_aire, viento, ghi = self.clima.en(t_s)
         h = self.h(T_aire, viento)
-        G = sistema.areas[e] / (sistema.d[e] / (2 * sistema.k[mascara]) + self.R_en(t_s, ids, sistema) + 1.0 / h)
+        G = sistema.areas[e] / (sistema.d[e] / (2 * sistema.k[mascara]) + self.R_en(t_s, ids, sistema)
+                                + self.R_franja(t_s, mascara) + 1.0 / h)
         if self.excluir:
             G[np.isin(ids, self.excluir)] = 0.0
         T_ref = T_aire + (self.absortividad * ghi / h if self.sol else 0.0)
@@ -123,17 +139,18 @@ class BordeTemperatura:
 
 
 def caras_ambientales(clima, *, moldaje=None, aislacion=None, suelo=None, absortividad=0.65,
-                      emisividad=0.9, h_fijo=None):
+                      emisividad=0.9, h_fijo=None, faldon=None):
     """Arma las seis caras del caso con clima real.
 
     moldaje / aislacion: {vertida_id: (R, retiro_h)} en lados / arriba.
     suelo: dict(id=..., T_fondo_C=...) si hay bloque de suelo; sin suelo la base es adiabatica.
+    faldon: (mascara, R, retiro_h) en la cara de arriba (ver mcplan.suelo.franja_junto_a_la_base).
     """
     from mcplan.solver1d import Neumann
     excluir = (suelo['id'],) if suelo else ()
     lados = BordeAmbiental(clima, sol=False, absortividad=absortividad, emisividad=emisividad,
                            resistencias=dict(moldaje or {}), h_fijo=h_fijo, excluir=excluir)
     arriba = BordeAmbiental(clima, sol=True, absortividad=absortividad, emisividad=emisividad,
-                            resistencias=dict(aislacion or {}), h_fijo=h_fijo)
+                            resistencias=dict(aislacion or {}), h_fijo=h_fijo, franja=faldon)
     base = BordeTemperatura(suelo['T_fondo_C'], (suelo['id'],)) if suelo else Neumann(0.0)
     return {'x-': lados, 'x+': lados, 'y-': lados, 'y+': lados, 'z-': base, 'z+': arriba}
