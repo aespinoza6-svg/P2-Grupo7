@@ -62,7 +62,7 @@ def correr(cfg, plan, curva, clima, malla):
     from mcplan.solver1d import Material
     from mcplan.solver_vertidas import resolver_vertidas
     from mcplan.bordes import caras_ambientales
-    from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo
+    from mcplan.suelo import SUELO_ID, agregar_suelo, modelo_suelo, franja_junto_a_la_base
     from mcplan.riesgo import cronograma, grilla_con_plan, medir
     reloj = time.monotonic()
     grilla, curvas, climas = _cargar(cfg, malla)
@@ -86,8 +86,12 @@ def correr(cfg, plan, curva, clima, malla):
     aislacion = {v: (float(Ra), ra) for v in hormigon} if Ra else {}
     if 'terreno' in prot:                      # manta sobre el suelo que rodea la fundacion
         aislacion[SUELO_ID] = (float(prot['terreno'][0]), prot['terreno'][1])
+    faldon = None
+    if 'faldon' in prot:                       # solo una franja de suelo junto a la base: [ancho m, R, retiro h]
+        ancho, Rf, rf = prot['faldon']
+        faldon = (franja_junto_a_la_base(g, float(ancho)), float(Rf), rf)
     bordes = caras_ambientales(climas[clima], moldaje={v: (float(Rl), rl) for v in hormigon} if Rl else {},
-                               aislacion=aislacion,
+                               aislacion=aislacion, faldon=faldon,
                                suelo=dict(id=SUELO_ID, T_fondo_C=s['T_fondo_C']),
                                absortividad=sup['absortividad_solar'], emisividad=sup['emisividad'])
     centro = lambda i: [round(float(x), 3) for x in np.asarray(g.origen) + (np.array(np.unravel_index(i, g.vertida_id.shape)) + .5) * np.asarray(g.paso)]

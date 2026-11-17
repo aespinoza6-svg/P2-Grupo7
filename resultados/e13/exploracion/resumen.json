@@ -199,6 +199,66 @@
       "cumple": false
     },
     {
+      "plan": "unica_manta15_T10_faldon04",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 49.346,
+      "MD_max": 19.576,
+      "MD_celda_max": 19.307,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T10_faldon08",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 49.346,
+      "MD_max": 19.902,
+      "MD_celda_max": 19.632,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T10_faldon12",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 49.346,
+      "MD_max": 20.32,
+      "MD_celda_max": 20.059,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T8_faldon04",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 47.374,
+      "MD_max": 18.298,
+      "MD_celda_max": 18.041,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T8_faldon08",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 47.374,
+      "MD_max": 18.642,
+      "MD_celda_max": 18.382,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T8_faldon12",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 47.374,
+      "MD_max": 19.068,
+      "MD_celda_max": 18.82,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
       "plan": "cinco_e6_manta10",
       "D_h": 39.919,
       "escenarios": 40,
@@ -371,8 +431,8 @@
   ],
   "recomendado": "unica_manta15_T10",
   "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
-  "commit": "d475a91aaee40a2f387dcd357a5776b7c6d4e7b1",
+  "commit": "71b87725a2b16dcdcba6de2e0d12f756ac97b86d",
   "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
-  "sha256_config": "148f5b00001efd3ab4132dcfb3ce5be89c9f40a44bb27482b00e2dc54561d046",
+  "sha256_config": "6f673b36c66e1318c899d41b68df7e880553988fd9cf0806c95f083a35f294be",
   "clima": "2026-11-16T1337"
 }

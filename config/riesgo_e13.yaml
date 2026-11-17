@@ -60,6 +60,12 @@ protecciones:
   manta15:   {lados: [4.43, null], arriba: [4.29, null]}   # moldaje + 15 cm de poliestireno
   # + manta de 10 cm sobre el terreno en la franja de 2 m alrededor de la fundación
   manta10_terreno: {lados: [3.0, null], arriba: [2.86, null], terreno: [2.86, null]}
+  # Faldon: la manta de 15 cm de los lados se dobla y sigue sobre el suelo en una franja de
+  # ancho [m] junto a la base, para cortar el puente termico de la esquina [DECISIÓN].
+  # faldon: [ancho m, R m2K/W, retiro h desde t0 o null]
+  manta15_faldon04: {lados: [4.43, null], arriba: [4.29, null], faldon: [0.4, 4.29, null]}
+  manta15_faldon08: {lados: [4.43, null], arriba: [4.29, null], faldon: [0.8, 4.29, null]}
+  manta15_faldon12: {lados: [4.43, null], arriba: [4.29, null], faldon: [1.2, 4.29, null]}
 
 # Familia de planes: misma geometría, volumen y bomba. La partición en 5 vertidas es la del IFC.
 planes:
@@ -85,6 +91,12 @@ planes:
   - {nombre: unica_terreno,         particion: unica, espera_h: 0,  proteccion: manta10_terreno}
   - {nombre: unica_terreno_T12,     particion: unica, espera_h: 0,  proteccion: manta10_terreno, temperatura_C: 12}
   - {nombre: cinco_e6_terreno_T12,  particion: cinco, espera_h: 6,  proteccion: manta10_terreno, temperatura_C: 12}
+  - {nombre: unica_manta15_T10_faldon04, particion: unica, espera_h: 0, proteccion: manta15_faldon04, temperatura_C: 10}
+  - {nombre: unica_manta15_T10_faldon08, particion: unica, espera_h: 0, proteccion: manta15_faldon08, temperatura_C: 10}
+  - {nombre: unica_manta15_T10_faldon12, particion: unica, espera_h: 0, proteccion: manta15_faldon12, temperatura_C: 10}
+  - {nombre: unica_manta15_T8_faldon04,  particion: unica, espera_h: 0, proteccion: manta15_faldon04, temperatura_C: 8}
+  - {nombre: unica_manta15_T8_faldon08,  particion: unica, espera_h: 0, proteccion: manta15_faldon08, temperatura_C: 8}
+  - {nombre: unica_manta15_T8_faldon12,  particion: unica, espera_h: 0, proteccion: manta15_faldon12, temperatura_C: 8}
 
 mallas:
   exploracion: {dx: 0.4, dy: 0.4, dz: 0.1}

@@ -12,7 +12,7 @@ Preparación del taller del miércoles 18-nov, la defensa del jueves 19 y el art
 >
 > **Todavía no podemos afirmar que el plan cumple.** El diferencial MΔ **no converge con la malla** en la esquina inferior de la cara lateral, donde el hormigón aislado toca el suelo expuesto al aire. Con dx = 0,1 m, el escenario crítico sube 1,4 °C más (sección 8). Con ese corrimiento, el plan fallaría en al menos 4 de los 24 escenarios. Además, la decisión cambia con los pesos de las curvas 22A y con el suelo a 12 °C (sección 7).
 >
-> **La decisión queda indeterminada.** Lo que falta para resolverla es tratar el puente térmico de la base, por ejemplo con un faldón aislante local (sección 9), y aclarar la consulta 1 (sección 10).
+> **La decisión queda indeterminada.** El faldón aislante sobre el suelo, que era la idea para cortar el puente térmico de la base, se probó y **no sirve**: le quita a la esquina el calor del sol (sección 8.1). Lo que falta es un refinamiento local de la esquina y aclarar la consulta 1 (sección 10).
 
 ## 1. Cómo reproducir
 
@@ -22,6 +22,7 @@ python -X utf8 scripts/17_riesgo_planes.py --procesos 15
 python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T8 --climas frio,central,calido
 python -X utf8 scripts/17_riesgo_planes.py --malla final --suelo-T 12,12 --planes unica_manta15_T8 --curvas M4_SS --climas frio,central,calido
 python -X utf8 scripts/17_riesgo_planes.py --malla hibrida_z --planes unica_manta15_T10 --curvas M4_SS,M1_SS --climas frio
+python -X utf8 scripts/17_riesgo_planes.py --planes unica_manta15_T10_faldon04,unica_manta15_T10_faldon08,unica_manta15_T10_faldon12,unica_manta15_T8_faldon04,unica_manta15_T8_faldon08,unica_manta15_T8_faldon12 --curvas M4_SS --climas frio
 pytest -q
 ```
 
@@ -147,6 +148,7 @@ El retiro de las mantas y el enfriamiento posterior no se evalúan aquí; se rep
 - Protecciones moldaje, manta5, manta10 y manta15.
 - Temperaturas de colocación de 18, 12, 10 y 8 °C.
 - Una manta sobre el terreno, que se probó y se descartó.
+- 6 variantes con faldón aislante (sección 8.1), corridas solo en el peor escenario y descartadas.
 
 ## 4. Métricas y evento de falla
 
@@ -218,7 +220,7 @@ Hay 24 escenarios por plan: 8 curvas × 3 climas, con pesos 1/8 × 1/3. «Fallas
 
 1. **El material manda; el clima casi no influye bajo manta.** En un mismo plan, MΔ cambia menos de 1 °C entre los 3 climas, pero hasta 10 °C entre curvas. Sobre todo fallan las curvas SS, con un ΔT adiabático de 35–40 K.
 2. **Con manta, el punto frío es el borde inferior de la losa contra el suelo**, en (−8,8; −3,6; 0,05). El núcleo, en el centro de la planta a 2,6–2,9 m de altura, no se enfría en 3 semanas. El borde inferior, en cambio, pierde calor hacia el suelo. Por eso más manta rinde cada vez menos: pasar de 5 a 10 cm baja unos 2 °C, y de 10 a 15 cm, menos de 1 °C.
-   - **La manta sobre el terreno empeora el resultado,** porque le quita al suelo el calor del sol. Por eso se descartó.
+   - **La manta sobre el terreno empeora el resultado,** porque le quita al suelo el calor del sol. Por eso se descartó. Un faldón angosto tampoco ayuda (sección 8.1).
 3. **La temperatura de colocación baja el núcleo casi 1:1.** Es la palanca más efectiva: de 18 a 10 °C, MΔ baja unos 5,5 °C.
 4. **Las esperas largas empeoran.** Con w = 24 h, MΔ salta justo al colocar la vertida siguiente, porque su hormigón fresco queda junto a un núcleo de 50 °C. Así, todas las esperas de 12 h o más fallan en todos los escenarios. Dividir en cinco vertidas no ayuda: el ΔT con w = 0–6 h es igual o algo peor que con la vertida única.
 5. **MT nunca falla:** el máximo es 57,9 °C en toda la familia. **El criterio que controla es el diferencial.**
@@ -262,7 +264,7 @@ Para separar los efectos, se corrieron mallas híbridas en el escenario más exi
 - **El efecto principal es el tamaño lateral de la celda.** Pasar de dx = 0,4 a 0,2 m suma +1,4 °C, y pasar de dz = 0,1 a 0,05 m, +0,4 a +0,7 °C.
 - **Las diferencias no se achican al refinar:** 0,8 → 0,4: +0,5 °C; 0,4 → 0,2: +1,4 °C; 0,2 → 0,1: +1,3 °C. MΔ sube cerca de 1,4 °C cada vez que la celda se achica a la mitad. **No hay convergencia, y Richardson no es aplicable.**
 - La reconstrucción de S25 no explica el cambio: el mínimo por celdas, `MD_celda`, se mueve igual.
-- El punto crítico es la esquina hormigón–suelo–aire. La cara lateral tiene 15 cm de manta, pero el suelo justo al lado está **al aire, sin protección**, y le saca calor a la base por debajo de la manta: es un **puente térmico**. Cada celda más fina resuelve mejor ese gradiente, que es muy fuerte.
+- El punto crítico es la esquina hormigón–suelo–aire. La cara lateral tiene 15 cm de manta, pero la base le entrega calor al suelo de abajo, que está a 13–16 °C: es un **puente térmico**. Cada celda más fina resuelve mejor ese gradiente, que es muy fuerte.
 
 **Consecuencia para la decisión:** la clasificación **no es estable con la malla**.
 - Con 0,4 m, ya cumplía la vertida única a 10 °C con manta de 15 cm (P_f = 0).
@@ -270,8 +272,40 @@ Para separar los efectos, se corrieron mallas híbridas en el escenario más exi
 - Si la tendencia sigue, con 0,1 m el plan propuesto podría dejar de cumplir.
 
 Con dx = 0,1 m, el corrimiento se repite. Reconocemos la **indeterminación**: con este modelo, el criterio de 20 °C en esa esquina depende de la malla. Hay dos formas de resolverlo:
-1. Cambiar el diseño para que la esquina deje de ser crítica, con un faldón aislante.
+1. Cambiar el diseño para que la esquina deje de ser crítica. El faldón aislante se probó y no sirve (sección 8.1).
 2. Discutir en el taller si S25 debe evaluarse en esa arista. Es la consulta 1 de la sección 10.
+
+### 8.1 Faldón aislante: probado y descartado
+
+**Idea:** la manta de 15 cm de los lados se dobla y sigue sobre el suelo en una franja de ancho w junto a la base (R = 4,29 m²K/W). Si la esquina se enfriara porque el suelo al aire le saca calor, eso la protegería.
+
+**Cómo se modela:** con la misma resistencia en serie de las mantas, pero solo en las celdas de la capa superior del suelo a una distancia ≤ w (en planta) del hormigón (`mcplan.suelo.franja_junto_a_la_base`, `BordeAmbiental(franja=...)`). No se retira en el horizonte.
+
+**Resultado** en el peor escenario (M4_SS frío), malla de exploración:
+
+| Faldón | MΔ a 10 °C | MΔ a 8 °C | T en S25 a 10 °C |
+|---|---|---|---|
+| sin faldón | 19,65 | 18,32 | 28,97 |
+| w = 0,4 m | 19,58 | 18,30 | 28,72 |
+| w = 0,8 m | 19,90 | 18,64 | 28,23 |
+| w = 1,2 m | 20,32 | 19,07 | 27,44 |
+
+**Cuanto más ancho el faldón, más fría la esquina.** Con 0,4 m el cambio es menor a 0,1 °C, que es mucho menos que lo que mueve la malla (+1,4 °C por refinamiento). Por eso no vale la pena correrlo con la malla final.
+
+**Por qué:** diagnóstico puntual en el mismo escenario a 10 °C, sin sol (absortividad 0 en vez de 0,65; no queda guardado en `resultados/`):
+
+| | con sol | sin sol |
+|---|---|---|
+| sin faldón | 19,65 | 22,02 |
+| faldón de 1,2 m | 20,32 | 21,26 |
+
+- **Sin sol, el faldón sí ayuda** (−0,8 °C): ahí el suelo al aire sí le saca calor a la base.
+- **Con el sol de noviembre, el suelo descubierto junto a la base es una fuente de calor, no una fuga:** el sol le da a la esquina unos 2,4 °C de margen. El faldón tapa justo ese aporte.
+- La esquina se enfría sobre todo **hacia el suelo de abajo**, no hacia el aire. Una manta encima no corta eso.
+
+**Consecuencias:**
+- El resultado de la esquina depende de la absortividad del suelo, 0,65 [TÍPICO]: un suelo más claro o días más nublados lo empeoran.
+- Ideas no probadas: aislar bajo el borde de la base antes de hormigonar (exige revisión estructural) o cubrir el suelo con algo que deje pasar el sol y corte el viento.
 
 ## 9. Conclusión
 
@@ -287,10 +321,10 @@ No relajamos el umbral ni ajustamos pesos para hacerlo pasar.
 **Qué controla el resultado:** el diferencial, no la temperatura máxima, que nunca pasa de 58 °C.
 - **El material:** las curvas SS, con un ΔT adiabático de 35–40 K, son las que fallan.
 - **La temperatura de colocación:** baja el núcleo casi 1:1.
-- **El puente térmico de la base:** con manta, el punto más frío es la esquina inferior junto al suelo al aire.
+- **El puente térmico de la base:** con manta, el punto más frío es la esquina inferior, que pierde calor hacia el suelo de abajo.
 
 **Qué habría que cambiar para tener una recomendación defendible:**
-1. **Diseño:** un **faldón aislante local** que baje por la cara lateral y cubra una franja angosta del suelo junto a la base. La manta sobre todo el terreno empeoró, porque se pierde el sol, así que el faldón debe ser angosto. Así se corta el puente térmico. Es la siguiente prueba.
+1. **Diseño:** el **faldón aislante** sobre el suelo se probó y no sirve, porque tapa el sol que calienta la esquina (sección 8.1). Quedan ideas sin probar, como aislar bajo el borde de la base.
 2. **Datos:**
    - confirmar si M1–M4 son réplicas y si 22A vale igual que SS;
    - fijar β y la edad cero;
@@ -313,7 +347,6 @@ No relajamos el umbral ni ajustamos pesos para hacerlo pasar.
 **Tareas que dependen de esas respuestas:**
 - reasignar los pesos p_m;
 - escalar las curvas por β como sensibilidad;
-- probar el faldón aislante;
 - correr de nuevo los planes cercanos al límite.
 
 ## 11. Teoría y método, con nuestras variables
