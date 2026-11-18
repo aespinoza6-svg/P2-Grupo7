@@ -3,24 +3,20 @@
   "criterio": "P_f conjunta <= 0,05 con los pesos base",
   "planes": [
     {
-      "plan": "unica_manta15_T10",
+      "plan": "unica_manta15_T5",
       "D_h": 15.919,
-      "escenarios": 12,
-      "MT_max": 49.358,
-      "MD_max": 21.439,
-      "MD_celda_max": 21.347,
+      "escenarios": 25,
+      "MT_max": 44.436,
+      "MD_max": 18.233,
+      "MD_celda_max": 18.151,
       "pico_al_final": false,
-      "cumple": false
-    },
-    {
-      "plan": "unica_manta10_T8",
-      "D_h": 15.919,
-      "escenarios": 3,
-      "MT_max": 47.353,
-      "MD_max": 20.501,
-      "MD_celda_max": 20.37,
-      "pico_al_final": false,
-      "cumple": false
+      "Pf_base": 0.0,
+      "PT": 0.0,
+      "PdT": 0.0,
+      "fallas": 0,
+      "Pf_solo_SS": 0.0,
+      "Pf_22A_a_la_mitad": 0.0,
+      "cumple": true
     },
     {
       "plan": "unica_manta15_T8",
@@ -37,12 +33,42 @@
       "Pf_solo_SS": 0.0833,
       "Pf_22A_a_la_mitad": 0.0555,
       "cumple": true
+    },
+    {
+      "plan": "unica_manta15_T6",
+      "D_h": 15.919,
+      "escenarios": 2,
+      "MT_max": 45.421,
+      "MD_max": 18.951,
+      "MD_celda_max": 18.867,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta10_T8",
+      "D_h": 15.919,
+      "escenarios": 3,
+      "MT_max": 47.353,
+      "MD_max": 20.501,
+      "MD_celda_max": 20.37,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
+      "plan": "unica_manta15_T10",
+      "D_h": 15.919,
+      "escenarios": 12,
+      "MT_max": 49.358,
+      "MD_max": 21.439,
+      "MD_celda_max": 21.347,
+      "pico_al_final": false,
+      "cumple": false
     }
   ],
-  "recomendado": "unica_manta15_T8",
-  "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
-  "commit": "d475a91aaee40a2f387dcd357a5776b7c6d4e7b1",
+  "recomendado": "unica_manta15_T5",
+  "nota": "Menor D entre los planes evaluados y, a igual D, menor P_f y menor MD; no es una prueba de optimalidad global.",
+  "commit": "aba843e5d37d21acd42eb4df7fcc0a186501b8a7",
   "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
-  "sha256_config": "148f5b00001efd3ab4132dcfb3ce5be89c9f40a44bb27482b00e2dc54561d046",
+  "sha256_config": "d567eb4b9216fa078446b2faf83e269afb92f7eb09f6311348ff65087a9c7d28",
   "clima": "2026-11-16T1337"
 }

@@ -318,7 +318,7 @@ Informe y guía para el taller: [docs/E13_incertidumbre_y_plan.md](docs/E13_ince
 ```powershell
 python -X utf8 scripts/16_clima_ensemble.py
 python -X utf8 scripts/17_riesgo_planes.py --procesos 15
-python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T8 --climas frio,central,calido
+python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T5 --climas frio,central,calido
 ```
 
 - **Curvas:** usa las 8 curvas del profesor (`data/hidratacion/source_terms.txt`).
@@ -327,7 +327,7 @@ python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_
 - **Probabilidad:** P_f por enumeración ponderada de 8 × 3 escenarios por plan.
 - **Configuración:** `config/riesgo_e13.yaml`.
 
-Con la malla de 0,2 m, la vertida única a 8 °C con manta de 15 cm da P_f = 4,2 %. Pero MΔ no converge con la malla en la esquina inferior junto al suelo, así que la decisión queda indeterminada (sección 8 del informe).
+Plan propuesto: vertida única (15,9 h), colocada a 5 °C (el piso de ACI 306) con manta de 15 cm. Con la malla de 0,2 m da P_f = 0 % y cumple todas las sensibilidades. En el peor escenario, MΔ da 19,67 °C con la malla de 0,05 m, pero la extrapolación a malla infinitamente fina queda en ≈ 20,5 °C: en la esquina contra el suelo no queda margen (sección 8 del informe).
 
 En `visor_laboratorio.html`:
 - **Hormigón → Curva de hidratación** simula en vivo con cualquiera de las 8 curvas.

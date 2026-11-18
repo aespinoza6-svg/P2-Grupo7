@@ -170,14 +170,15 @@ def resumir(cfg, out, filas, climas_peso):
             if completo and len(G) == len(pesos['base']) * len(climas_peso):
                 fila[f'Pf_con_{extremo}'] = round(probabilidades(G, pesos['base'], climas_peso)['conjunta'], 4)
         tabla.append(fila)
-    tabla.sort(key=lambda x: x['D_h'])
+    # Menor D primero; a igual D, el de menor riesgo (P_f y luego el peor MD): es el mas robusto
+    tabla.sort(key=lambda x: (x['D_h'], x.get('Pf_base', 1.0) if x.get('Pf_base') is not None else 1.0, x['MD_max']))
     with (out / 'planes.csv').open('w', newline='', encoding='utf-8-sig') as f:
         claves = list(dict.fromkeys(k for t in tabla for k in t))
         w = csv.DictWriter(f, fieldnames=claves); w.writeheader(); w.writerows(tabla)
     factibles = [t for t in tabla if t['cumple']]
     resumen = dict(malla=out.name, criterio='P_f conjunta <= 0,05 con los pesos base', planes=tabla,
                    recomendado=factibles[0]['plan'] if factibles else None,
-                   nota='Menor D entre los planes evaluados; no es una prueba de optimalidad global.')
+                   nota='Menor D entre los planes evaluados y, a igual D, menor P_f y menor MD; no es una prueba de optimalidad global.')
     (out / 'resumen.json').write_text(json.dumps(resumen, ensure_ascii=False, indent=2), encoding='utf-8')
 
     # Figura 1: matriz de escenarios por plan (MD en cada celda; rojo = falla)

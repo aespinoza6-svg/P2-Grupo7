@@ -1,0 +1,22 @@
+{
+  "malla": "lateral005",
+  "criterio": "P_f conjunta <= 0,05 con los pesos base",
+  "planes": [
+    {
+      "plan": "unica_manta15_T5",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 44.419,
+      "MD_max": 19.673,
+      "MD_celda_max": 19.673,
+      "pico_al_final": false,
+      "cumple": false
+    }
+  ],
+  "recomendado": null,
+  "nota": "Menor D entre los planes evaluados y, a igual D, menor P_f y menor MD; no es una prueba de optimalidad global.",
+  "commit": "aba843e5d37d21acd42eb4df7fcc0a186501b8a7",
+  "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
+  "sha256_config": "32ba6f65bc512d2cac1ef78b7b855b9bf7fcec49a099ba1a9e34f1765e4fd1ed",
+  "clima": "2026-11-16T1337"
+}

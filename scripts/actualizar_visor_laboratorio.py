@@ -89,14 +89,18 @@ def riesgo_desde_resultados(carpeta=E13):
                   for f in _csv(carpeta / nombre / 'planes.csv')]
         mallas[nombre] = dict(d=cfg['mallas'][nombre], planes=planes, escenarios=esc, recomendado=res.get('recomendado'),
                               commit=res.get('commit'), clima=res.get('clima'))
-    # El mismo escenario en todas las mallas: asi se ve si MD converge al refinar
-    plan, curva, clima = 'unica_manta15_T10', 'M4_SS', 'frio'
+    # El mismo escenario en todas las mallas: asi se ve si MD converge al refinar.
+    # Dos planes: el de la prueba original (10 C) y el propuesto (5 C).
+    planes_conv, curva, clima = ['unica_manta15_T10', 'unica_manta15_T5'], 'M4_SS', 'frio'
     conv = []
     for nombre, d in cfg['mallas'].items():
         ruta = carpeta / nombre / 'escenarios.csv'
+        md, mt = {}, {}
         for f in (_csv(ruta) if ruta.exists() else []):
-            if (f['plan'], f['curva'], f['clima']) == (plan, curva, clima):
-                conv.append(dict(malla=nombre, dx=d['dx'], dz=d['dz'], MT=_num(f['MT']), MD=_num(f['MD'])))
+            if f['plan'] in planes_conv and (f['curva'], f['clima']) == (curva, clima):
+                md[f['plan']], mt[f['plan']] = _num(f['MD']), _num(f['MT'])
+        if md:
+            conv.append(dict(malla=nombre, dx=d['dx'], dz=d['dz'], MD=md, MT=mt))
     conv.sort(key=lambda f: (-f['dx'], -f['dz']))
     suelo = []
     for nombre in ('exploracion', 'final'):
@@ -105,7 +109,7 @@ def riesgo_desde_resultados(carpeta=E13):
             suelo.append(dict(malla=nombre, plan=f['plan'], curva=f['curva'], clima=f['clima'], MT=_num(f['MT']), MD=_num(f['MD'])))
     return dict(criterio='P_f = P(MT > 70 °C o MΔ > 20 °C) ≤ 5 %', curvas=list(cfg['curvas']['pesos']['base']),
                 climas=['frio', 'central', 'calido'], mallas=mallas,
-                convergencia=dict(plan=plan, curva=curva, clima=clima, filas=conv), suelo12=suelo)
+                convergencia=dict(planes=planes_conv, curva=curva, clima=clima, filas=conv), suelo12=suelo)
 
 
 def _bloque(regex, texto, nombre):

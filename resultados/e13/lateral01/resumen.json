@@ -3,6 +3,16 @@
   "criterio": "P_f conjunta <= 0,05 con los pesos base",
   "planes": [
     {
+      "plan": "unica_manta15_T5",
+      "D_h": 15.919,
+      "escenarios": 1,
+      "MT_max": 44.419,
+      "MD_max": 19.028,
+      "MD_celda_max": 18.998,
+      "pico_al_final": false,
+      "cumple": false
+    },
+    {
       "plan": "unica_manta15_T10",
       "D_h": 15.919,
       "escenarios": 1,
@@ -14,9 +24,9 @@
     }
   ],
   "recomendado": null,
-  "nota": "Menor D entre los planes evaluados; no es una prueba de optimalidad global.",
-  "commit": "d475a91aaee40a2f387dcd357a5776b7c6d4e7b1",
+  "nota": "Menor D entre los planes evaluados y, a igual D, menor P_f y menor MD; no es una prueba de optimalidad global.",
+  "commit": "aba843e5d37d21acd42eb4df7fcc0a186501b8a7",
   "sha256_curvas": "182b4a500dd02060b89dc452f007a379c7ab6cdc569e67de59a04c00d3497956",
-  "sha256_config": "148f5b00001efd3ab4132dcfb3ce5be89c9f40a44bb27482b00e2dc54561d046",
+  "sha256_config": "d567eb4b9216fa078446b2faf83e269afb92f7eb09f6311348ff65087a9c7d28",
   "clima": "2026-11-16T1337"
 }
