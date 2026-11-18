@@ -111,6 +111,16 @@ Están en `data/hidratacion/source_terms.txt`: es el archivo original, guardado 
 
 ![Trayectorias](../resultados/e13/clima/trayectorias.png)
 
+**Mínimas y máximas en los 21 días que se simulan:**
+- La más baja de los 51 miembros es **7,2 °C**, el 22-nov a las 03:00.
+- La más alta es **33,6 °C**, el 28-nov a las 15:00.
+- Cada día el aire oscila unos 10 a 15 °C entre la noche y la tarde.
+- Desde el 1-dic ya no hay pronóstico: la serie es el promedio ERA5, igual para todos los miembros.
+
+En el panel de abajo, el punto es la trayectoria central y la barra, el rango de los 51 miembros. Solo se grafican los días completos.
+
+![Mínimas y máximas](../resultados/e13/clima/temperatura_min_max.png)
+
 ### 2.3 Suelo: estado inicial desde ERA5
 
 E10 y E12 suponían el suelo uniforme a 12 °C, un valor provisional. Para E13 lo reemplazamos por datos: ERA5 en el sitio, promedio del 1 al 12 de noviembre de 2026, guardado en `data/suelo/2026-11-16T1341/`.
