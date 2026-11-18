@@ -1,0 +1,8 @@
+corrida,plan,curva,clima,malla,MT,t_MT_h,MD,t_MD_h,MD_336,xyz_S25_MD,pasos,residuo
+critico_cinco_e6_manta15_T10_M4_SS_frio_final,cinco_e6_manta15_T10,M4_SS,frio,final,49.649,243.0,22.081,338.0,22.003,"[-8.9, -3.7, 0.025]",3029,4.250258259281699e-16
+critico_unica_manta15_T5_M4_SS_frio_final,unica_manta15_T5,M4_SS,frio,final,44.419,222.0,17.852,338.0,17.774,"[-8.9, -3.7, 0.025]",3025,1.4247731201867239e-15
+critico_unica_manta15_T5_M4_SS_frio_final_intervalo_salida_h0.25,unica_manta15_T5,M4_SS,frio,final,44.419,222.0,17.86,337.5,17.774,"[-8.9, -3.7, 0.025]",4033,1.0127924719647017e-15
+critico_unica_manta15_T5_M4_SS_frio_final_max_dt_s150,unica_manta15_T5,M4_SS,frio,final,44.419,222.0,17.846,337.0,17.774,"[-8.9, -3.7, 0.025]",12097,1.9667193413434943e-15
+critico_unica_manta15_T5_M4_SS_frio_final_max_dt_s300,unica_manta15_T5,M4_SS,frio,final,44.419,222.0,17.848,337.0,17.774,"[-8.9, -3.7, 0.025]",6049,1.2692802161492032e-15
+critico_unica_manta15_T8_M4_SS_frio_final,unica_manta15_T8,M4_SS,frio,final,47.377,220.0,20.004,338.0,19.925,"[-8.9, -3.7, 0.025]",3025,1.4698203181439073e-15
+critico_unica_moldaje_M4_SS_frio_final,unica_moldaje,M4_SS,frio,final,56.566,174.0,46.708,140.0,46.708,"[-3.3, -1.1, 4.275]",3025,1.020181863175735e-15

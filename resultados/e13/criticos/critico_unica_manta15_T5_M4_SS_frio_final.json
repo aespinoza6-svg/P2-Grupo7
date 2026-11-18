@@ -1,0 +1,37 @@
+{
+  "plan": "unica_manta15_T5",
+  "curva": "M4_SS",
+  "clima": "frio",
+  "malla": "final",
+  "D_h": 15.919,
+  "horizonte_h": 504.0,
+  "MT": 44.419,
+  "t_MT_h": 222.0,
+  "xyz_MT": [
+    -0.1,
+    -0.1,
+    2.625
+  ],
+  "MD": 17.852,
+  "t_MD_h": 338.0,
+  "xyz_nucleo_MD": [
+    -0.1,
+    -0.1,
+    2.825
+  ],
+  "xyz_S25_MD": [
+    -8.9,
+    -3.7,
+    0.025
+  ],
+  "cara_S25": "x-",
+  "T_nucleo_MD": 43.969,
+  "T_S25_MD": 26.117,
+  "MD_celda": 17.771,
+  "MT_336": 44.419,
+  "MD_336": 17.774,
+  "pico_al_final": false,
+  "residuo": 1.4247731201867239e-15,
+  "pasos": 3025,
+  "segundos": 264.0
+}
