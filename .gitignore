@@ -36,3 +36,6 @@ resultados/e12/**/*.vtk
 
 # E13: grillas regeneradas por scripts/17 (se rehacen en segundos)
 resultados/e13/grillas/
+
+# F01: campos 3D del escenario critico (unos 2 MB cada uno): scripts/18
+resultados/e13/criticos/*.npz

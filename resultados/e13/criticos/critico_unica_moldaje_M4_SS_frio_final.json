@@ -1,0 +1,37 @@
+{
+  "plan": "unica_moldaje",
+  "curva": "M4_SS",
+  "clima": "frio",
+  "malla": "final",
+  "D_h": 15.919,
+  "horizonte_h": 504.0,
+  "MT": 56.566,
+  "t_MT_h": 174.0,
+  "xyz_MT": [
+    -0.1,
+    -0.1,
+    2.075
+  ],
+  "MD": 46.708,
+  "t_MD_h": 140.0,
+  "xyz_nucleo_MD": [
+    -0.1,
+    -0.1,
+    2.075
+  ],
+  "xyz_S25_MD": [
+    -3.3,
+    -1.1,
+    4.275
+  ],
+  "cara_S25": "x-",
+  "T_nucleo_MD": 56.365,
+  "T_S25_MD": 9.657,
+  "MD_celda": 45.889,
+  "MT_336": 56.566,
+  "MD_336": 46.708,
+  "pico_al_final": false,
+  "residuo": 1.020181863175735e-15,
+  "pasos": 3025,
+  "segundos": 4594.4
+}

@@ -333,3 +333,29 @@ En `visor_laboratorio.html`:
 - **Hormigón → Curva de hidratación** simula en vivo con cualquiera de las 8 curvas.
 - **La pestaña «Riesgo E13»** muestra los planes, la matriz curva × clima, la prueba de malla y el suelo a 12 °C. Son resultados de Python copiados al HTML; el navegador no los recalcula.
 - **Vista 3D → «La solución que cumple»** simula en el navegador el peor escenario del plan propuesto: M4_SS, trayectoria fría, 21 días. Para eso pone en el formulario el mismo clima del ensemble, el horario, la manta y el suelo que usa el script 17. Con celdas de 0,4 m tarda unos 10 s, y con 0,2 m, 1 a 2 minutos. Después se puede mover la vista 3D y recorrer el tiempo. Mide el diferencial de toda la fundación por celdas, lo compara con lo que dio Python en esa malla (`MD_celda`) y recuerda el valor a 25 mm y el de Richardson. El test `test_la_solucion_del_visor_da_lo_mismo_que_python` revisa que coincidan.
+
+### Escenario crítico con historia (artículo F01)
+
+```powershell
+python -X utf8 scripts/18_corrida_critica.py
+python -X utf8 scripts/18_corrida_critica.py --plan unica_moldaje
+python -X utf8 scripts/18_corrida_critica.py --cambiar max_dt_s=300
+```
+
+Repite un escenario con la misma función `correr()` del script 17. Además, guarda la historia hora a hora (máximo del hormigón, mínimo en S25 y MΔ) y el campo 3D en el instante del MΔ máximo. Por defecto corre el plan propuesto en el escenario crítico (M4_SS, trayectoria fría, malla final), en unos 5 min.
+
+El artículo lo usa para:
+- comparar cuatro planes en el mismo escenario: `unica_moldaje`, `unica_manta15_T8`, `cinco_e6_manta15_T10` y la propuesta;
+- medir la sensibilidad al paso temporal (`max_dt_s`) y al intervalo de evaluación de MΔ (`intervalo_salida_h`).
+
+Resultados en `resultados/e13/criticos/`: un `.json` por corrida (la misma fila de `escenarios.csv`), su `_historia.csv` y `resumen.csv`. Los `.npz` con el campo 3D pesan unos 2 MB y no se versionan; se regeneran corriendo el script.
+
+| Corrida (M4_SS, frío, malla final) | MT [°C] | MΔ [°C] | Hora de MΔ |
+|---|---|---|---|
+| Vertida única con moldaje, 18 °C | 56,57 | 46,71 | 140 |
+| Única, manta 15 cm, 8 °C | 47,38 | 20,00 | 338 |
+| Cinco vertidas, esperas de 6 h, manta 15 cm, 10 °C | 49,65 | 22,08 | 338 |
+| Propuesta: única, manta 15 cm, 5 °C | 44,42 | 17,85 | 338 |
+| Propuesta con Δt máximo de 300 s | 44,42 | 17,85 | 337 |
+| Propuesta con Δt máximo de 150 s | 44,42 | 17,85 | 337 |
+| Propuesta con MΔ evaluado cada 15 min | 44,42 | 17,86 | 337,5 |
