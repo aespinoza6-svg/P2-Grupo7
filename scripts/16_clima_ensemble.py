@@ -8,6 +8,7 @@ entre si y con su ciclo diario. Se ordenan por la temperatura media del aire en 
 con pronostico, se parten en tres grupos iguales (frio, central, calido) y de cada grupo se
 toma el miembro mas cercano a su mediana. Peso = fraccion de miembros que representa.
 La cola despues del ultimo dia del ensemble es la misma para todos: promedio ERA5.
+Grafica trayectorias.png y temperatura_min_max.png (minimas y maximas de los 21 dias).
 """
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,6 +24,7 @@ from mcplan.riesgo import elegir_trayectorias
 
 RAIZ = Path(__file__).resolve().parents[1]
 COLORES = dict(frio='#287bb5', central='#258b62', calido='#cd4c44')
+NOMBRE = dict(frio='fría', central='central', calido='cálida', frio_extremo='más frío', calido_extremo='más cálido')
 
 
 def horizonte_maximo(cfg):
@@ -61,6 +63,67 @@ def descargar_suelo(cfg, caso):
     (carpeta / 'era5_suelo.json').write_text(json.dumps(datos, ensure_ascii=False), encoding='utf-8')
     print(f'Suelo ERA5 {inicio}..{fin}: ' + ', '.join(f"{c.replace('soil_temperature_', '')} {v} C" for c, v in medias.items()))
     print(f'Guardado en {carpeta}')
+
+
+def figura_min_max(cfg, snap, series, elegidas, extra, ruta):
+    """Temperatura del aire en los 21 dias que se simulan, con sus minimas y maximas.
+
+    Arriba: hora a hora, el rango de los 51 miembros, las 3 trayectorias, los 2 miembros
+    extremos y la minima y la maxima absolutas. Abajo: minima y maxima de cada dia
+    (barra = rango del ensemble, punto = trayectoria central).
+    """
+    import matplotlib.dates as mdates
+    H = float(cfg['horizonte_extendido_h'])
+    t0 = datetime.fromisoformat(cfg['t0']).replace(tzinfo=None)          # hora de Chile
+    s0 = next(iter(series.values()))
+    dentro = s0.t_s / 3600 <= H + 1e-9
+    fechas = np.array([t0 + timedelta(seconds=float(x)) for x in s0.t_s[dentro]])
+    T = np.array([s.T_aire_C[dentro] for s in series.values()])          # miembro x hora
+    fin = s0.t_s[s0.fuente == 'pronostico'].max() / 3600
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(11, 8), sharex=True, layout='constrained', height_ratios=[1.25, 1])
+
+    a1.fill_between(fechas, T.min(0), T.max(0), color='#b8bec2', alpha=.45, lw=0, label=f'Rango de los {len(series)} miembros')
+    for e in elegidas:
+        a1.plot(fechas, series[e['miembro']].T_aire_C[dentro], color=COLORES.get(e['nombre'], 'k'), lw=1.3,
+                label=f"Trayectoria {NOMBRE[e['nombre']]} ({e['miembro']})")
+    for clave, color in (('frio_extremo', '#173f63'), ('calido_extremo', '#7a1f1a')):
+        m = extra[clave]
+        a1.plot(fechas, series[m].T_aire_C[dentro], color=color, lw=1, ls='--', label=f"Miembro {NOMBRE[clave]} ({m})")
+    i_min, i_max = np.unravel_index(T.argmin(), T.shape), np.unravel_index(T.argmax(), T.shape)
+    for (im, ih), txt, dy, c in ((i_min, 'Mínima', -5, '#173f63'), (i_max, 'Máxima', 3, '#7a1f1a')):
+        v, f = T[im, ih], fechas[ih]
+        a1.plot(f, v, 'o', ms=7, mfc='white', mec=c, mew=2, zorder=5)
+        a1.annotate(f"{txt}: {v:.1f} °C\n{f:%d-%m %H:%M}".replace('.', ','), (f, v), xytext=(f, v + dy), ha='center',
+                    fontsize=9, color=c, fontweight='bold', arrowprops=dict(arrowstyle='-', color=c, lw=.8))
+    a1.set_ylabel('Temperatura del aire a 2 m [°C]')
+    a1.set_ylim(T.min() - 7, T.max() + 6)
+    a1.legend(fontsize=8, ncol=3, loc='lower left', bbox_to_anchor=(0, 1.01), frameon=False)
+
+    dia = np.array([f.date() for f in fechas])
+    dias = [d for d in sorted(set(dia)) if np.count_nonzero(dia == d) >= 24]   # solo dias completos
+    tmin = np.array([[T[k, dia == d].min() for d in dias] for k in range(len(T))])   # miembro x dia
+    tmax = np.array([[T[k, dia == d].max() for d in dias] for k in range(len(T))])
+    cen = next(e['miembro'] for e in elegidas if e['nombre'] == 'central')
+    Tc = series[cen].T_aire_C[dentro]
+    x = np.array([datetime.combine(d, datetime.min.time()) + timedelta(hours=12) for d in dias])
+    for datos, c, txt in ((tmax, '#cd4c44', 'Máxima del día'), (tmin, '#287bb5', 'Mínima del día')):
+        a2.vlines(x, datos.min(0), datos.max(0), color=c, lw=6, alpha=.3)
+        y = [(Tc[dia == d].max() if c == '#cd4c44' else Tc[dia == d].min()) for d in dias]
+        a2.plot(x, y, 'o-', color=c, ms=4, lw=1.2, label=f'{txt} (trayectoria central)')
+    a2.set_ylabel('Mínima y máxima diaria [°C]')
+    a2.set_ylim(T.min() - 6, T.max() + 2)
+    a2.legend(fontsize=8, loc='lower right', ncol=2, title='Barra = rango de los 51 miembros · solo días completos', title_fontsize=8)
+    a2.xaxis.set_major_locator(mdates.DayLocator(interval=2)); a2.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m'))
+    finf = t0 + timedelta(hours=fin)
+    for ax in (a1, a2):
+        ax.axvspan(finf, fechas[-1], color='#9aa3a7', alpha=.15, lw=0); ax.grid(alpha=.2)
+    a1.text(finf + timedelta(hours=6), T.min() - 6, 'Sin pronóstico: promedio ERA5 2021-2025\n(igual para todos los miembros)',
+            fontsize=8, color='#555', va='bottom')
+    a2.set_xlabel(f"Fecha (hora de Chile) · desde el {t0:%d-%m-%Y %H:%M}, inicio de la vertida, durante {H / 24:.0f} días")
+    bajado = datetime.strptime(snap['nombre'][:10], '%Y-%m-%d')
+    fig.suptitle(f"Temperatura ambiente en Renaico · ensemble ECMWF de {len(series)} miembros descargado el {bajado:%d-%m-%Y}")
+    fig.savefig(ruta, dpi=140); plt.close(fig)
+    print(f'Aire: minima {T.min():.1f} C el {fechas[i_min[1]]:%d-%m %H:%M}, maxima {T.max():.1f} C el {fechas[i_max[1]]:%d-%m %H:%M}. Figura: {ruta}')
 
 
 def main():
@@ -114,6 +177,7 @@ def main():
     fig.suptitle(f"{len(series)} miembros del ensemble (gris) y las {len(elegidas)} trayectorias elegidas · "
                  f"sombreado: completado con ERA5 desde las {fin:.0f} h")
     fig.savefig(args.salida / 'trayectorias.png', dpi=140); plt.close(fig)
+    figura_min_max(cfg, snap, series, elegidas, extra, args.salida / 'temperatura_min_max.png')
     for e in elegidas:
         print(f"{e['nombre']:8s} {e['miembro']}  peso {e['peso']:.3f}  T media {e['indice_C']:.2f} C  grupo {e['rango_C'][0]:.2f}-{e['rango_C'][1]:.2f} C")
     print(f'Pronostico: {s0.horas_pronostico} h; relleno: {s0.horas_relleno} h ({s0.metodo_cola}). Salida: {args.salida}')
