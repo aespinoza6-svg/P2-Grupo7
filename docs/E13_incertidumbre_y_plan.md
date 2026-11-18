@@ -8,19 +8,24 @@ Preparación del taller del miércoles 18-nov, la defensa del jueves 19 y el art
 
 ## 0. La afirmación que podemos sostener hoy
 
-> **Con la malla final propuesta (0,2 × 0,2 × 0,05 m), el plan más rápido de la familia evaluada que satisface P_f ≤ 5 % es la vertida única: D = 15,9 h.** Empieza el jueves 19-nov a las 08:00 y termina a las 23:55, con una bomba de 40 m³/h, hormigón **colocado a 8 °C** y **moldaje + 15 cm de poliestireno** en todas las caras expuestas. Da **P_f = 4,2 %**: falla 1 de 24 escenarios, por 0,004 °C. Son 19 planes con sus 24 escenarios cada uno.
+> **Plan propuesto: `unica_manta15_T5`, la vertida única, D = 15,9 h.** Empieza el jueves 19-nov a las 08:00 y termina a las 23:55, con una bomba de 40 m³/h, hormigón **colocado a 5 °C** y **moldaje + 15 cm de poliestireno** en todas las caras expuestas, sin retirarlo en el horizonte. Es el plan más rápido posible con una bomba.
 >
-> **Todavía no podemos afirmar que el plan cumple.** El diferencial MΔ **no converge con la malla** en la esquina inferior de la cara lateral, donde el hormigón aislado toca el suelo expuesto al aire. Con dx = 0,1 m, el escenario crítico sube 1,4 °C más (sección 8). Con ese corrimiento, el plan fallaría en al menos 4 de los 24 escenarios. Además, la decisión cambia con los pesos de las curvas 22A y con el suelo a 12 °C (sección 7).
+> **Con la malla final (0,2 × 0,2 × 0,05 m) da P_f = 0 %:** cumplen los 24 escenarios, y el peor MΔ es 17,85 °C (M4_SS frío; MT = 44,4 °C). También cumple con todas las sensibilidades de la sección 7: pesos «solo SS» y «22A a la mitad», el miembro más frío del ensemble (18,23 °C) y el suelo a 12 °C (18,49 °C).
 >
-> **La decisión queda indeterminada.** El faldón aislante sobre el suelo, que era la idea para cortar el puente térmico de la base, se probó y **no sirve**: le quita a la esquina el calor del sol (sección 8.1). Lo que falta es un refinamiento local de la esquina y aclarar la consulta 1 (sección 10).
+> **El margen depende de la malla.** En el peor escenario, MΔ sube al afinar la celda lateral: 17,85 °C con 0,2 m, 19,03 con 0,1 m y **19,67 con 0,05 m**. Cumple en todas las mallas corridas, pero los saltos se achican (+1,18 y luego +0,65 °C), y la extrapolación de Richardson da **≈ 20,5 °C** para la malla infinitamente fina, justo sobre el límite (sección 8). Lo declaramos: **el plan cumple con los modelos corridos, pero sin margen en la esquina hormigón–suelo**.
+>
+> **5 °C es el piso:** ACI 306 no permite colocar más frío en secciones de más de 1,8 m. Lograrlo exige hielo, áridos enfriados o nitrógeno líquido. La manta de 20 cm (ganancia < 0,3 °C) y el faldón aislante sobre el suelo (sección 8.1) se probaron y no ayudan. La palanca que queda para ganar margen son tuberías de enfriamiento, que no se modelaron.
 
 ## 1. Cómo reproducir
 
 ```powershell
 python -X utf8 scripts/16_clima_ensemble.py
 python -X utf8 scripts/17_riesgo_planes.py --procesos 15
-python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T8 --climas frio,central,calido
-python -X utf8 scripts/17_riesgo_planes.py --malla final --suelo-T 12,12 --planes unica_manta15_T8 --curvas M4_SS --climas frio,central,calido
+python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T5 --climas frio,central,calido
+python -X utf8 scripts/17_riesgo_planes.py --malla final --planes unica_manta15_T5 --curvas M4_SS --climas frio_extremo
+python -X utf8 scripts/17_riesgo_planes.py --malla final --suelo-T 12,12 --planes unica_manta15_T5 --curvas M4_SS --climas frio,central,calido
+python -X utf8 scripts/17_riesgo_planes.py --malla lateral01 --planes unica_manta15_T10,unica_manta15_T5 --curvas M4_SS --climas frio
+python -X utf8 scripts/17_riesgo_planes.py --malla lateral005 --planes unica_manta15_T5 --curvas M4_SS --climas frio --procesos 1
 python -X utf8 scripts/17_riesgo_planes.py --malla hibrida_z --planes unica_manta15_T10 --curvas M4_SS,M1_SS --climas frio
 python -X utf8 scripts/17_riesgo_planes.py --planes unica_manta15_T10_faldon04,unica_manta15_T10_faldon08,unica_manta15_T10_faldon12,unica_manta15_T8_faldon04,unica_manta15_T8_faldon08,unica_manta15_T8_faldon12 --curvas M4_SS --climas frio
 pytest -q
@@ -29,7 +34,7 @@ pytest -q
 - **`16`, sin flags:** vuelve a elegir las 3 trayectorias desde el ensemble guardado. Con `--descargar --descargar-suelo` baja datos **nuevos**, que son otro snapshot y otro resultado.
 - **`17`, malla de exploración:** corre la familia completa en unos 60–100 min con 15 procesos. Cada corrida guarda su fila apenas termina; si se corta, al volver a correr se saltan las hechas.
 - **`17` con `--malla final`:** son 24 corridas de unos 25–70 min cada una, según la carga del computador.
-- **Mallas de sensibilidad:** `hibrida_z`, `hibrida_xy`, `lateral08` y `lateral01`. Cada una cambia solo dx o dz, como se ve en la sección 8.
+- **Mallas de sensibilidad:** `hibrida_z`, `hibrida_xy`, `lateral08`, `lateral01` y `lateral005`. Cada una cambia solo dx o dz, como se ve en la sección 8. `lateral005` (unos 24 millones de celdas) tarda unas 6,5 h con un proceso y usa unos 2 GB de RAM.
 - Toda la configuración del caso está en `config/riesgo_e13.yaml`. Cada valor lleva su origen: [CURSO], [ENSAYO], [ERA5], [TÍPICO] o [DECISIÓN].
 
 ## 2. Datos y su trazabilidad
@@ -138,15 +143,16 @@ El caso de 12 °C queda como sensibilidad (sección 7).
 | manta5 | 0,14 + 5 cm de EPS = 1,57 | 1,43 | no se retira en el horizonte |
 | manta10 | 3,0 | 2,86 | no se retira en el horizonte |
 | manta15 | 4,43 | 4,29 | no se retira en el horizonte |
+| manta20 | 5,85 | 5,71 | no se retira en el horizonte |
 
 El retiro de las mantas y el enfriamiento posterior no se evalúan aquí; se reportan aparte.
 
-**Temperatura de colocación:** 18 °C (base), 12 °C, 10 °C o 8 °C. Bajarla exige enfriar el hormigón con agua helada o hielo, y es un recurso declarado.
+**Temperatura de colocación:** 18 °C (base), 12, 10, 8, 6 o 5 °C. Bajarla exige enfriar el hormigón con agua helada, hielo, áridos enfriados o nitrógeno líquido, y es un recurso declarado. **5 °C es el piso:** ACI 306 fija 5 °C (40 °F) como temperatura mínima de colocación para secciones de más de 1,8 m (tabla de ACI 306R, citada en resúmenes de la norma; confirmar en la edición vigente).
 
-**Familia evaluada:** 22 planes en `config/riesgo_e13.yaml`. De ellos, 19 tienen sus 24 escenarios y 3 con manta sobre el terreno se corrieron solo en el peor escenario (sección 5).
+**Familia evaluada:** 32 planes en `config/riesgo_e13.yaml`. De ellos, 23 tienen sus 24 escenarios; 3 con manta sobre el terreno y 6 con faldón se corrieron solo en el peor escenario (secciones 5 y 8.1).
 - Esperas de 0, 6, 12 y 24 h, o sea resolución de 6 h hasta 12 h, más 24 h.
-- Protecciones moldaje, manta5, manta10 y manta15.
-- Temperaturas de colocación de 18, 12, 10 y 8 °C.
+- Protecciones moldaje, manta5, manta10, manta15 y manta20.
+- Temperaturas de colocación de 18, 12, 10, 8, 6 y 5 °C.
 - Una manta sobre el terreno, que se probó y se descartó.
 - 6 variantes con faldón aislante (sección 8.1), corridas solo en el peor escenario y descartadas.
 
@@ -191,6 +197,10 @@ Hay 24 escenarios por plan: 8 curvas × 3 climas, con pesos 1/8 × 1/3. «Fallas
 | unica_manta15_T12 | unica | 0 h | manta15 | 12 °C | 15.9 | 51.3 | 21.3 | 12.5 % | 3 | 25.0 % | 16.7 % |
 | unica_manta10_T8 | unica | 0 h | manta10 | 8 °C | 15.9 | 47.3 | 18.9 | 0.0 % | 0 | 0.0 % | 0.0 % |
 | unica_manta15_T8 | unica | 0 h | manta15 | 8 °C | 15.9 | 47.4 | 18.3 | 0.0 % | 0 | 0.0 % | 0.0 % |
+| unica_manta15_T6 | unica | 0 h | manta15 | 6 °C | 15.9 | 45.4 | 17.3 | 0.0 % | 0 | 0.0 % | 0.0 % |
+| **unica_manta15_T5** | unica | 0 h | manta15 | 5 °C | 15.9 | 44.4 | 16.6 | 0.0 % | 0 | 0.0 % | 0.0 % |
+| unica_manta20_T8 | unica | 0 h | manta20 | 8 °C | 15.9 | 47.4 | 18.3 | 0.0 % | 0 | 0.0 % | 0.0 % |
+| unica_manta20_T5 | unica | 0 h | manta20 | 5 °C | 15.9 | 44.5 | 16.3 | 0.0 % | 0 | 0.0 % | 0.0 % |
 | cinco_e6_manta10 | cinco | 6 h | manta10 | 18 °C | 39.9 | 57.5 | 26.8 | 62.5 % | 15 | 100.0 % | 75.0 % |
 | cinco_e6_manta5 | cinco | 6 h | manta5 | 18 °C | 39.9 | 57.3 | 28.7 | 83.3 % | 20 | 100.0 % | 88.9 % |
 | cinco_e6_manta10_T12 | cinco | 6 h | manta10 | 12 °C | 39.9 | 51.6 | 22.7 | 50.0 % | 12 | 75.0 % | 58.3 % |
@@ -208,8 +218,8 @@ Hay 24 escenarios por plan: 8 curvas × 3 climas, con pesos 1/8 × 1/3. «Fallas
 | Rol | Plan | D | P_f | Qué muestra |
 |---|---|---|---|---|
 | Vertida única «tal cual» | unica_moldaje | 15,9 h | 100 % | Sin protección falla siempre: MΔ de 32 a 46 °C |
-| Propuesta | unica_manta15_T8 | 15,9 h | ver la sección 8 | Es la más rápida posible con una bomba |
-| Desviación igual de rápida con menos medidas | unica_manta10_T10, unica_manta15_T10 | 15,9 h | 8,3 % y 0 %; con malla fina, 15–20 % | Ahorran hielo o manta, pero exceden el riesgo con la malla final |
+| Propuesta | unica_manta15_T5 | 15,9 h | 0 % (también con la malla final) | Es la más rápida posible con una bomba |
+| Desviación igual de rápida con menos medidas | unica_manta15_T8, unica_manta15_T10 | 15,9 h | 0 % aquí; con la malla final, 4,2 % y 15–20 % | Ahorran hielo, pero con la malla final T8 queda en el límite y T10 lo excede |
 | Desviación más lenta | cinco_e6_manta15_T10 | 39,9 h (+24 h) | 25 % | **Agrega 24 h y empeora**: el hormigón nuevo queda junto a un núcleo ya caliente |
 
 ![Matriz de escenarios](../resultados/e13/exploracion/matriz_escenarios.png)
@@ -227,21 +237,18 @@ Hay 24 escenarios por plan: 8 curvas × 3 climas, con pesos 1/8 × 1/3. «Fallas
 
 ## 7. Sensibilidades
 
-Todo para el plan propuesto (`unica_manta15_T8`), con la malla final salvo donde se indica.
+Todo con la malla final. La columna T8 es el plan anterior, que se descartó por estas mismas sensibilidades.
 
-| Sensibilidad | Resultado | P_f | ¿Cambia la decisión? |
-|---|---|---|---|
-| Pesos base (8 curvas a 1/8) | Falla 1 de 24: M4_SS frío, con MΔ = 20,004 °C | **4,2 %** | — (cumple) |
-| Pesos «solo SS» (4 curvas a 1/4) | El mismo escenario ahora pesa 1/12 | 8,3 % | **Sí: no cumple** |
-| Pesos «22A a la mitad» | El mismo escenario ahora pesa 1/18 | 5,6 % | **Sí: no cumple**, por 0,6 puntos |
-| Clima: el miembro más frío (member12) en vez del representante frío | M4_SS: 20,39 °C (falla); M2_SS: 19,15 °C. Las otras curvas tienen ≥ 1,4 °C de margen en la malla gruesa | 4,2 % (estimado) | No |
-| Clima: el miembro más cálido (member18) | M4_SS: 19,48 °C; M2_SS: 18,25 °C | 4,2 % | No |
-| Suelo a 12 °C uniforme (el supuesto antiguo) | M4_SS falla en los 3 climas: 20,65, 20,43 y 20,03 °C | ≥ 12,5 % | **Sí: no cumple** |
-| MT en toda la familia | MT ≤ 57,9 °C, lejos de 70 °C | P(MT > 70) = 0 | — |
+| Sensibilidad | `unica_manta15_T5` (propuesto) | `unica_manta15_T8` (anterior) |
+|---|---|---|
+| Pesos base (8 curvas a 1/8) | 0 de 24 fallas; peor MΔ = 17,85 °C (M4_SS frío). **P_f = 0 %** | Falla M4_SS frío por 0,004 °C. P_f = 4,2 % |
+| Pesos «solo SS» (4 curvas a 1/4) | **0 %** | 8,3 %: no cumple |
+| Pesos «22A a la mitad» | **0 %** | 5,6 %: no cumple |
+| Clima: el miembro más frío (member12) | M4_SS: **18,23 °C** | M4_SS: 20,39 °C (falla) |
+| Suelo a 12 °C uniforme (el supuesto antiguo) | M4_SS: **18,49, 18,28 y 17,88 °C** en los 3 climas | Falla en los 3 climas (20,65, 20,43 y 20,03 °C) |
+| MT | **44,4 °C** | 47,4 °C |
 
-**Lectura:** el plan cumple **solo** bajo el conjunto y los pesos declarados. Con una enumeración de 24 escenarios, una falla pesa 4,17 %, así que **cualquier segunda falla, o un peso mayor para M4_SS, hace fallar el plan**. Esto no se arregla alterando los pesos: lo informamos como fragilidad.
-
-**Con otros pesos:** con «solo SS» o «22A a la mitad», ningún plan evaluado con la malla final cumple.
+**Lectura:** con 5 °C, el plan cumple en todas las sensibilidades con al menos 1,5 °C de margen en la malla final. El margen que no tiene es el de la malla (sección 8). El de 6 °C (`unica_manta15_T6`) también cumple en el peor escenario, pero con menos margen: 18,57 °C, y 18,95 °C con el miembro más frío.
 
 ## 8. Malla: ¿cambia la decisión al refinar?
 
@@ -271,9 +278,19 @@ Para separar los efectos, se corrieron mallas híbridas en el escenario más exi
 - Con 0,2 m, esa misma falla en 5 de 12 escenarios SS, y hay que bajar a 8 °C para cumplir.
 - Si la tendencia sigue, con 0,1 m el plan propuesto podría dejar de cumplir.
 
-Con dx = 0,1 m, el corrimiento se repite. Reconocemos la **indeterminación**: con este modelo, el criterio de 20 °C en esa esquina depende de la malla. Hay dos formas de resolverlo:
-1. Cambiar el diseño para que la esquina deje de ser crítica. El faldón aislante se probó y no sirve (sección 8.1).
-2. Discutir en el taller si S25 debe evaluarse en esa arista. Es la consulta 1 de la sección 10.
+**Con el plan propuesto se agregó un quinto nivel, dx = 0,05 m**, solo en el peor escenario (M4_SS frío; dz = 0,05 m fijo):
+
+| dx = dy [m] | MΔ a 10 °C | MΔ a 5 °C | Salto a 5 °C |
+|---|---|---|---|
+| 0,2 | 21,44 | 17,85 | — |
+| 0,1 | 22,76 | 19,03 | +1,18 |
+| 0,05 | — | **19,67** | **+0,65** |
+
+- **Ahora los saltos sí se achican:** a la mitad, más o menos. El orden observado es p = log₂(1,18/0,65) ≈ 0,87, menor que el 1–2 de un esquema de volúmenes finitos en una zona suave, como se espera junto a una esquina con un gradiente muy fuerte.
+- **Richardson con esos tres niveles:** MΔ∞ ≈ 19,67 + 0,65/(2^0,87 − 1) ≈ **20,5 °C**. Es una estimación con solo tres mallas y un orden bajo, así que la incertidumbre es de algunas décimas.
+- **Lectura honesta:** el plan cumple en todas las mallas corridas (19,67 °C con la más fina), pero la extrapolación queda **justo sobre el límite**. En el peor escenario, el plan está en el borde del criterio; los otros 23 escenarios tienen al menos 0,2 °C más de margen en la malla final.
+
+Por eso la consulta 1 de la sección 10 sigue vigente: si S25 se evalúa en esa arista, ¿con qué resolución? Si hace falta más margen, la palanca que queda es enfriar el núcleo con tuberías de agua, que no se modelaron. La manta de 20 cm y el faldón (sección 8.1) no sirven.
 
 ### 8.1 Faldón aislante: probado y descartado
 
@@ -309,12 +326,12 @@ Con dx = 0,1 m, el corrimiento se repite. Reconocemos la **indeterminación**: c
 
 ## 9. Conclusión
 
-**Respuesta honesta:** con los recursos fijados (una bomba de 40 m³/h y la geometría del IFC), la duración mínima posible es la **vertida única, D = 15,9 h**. Pero **no encontramos un plan que podamos demostrar que cumple P_f ≤ 5 %**:
-- Con la malla final propuesta, el mejor candidato (`unica_manta15_T8`) da **4,2 %**.
-- Al refinar la malla, el mismo escenario sube 1,4 °C más y el plan pasaría a fallar en varios escenarios.
-- También deja de cumplir con los pesos «solo SS» o «22A a la mitad», y con el suelo a 12 °C.
+**Respuesta:** con los recursos fijados (una bomba de 40 m³/h y la geometría del IFC), la duración mínima posible es la **vertida única, D = 15,9 h**, y el plan que la logra es **`unica_manta15_T5`: colocar a 5 °C y cubrir todo con manta de 15 cm**.
+- Con la malla final: **P_f = 0 %**, peor MΔ = 17,85 °C y MT = 44,4 °C.
+- Cumple con los pesos «solo SS» y «22A a la mitad», con el miembro más frío del ensemble y con el suelo a 12 °C.
+- Cumple en las mallas de 0,1 y 0,05 m (19,03 y 19,67 °C), pero la extrapolación a malla infinitamente fina da ≈ 20,5 °C: **en la esquina contra el suelo no queda margen** (sección 8).
 
-No relajamos el umbral ni ajustamos pesos para hacerlo pasar.
+No relajamos el umbral ni ajustamos pesos para hacerlo pasar. Para llegar aquí se bajó la temperatura de colocación hasta el piso de ACI 306 (5 °C); de 8 a 5 °C, MΔ baja unos 0,7 °C por cada grado.
 
 **Qué se obtiene con alternativas más lentas:** nada. Partir en cinco vertidas con esperas de 6 h agrega 24 h y sube P_f a 25 %, porque el hormigón fresco queda junto a un núcleo caliente. Las esperas de 12 h o más fallan siempre.
 
@@ -323,14 +340,13 @@ No relajamos el umbral ni ajustamos pesos para hacerlo pasar.
 - **La temperatura de colocación:** baja el núcleo casi 1:1.
 - **El puente térmico de la base:** con manta, el punto más frío es la esquina inferior, que pierde calor hacia el suelo de abajo.
 
-**Qué habría que cambiar para tener una recomendación defendible:**
-1. **Diseño:** el **faldón aislante** sobre el suelo se probó y no sirve, porque tapa el sol que calienta la esquina (sección 8.1). Quedan ideas sin probar, como aislar bajo el borde de la base.
+**Qué queda abierto:**
+1. **Margen en la esquina:** si se exige margen también en el límite de malla, la palanca que queda son **tuberías de enfriamiento** en el núcleo (no modeladas). El **faldón aislante** y la manta de 20 cm se probaron y no sirven (sección 8.1). Aislar bajo el borde de la base tampoco se probó.
 2. **Datos:**
    - confirmar si M1–M4 son réplicas y si 22A vale igual que SS;
    - fijar β y la edad cero;
    - medir la temperatura del suelo en obra.
-3. **Numérica:** un refinamiento local de la esquina inferior, o un modelo 2D de esa sección, hasta que MΔ deje de cambiar.
-4. **Ejecución:** verificar que colocar a 8 °C sea posible en 637 m³ con agua helada, hielo y áridos enfriados.
+3. **Ejecución:** colocar 637 m³ a 5 °C es exigente: hielo en vez de agua, áridos enfriados o nitrógeno líquido, y control de la temperatura en cada camión. Además, el piso de 5 °C viene de resúmenes de ACI 306 y hay que confirmarlo en la edición vigente.
 
 **Lo que esto NO dice:**
 - No certifica un 95 % de confiabilidad real: es la probabilidad del modelo discreto declarado.
@@ -338,7 +354,7 @@ No relajamos el umbral ni ajustamos pesos para hacerlo pasar.
 
 ## 10. Consultas prioritarias para el taller
 
-1. **¿S25 se evalúa también en la arista donde la cara lateral toca el suelo?** Ahí MΔ no converge con la malla (sección 8). Si se evalúa, ¿qué resolución o qué submodelo local se acepta?
+1. **¿S25 se evalúa también en la arista donde la cara lateral toca el suelo?** Ahí MΔ converge lento con la malla: el plan propuesto da 19,67 °C con 0,05 m y ≈ 20,5 °C extrapolado (sección 8). Si se evalúa, ¿qué resolución o qué submodelo local se acepta?
 2. **¿Las 8 curvas son escenarios de un mismo material?**
    - ¿M1–M4 son réplicas de la misma mezcla? Si son mezclas distintas, la mezcla es una decisión y no se sortea.
    - ¿Las curvas 22A valen igual que las SS? ¿Su caída a cero cerca de las 80 h es real o es un efecto del fin del registro?

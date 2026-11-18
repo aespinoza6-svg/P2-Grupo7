@@ -58,6 +58,7 @@ protecciones:
   manta5:    {lados: [1.57, null], arriba: [1.43, null]}   # moldaje + 5 cm de poliestireno (0,05/0,035)
   manta10:   {lados: [3.0, null], arriba: [2.86, null]}    # moldaje + 10 cm de poliestireno
   manta15:   {lados: [4.43, null], arriba: [4.29, null]}   # moldaje + 15 cm de poliestireno
+  manta20:   {lados: [5.85, null], arriba: [5.71, null]}   # moldaje + 20 cm de poliestireno
   # + manta de 10 cm sobre el terreno en la franja de 2 m alrededor de la fundación
   manta10_terreno: {lados: [3.0, null], arriba: [2.86, null], terreno: [2.86, null]}
   # Faldon: la manta de 15 cm de los lados se dobla y sigue sobre el suelo en una franja de
@@ -91,6 +92,11 @@ planes:
   - {nombre: unica_terreno,         particion: unica, espera_h: 0,  proteccion: manta10_terreno}
   - {nombre: unica_terreno_T12,     particion: unica, espera_h: 0,  proteccion: manta10_terreno, temperatura_C: 12}
   - {nombre: cinco_e6_terreno_T12,  particion: cinco, espera_h: 6,  proteccion: manta10_terreno, temperatura_C: 12}
+  # Hormigon mas frio: 5 C es el minimo de ACI 306 para secciones de mas de 1,8 m [TÍPICO]
+  - {nombre: unica_manta15_T6,      particion: unica, espera_h: 0,  proteccion: manta15, temperatura_C: 6}
+  - {nombre: unica_manta15_T5,      particion: unica, espera_h: 0,  proteccion: manta15, temperatura_C: 5}
+  - {nombre: unica_manta20_T8,      particion: unica, espera_h: 0,  proteccion: manta20, temperatura_C: 8}
+  - {nombre: unica_manta20_T5,      particion: unica, espera_h: 0,  proteccion: manta20, temperatura_C: 5}
   - {nombre: unica_manta15_T10_faldon04, particion: unica, espera_h: 0, proteccion: manta15_faldon04, temperatura_C: 10}
   - {nombre: unica_manta15_T10_faldon08, particion: unica, espera_h: 0, proteccion: manta15_faldon08, temperatura_C: 10}
   - {nombre: unica_manta15_T10_faldon12, particion: unica, espera_h: 0, proteccion: manta15_faldon12, temperatura_C: 10}
@@ -106,3 +112,4 @@ mallas:
   hibrida_xy: {dx: 0.2, dy: 0.2, dz: 0.1}
   lateral08: {dx: 0.8, dy: 0.8, dz: 0.05}
   lateral01: {dx: 0.1, dy: 0.1, dz: 0.05}   # cuarto nivel: ¿converge MΔ en la esquina contra el suelo?   # tercer nivel lateral (0,8 / 0,4 / 0,2) para Richardson
+  lateral005: {dx: 0.05, dy: 0.05, dz: 0.05}  # quinto nivel: solo el peor escenario del plan propuesto (unas 4 h)

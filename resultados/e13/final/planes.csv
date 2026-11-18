@@ -1,4 +1,6 @@
-﻿plan,D_h,escenarios,MT_max,MD_max,MD_celda_max,pico_al_final,cumple,Pf_base,PT,PdT,fallas,Pf_solo_SS,Pf_22A_a_la_mitad
-unica_manta15_T10,15.919,12,49.358,21.439,21.347,False,False,,,,,,
-unica_manta10_T8,15.919,3,47.353,20.501,20.37,False,False,,,,,,
-unica_manta15_T8,15.919,28,47.401,20.387,20.299,False,True,0.0417,0.0,0.0417,1,0.0833,0.0555
+﻿plan,D_h,escenarios,MT_max,MD_max,MD_celda_max,pico_al_final,Pf_base,PT,PdT,fallas,Pf_solo_SS,Pf_22A_a_la_mitad,cumple
+unica_manta15_T5,15.919,25,44.436,18.233,18.151,False,0.0,0.0,0.0,0,0.0,0.0,True
+unica_manta15_T8,15.919,28,47.401,20.387,20.299,False,0.0417,0.0,0.0417,1,0.0833,0.0555,True
+unica_manta15_T6,15.919,2,45.421,18.951,18.867,False,,,,,,,False
+unica_manta10_T8,15.919,3,47.353,20.501,20.37,False,,,,,,,False
+unica_manta15_T10,15.919,12,49.358,21.439,21.347,False,,,,,,,False
