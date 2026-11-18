@@ -301,3 +301,57 @@ def test_el_motor_del_visor_con_una_curva_del_ensayo_da_lo_mismo_que_python(tmp_
     for vid, media in media_py.items():
         if media is not None:
             assert js['media'][str(vid)] == pytest.approx(media, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# La solución que cumple: el plan propuesto de E13 simulado en el navegador
+# ---------------------------------------------------------------------------
+from mcplan.clima import snapshot_de_miembro
+
+ARNES_SOLUCION = r"""
+const fs=require('fs');global.self={};global.postMessage=()=>{};
+const main=fs.readFileSync(process.argv[2],'utf8');
+eval(main.slice(main.indexOf('function horasUTC'),main.indexOf('function inicioClima'))+';global.serieClima=serieClima;');
+eval(fs.readFileSync(process.argv[3],'utf8')+';global.voxelizar=voxelizar;global.simular=simular;global.agregarSuelo=agregarSuelo;');
+const G=JSON.parse(fs.readFileSync(process.argv[4],'utf8')),SOL=JSON.parse(fs.readFileSync(process.argv[5],'utf8')),CURVAS=JSON.parse(fs.readFileSync(process.argv[6],'utf8'));
+// Lo mismo que verSolucion() pone en el formulario
+const c=SOL.climas[SOL.clima],snap={nombre:'e13',metadata:SOL.snapshot.metadata,pronostico:c.pronostico,historico:SOL.snapshot.historico};
+const ref=SOL.referencia.exploracion,inicio=Date.parse(SOL.t0.slice(0,16)+':00Z')/1000-c.pronostico.utc_offset_seconds;
+const cl=serieClima(snap,inicio,ref.horizonte_h,SOL.metodo_cola);
+const P={d:[ref.d.dx,ref.d.dy,ref.d.dz],k:SOL.k,rho:CURVAS.rho,cp:CURVAS.cp,theta:0,tau:30,curva:CURVAS.curvas.find(x=>x.nombre===SOL.curva),
+  horizonte:ref.horizonte_h,maxdt:SOL.max_dt_s,intervalo:SOL.intervalo_h,amb:{alfa:SOL.absortividad,emis:SOL.emisividad,hFijo:0},
+  arriba:{tipo:'ambiente',R:SOL.arriba[0],retiro:SOL.arriba[1]},lados:{tipo:'ambiente',R:SOL.lados[0],retiro:SOL.lados[1]},base:{tipo:'neumann',q:0},
+  suelo:SOL.suelo,clima:{t:cl.t,T:cl.T,V:cl.V,G:cl.G},vertidas:G.map(g=>({id:g.id,inicio:SOL.vertidas[g.id],temp:SOL.temperatura_C,calc:true})),sinCampos:true};
+const r=simular(agregarSuelo(voxelizar(G,P.d),P.suelo),P,()=>{}),s=r.serie;
+let md=-Infinity;s.t.forEach((t,i)=>{const x=s.gmax[i]-s.gsup[i];if(x>md)md=x;});  // antes de colocar no hay hormigón (NaN)
+console.log(JSON.stringify({clima:{t:cl.t,T:cl.T,V:cl.V,G:cl.G,metodo:cl.metodo},MT:r.maximo,MD_celda:md}));
+"""
+
+
+def test_el_visor_lleva_el_plan_propuesto_y_su_clima():
+    copia = visor12.solucion_del_visor(TEXTO)
+    assert copia == json.loads(json.dumps(visor12.solucion_desde_config()))
+    assert set(copia['climas']) == {'frio', 'central', 'calido'} and copia['referencia']['exploracion']['MD_celda']
+
+
+@pytest.mark.skipif(shutil.which('node') is None, reason='Node no esta instalado')
+def test_la_solucion_del_visor_da_lo_mismo_que_python(tmp_path):
+    """Peor escenario del plan propuesto, 21 días, malla de exploración: mismo clima, MT y MΔ por celdas que el script 17."""
+    sol = visor12.solucion_del_visor(TEXTO)
+    (tmp_path / 'main.js').write_text(re.findall(r'<script>(.*?)</script>', TEXTO, re.S)[-1], encoding='utf-8')
+    (tmp_path / 'worker.js').write_text(re.search(r'id="worker-src">(.*?)</script>', TEXTO, re.S).group(1), encoding='utf-8')
+    (tmp_path / 'geo.json').write_text(json.dumps(visor12.geometria_del_visor(TEXTO)), encoding='utf-8')
+    (tmp_path / 'sol.json').write_text(json.dumps(sol), encoding='utf-8')
+    (tmp_path / 'curvas.json').write_text(json.dumps(visor12.curvas_del_visor(TEXTO)), encoding='utf-8')
+    js = _node(tmp_path, ARNES_SOLUCION, *(tmp_path / n for n in ('main.js', 'worker.js', 'geo.json', 'sol.json', 'curvas.json')))
+
+    tray = json.loads((RAIZ / 'resultados' / 'e13' / 'clima' / 'trayectorias.json').read_text(encoding='utf-8'))
+    miembro = next(e['miembro'] for e in tray['trayectorias'] if e['nombre'] == sol['clima'])
+    py = serie_clima(snapshot_de_miembro(cargar_snapshot(RAIZ / tray['carpeta']), miembro), sol['t0'],
+                     sol['referencia']['exploracion']['horizonte_h'], sol['metodo_cola'])
+    assert js['clima']['metodo'] == py.metodo_cola
+    np.testing.assert_allclose(js['clima']['t'], py.t_s, atol=1e-9)
+    np.testing.assert_allclose(js['clima']['T'], py.T_aire_C, atol=1e-9)
+    ref = sol['referencia']['exploracion']
+    assert js['MT'] == pytest.approx(ref['MT'], abs=2e-3)
+    assert js['MD_celda'] == pytest.approx(ref['MD_celda'], abs=2e-3)

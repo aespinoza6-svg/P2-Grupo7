@@ -36,6 +36,7 @@ pytest -q
 - **`17` con `--malla final`:** son 24 corridas de unos 25–70 min cada una, según la carga del computador.
 - **Mallas de sensibilidad:** `hibrida_z`, `hibrida_xy`, `lateral08`, `lateral01` y `lateral005`. Cada una cambia solo dx o dz, como se ve en la sección 8. `lateral005` (unos 24 millones de celdas) tarda unas 6,5 h con un proceso y usa unos 2 GB de RAM.
 - Toda la configuración del caso está en `config/riesgo_e13.yaml`. Cada valor lleva su origen: [CURSO], [ENSAYO], [ERA5], [TÍPICO] o [DECISIÓN].
+- **Para verla en 3D:** abra `visor_laboratorio.html`, vaya a **Vista 3D → «La solución que cumple»** y pulse **▶ Simular la solución**. El navegador repite el peor escenario del plan (M4_SS, trayectoria fría) con los mismos datos del script 17. Con celdas de 0,4 m da MT = 44,42 °C y MΔ por celdas = 16,16 °C, igual que Python. La vista queda en el instante del peor diferencial y marca el núcleo y la esquina fría de la base.
 
 ## 2. Datos y su trazabilidad
 
